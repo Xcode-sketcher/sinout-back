@@ -1,0 +1,17 @@
+﻿# Arquivos e pastas do Visual Studio
+.vs/
+*.suo
+*.user
+
+# Pastas de Build (Crucial!)
+bin/
+obj/
+
+# Arquivos de usuário
+*.userosscache
+*.sln.docstates
+
+# Arquivos de log
+*.log
+
+# ... (O template padrão do Visual Studio pode ter mais coisas, o que é bom)

@@ -7,12 +7,12 @@
       "RelativeMoniker": "D:0:0:{410A955F-4562-4C7D-9925-2ADD7824ECB8}|APISinout.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{410A955F-4562-4C7D-9925-2ADD7824ECB8}|APISinout.csproj|c:\\users\\aluno\\source\\repos\\apisinout\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{410A955F-4562-4C7D-9925-2ADD7824ECB8}|APISinout.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{410A955F-4562-4C7D-9925-2ADD7824ECB8}|APISinout.csproj|c:\\users\\aluno\\source\\repos\\apisinout\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
       "RelativeMoniker": "D:0:0:{410A955F-4562-4C7D-9925-2ADD7824ECB8}|APISinout.csproj|solutionrelative:properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{410A955F-4562-4C7D-9925-2ADD7824ECB8}|APISinout.csproj|c:\\users\\aluno\\source\\repos\\apisinout\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{410A955F-4562-4C7D-9925-2ADD7824ECB8}|APISinout.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     }
   ],
   "DocumentGroupContainers": [
@@ -26,7 +26,7 @@
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 1,
               "Title": "launchSettings.json",
               "DocumentMoniker": "C:\\Users\\Aluno\\source\\repos\\APISinout\\Properties\\launchSettings.json",
               "RelativeDocumentMoniker": "Properties\\launchSettings.json",
@@ -34,7 +34,8 @@
               "RelativeToolTip": "Properties\\launchSettings.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-11-05T23:56:58.441Z"
+              "WhenOpened": "2025-11-05T23:56:58.441Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -44,14 +45,14 @@
               "RelativeDocumentMoniker": "Program.cs",
               "ToolTip": "C:\\Users\\Aluno\\source\\repos\\APISinout\\Program.cs",
               "RelativeToolTip": "Program.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAABNAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-11-05T23:31:13.874Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "appsettings.json",
               "DocumentMoniker": "C:\\Users\\Aluno\\source\\repos\\APISinout\\appsettings.json",
               "RelativeDocumentMoniker": "appsettings.json",

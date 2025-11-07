@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("APISinout")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6ddbcf9acbbe1ae1869773bbc9e1bb20107aaead")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7c85c746183129c5f73072ad8beea41c3396ad7e")]
 [assembly: System.Reflection.AssemblyProductAttribute("APISinout")]
 [assembly: System.Reflection.AssemblyTitleAttribute("APISinout")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

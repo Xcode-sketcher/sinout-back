@@ -26,6 +26,40 @@
           }
         }
       }
+    },
+    "/login": {
+      "post": {
+        "tags": [
+          "APISinout"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CuidadorLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/meu-perfil": {
+      "get": {
+        "tags": [
+          "APISinout"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -52,10 +86,40 @@
           "perfil": {
             "type": "string",
             "nullable": true
+          },
+          "dadosFaciais": {
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CuidadorLoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "senha": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
       }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "description": "Insira 'Bearer' [espaço] e depois o seu token.",
+        "scheme": "Bearer",
+        "bearerFormat": "JWT"
+      }
     }
-  }
+  },
+  "security": [
+    {
+      "Bearer": [ ]
+    }
+  ]
 }

@@ -42,3 +42,11 @@ C:\Users\Aluno\source\repos\APISinout\obj\Debug\net8.0\refint\APISinout.dll
 C:\Users\Aluno\source\repos\APISinout\obj\Debug\net8.0\APISinout.pdb
 C:\Users\Aluno\source\repos\APISinout\obj\Debug\net8.0\APISinout.genruntimeconfig.cache
 C:\Users\Aluno\source\repos\APISinout\obj\Debug\net8.0\ref\APISinout.dll
+C:\Users\Aluno\source\repos\APISinout\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\Aluno\source\repos\APISinout\bin\Debug\net8.0\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\Aluno\source\repos\APISinout\bin\Debug\net8.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\Aluno\source\repos\APISinout\bin\Debug\net8.0\Microsoft.IdentityModel.Logging.dll
+C:\Users\Aluno\source\repos\APISinout\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
+C:\Users\Aluno\source\repos\APISinout\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+C:\Users\Aluno\source\repos\APISinout\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
+C:\Users\Aluno\source\repos\APISinout\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
