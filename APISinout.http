@@ -1,0 +1,6 @@
+@APISinout_HostAddress = http://localhost:5240
+
+GET {{APISinout_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
