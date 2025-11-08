@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Aluno\\source\\repos\\APISinout\\APISinout.csproj": {}
+    "C:\\Users\\Eduar\\Downloads\\PROA\\Sinout\\CRUD-Sinout\\APISinout.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Aluno\\source\\repos\\APISinout\\APISinout.csproj": {
+    "C:\\Users\\Eduar\\Downloads\\PROA\\Sinout\\CRUD-Sinout\\APISinout.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Aluno\\source\\repos\\APISinout\\APISinout.csproj",
+        "projectUniqueName": "C:\\Users\\Eduar\\Downloads\\PROA\\Sinout\\CRUD-Sinout\\APISinout.csproj",
         "projectName": "APISinout",
-        "projectPath": "C:\\Users\\Aluno\\source\\repos\\APISinout\\APISinout.csproj",
-        "packagesPath": "C:\\Users\\Aluno\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Aluno\\source\\repos\\APISinout\\obj\\",
+        "projectPath": "C:\\Users\\Eduar\\Downloads\\PROA\\Sinout\\CRUD-Sinout\\APISinout.csproj",
+        "packagesPath": "C:\\Users\\Eduar\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Eduar\\Downloads\\PROA\\Sinout\\CRUD-Sinout\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Aluno\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Eduar\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -44,7 +44,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net8.0": {
@@ -53,6 +53,10 @@
             "BCrypt.Net-Next": {
               "target": "Package",
               "version": "[4.0.3, )"
+            },
+            "FluentValidation.AspNetCore": {
+              "target": "Package",
+              "version": "[11.3.1, )"
             },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
@@ -65,6 +69,10 @@
             "MongoDB.Driver": {
               "target": "Package",
               "version": "[3.5.0, )"
+            },
+            "Scalar.AspNetCore": {
+              "target": "Package",
+              "version": "[2.10.1, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
@@ -94,7 +102,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.100-rc.2.25502.107/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
