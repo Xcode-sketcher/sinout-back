@@ -32,52 +32,107 @@ public class AuthService : IAuthService
         if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Name) || string.IsNullOrEmpty(request.Password))
             throw new AppException("Dados inválidos");
 
-        // Verificar se já existe esse prato no cardápio
+        // Validar formato de email
+        if (!IsValidEmail(request.Email))
+            throw new AppException("Email inválido");
+
+        // Validar senha forte
+        if (request.Password.Length < 6)
+            throw new AppException("Senha deve ter no mínimo 6 caracteres");
+
+        // Verificar se já existe esse email no banco
         if (await _userRepository.GetByEmailAsync(request.Email.ToLower().Trim()) != null)
             throw new AppException("Email já cadastrado");
 
-        // Preparar o prato: misturar os ingredientes
+        // Determinar Role (apenas Admin pode criar outros Admins)
+        var role = string.IsNullOrEmpty(request.Role) ? UserRole.Caregiver.ToString() : request.Role;
+        if (role != UserRole.Admin.ToString() && role != UserRole.Caregiver.ToString())
+            throw new AppException($"Role inválido. Valores permitidos: {UserRole.Admin}, {UserRole.Caregiver}");
+
+        // Por segurança, registro público só pode criar Caregiver
+        // Para criar Admin, deve ser através de endpoint protegido
+        if (role == UserRole.Admin.ToString())
+            throw new AppException("Não é possível auto-registrar como Admin");
+
+        // Preparar o usuário
         var user = new User
         {
-            Id = await _userRepository.GetNextUserIdAsync(), // Pegar o próximo número da receita
+            Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(), // Gerar ObjectId
+            UserId = await _userRepository.GetNextUserIdAsync(), // ID numérico sequencial
             Name = request.Name.Trim(),
             Email = request.Email.ToLower().Trim(),
-            DataCadastro = DateTime.UtcNow, // Data de produção
-            Status = true, // Prato pronto para servir
-            Role = "Client", // Tipo de prato
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password), // Temperar a senha
-            CreatedBy = "self-registration" // Quem fez o prato
+            Phone = request.Phone?.Trim(),
+            PatientName = request.PatientName?.Trim(),
+            DataCadastro = DateTime.UtcNow,
+            Status = true,
+            Role = role,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            CreatedBy = "self-registration",
+            LastLogin = null
         };
 
-        // Colocar no forno (salvar no banco)
+        // Salvar no banco
         await _userRepository.CreateUserAsync(user);
         
-        // Servir o prato com acompanhamento (token)
-        return new AuthResponse { 
-            User = new UserResponse(user),
-            Token = JwtHelper.GenerateToken(user, _config) // O "certificado de qualidade"
-        };
-    }
-
-    // Receita: Fazer login (como aquecer um prato pronto)
-    public async Task<AuthResponse> LoginAsync(LoginRequest request)
-    {
-        // Verificar ingredientes
-        if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
-            throw new AppException("Dados inválidos");
-
-        // Buscar o prato no cardápio
-        var user = await _userRepository.GetByEmailAsync(request.Email.ToLower().Trim());
-        
-        // Verificar se o prato existe e está fresco
-        if (user == null || !user.Status || 
-            !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-            throw new AppException("Credenciais inválidas");
-
-        // Servir o prato aquecido
+        // Retornar resposta com token
         return new AuthResponse { 
             User = new UserResponse(user),
             Token = JwtHelper.GenerateToken(user, _config)
         };
+    }
+
+    // Receita: Fazer login
+    public async Task<AuthResponse> LoginAsync(LoginRequest request)
+    {
+        // Verificar campos obrigatórios
+        if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+            throw new AppException("Email e senha são obrigatórios");
+
+        // Buscar usuário
+        var user = await _userRepository.GetByEmailAsync(request.Email.ToLower().Trim());
+        
+        // Verificar credenciais e status
+        if (user == null || !user.Status || 
+            !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+            throw new AppException("Credenciais inválidas");
+
+        // Garantir que o usuário tenha uma Role definida (para usuários antigos)
+        if (string.IsNullOrEmpty(user.Role))
+        {
+            user.Role = UserRole.Caregiver.ToString();
+        }
+
+        // Atualizar último login
+        user.LastLogin = DateTime.UtcNow;
+        await _userRepository.UpdateUserAsync(user.UserId, user);
+
+        // Retornar resposta com token
+        return new AuthResponse { 
+            User = new UserResponse(user),
+            Token = JwtHelper.GenerateToken(user, _config)
+        };
+    }
+
+    private bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    // Receita: Obter usuário por ID
+    public async Task<User> GetUserByIdAsync(int userId)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+            throw new AppException("Usuário não encontrado");
+        
+        return user;
     }
 }

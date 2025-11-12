@@ -8,9 +8,12 @@ namespace APISinout.Models;
 // Ingrediente: Pedido de registro (como uma lista de compras para o chef)
 public class RegisterRequest
 {
-    public string? Name { get; set; } // Nome do ingrediente principal
-    public string? Email { get; set; } // Código de barras
-    public string? Password { get; set; } // Selo de qualidade
+    public string? Name { get; set; } // Nome do usuário
+    public string? Email { get; set; } // Email único
+    public string? Password { get; set; } // Senha
+    public string? Phone { get; set; } // Telefone (opcional)
+    public string? PatientName { get; set; } // Nome do paciente (opcional)
+    public string? Role { get; set; } // Admin ou Caregiver (default: Caregiver)
 }
 
 // Ingrediente: Pedido de login (como verificar se o ingrediente está bom)
@@ -30,21 +33,25 @@ public class AuthResponse
 // Apresentação do prato: Resposta do usuário (como decorar o prato para servir)
 public class UserResponse
 {
-    public int Id { get; set; } // Número do prato
-    public string? Name { get; set; } // Nome do prato
-    public string? Email { get; set; } // Ingrediente principal
-    public DateTime DataCadastro { get; set; } // Data de produção
-    public bool Status { get; set; } // Se está fresco
-    public string? Role { get; set; } // Tipo de prato (entrada, principal, sobremesa)
+    public int UserId { get; set; } // ID numérico do usuário
+    public string? Name { get; set; } // Nome
+    public string? Email { get; set; } // Email
+    public DateTime DataCadastro { get; set; } // Data de cadastro
+    public bool Status { get; set; } // Se está ativo
+    public string? Role { get; set; } // Admin ou Caregiver
+    public string? Phone { get; set; } // Telefone
+    public DateTime? LastLogin { get; set; } // Último login
 
-    // Construtor: Como montar o prato para apresentação
+    // Construtor: Como montar o usuário para apresentação
     public UserResponse(User user)
     {
-        Id = user.Id;
+        UserId = user.UserId;
         Name = user.Name;
         Email = user.Email;
         DataCadastro = user.DataCadastro;
         Status = user.Status;
         Role = user.Role;
+        Phone = user.Phone;
+        LastLogin = user.LastLogin;
     }
 }

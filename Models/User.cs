@@ -10,9 +10,12 @@ namespace APISinout.Models;
 
 public class User
 {
-    [BsonId] // O "código de barras" único do prato
-    [BsonRepresentation(BsonType.Int32)] // Como armazenar no freezer
-    public int Id { get; set; } // Número de identificação do prato
+    [BsonId] // ID principal do MongoDB (ObjectId)
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string? Id { get; set; } // MongoDB ObjectId (_id)
+    
+    [BsonElement("id_usuario")] // ID sequencial numérico
+    public int UserId { get; set; } // ID numérico para facilidade de uso (1, 2, 3...)
     
     [BsonElement("nome")] // Rótulo no freezer
     public string? Name { get; set; } // Nome do prato
@@ -26,10 +29,25 @@ public class User
     [BsonElement("status")] // Se está disponível
     public bool Status { get; set; } // Prato ativo ou não
     
-    [BsonElement("role")] // Tipo de prato
-    public string? Role { get; set; } // Cliente, Admin, etc.
+    [BsonElement("cargo")] // Tipo de perfil: Admin ou Caregiver (ver UserRole enum)
+    public string? Role { get; set; } // Admin, Caregiver (ver UserRole enum)
     
+    [BsonElement("password_hash")]
     public string? PasswordHash { get; set; } // Receita secreta (senha criptografada)
     
-    public string? CreatedBy { get; set; } // Quem preparou o prato
+    [BsonElement("criado_por")]
+    public string? CreatedBy { get; set; } // Quem criou o usuário
+    
+    [BsonElement("ultimo_acesso")]
+    public DateTime? LastLogin { get; set; } // Último acesso
+    
+    [BsonElement("telefone")]
+    public string? Phone { get; set; } // Telefone de contato
+    
+    [BsonElement("data_atualizacao")]
+    public DateTime? UpdatedAt { get; set; } // Data da última atualização
+
+    
+    [BsonElement("nome_paciente")]
+    public string? PatientName { get; set; } // Nome do paciente (1:1 cuidador-paciente)
 }

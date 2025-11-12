@@ -66,6 +66,14 @@
               "target": "Package",
               "version": "[8.0.21, )"
             },
+            "Microsoft.Graph": {
+              "target": "Package",
+              "version": "[5.96.0, )"
+            },
+            "Microsoft.Identity.Client": {
+              "target": "Package",
+              "version": "[4.78.0, )"
+            },
             "MongoDB.Driver": {
               "target": "Package",
               "version": "[3.5.0, )"

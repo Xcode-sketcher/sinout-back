@@ -37,13 +37,25 @@ var builder = WebApplication.CreateBuilder(args);
 // Como um chef organizando panelas, facas e ingredientes na bancada.
 
 builder.Services.AddControllers();
+
 // Configuração do MongoDB - O "freezer" onde guardamos os ingredientes frescos
 builder.Services.AddSingleton<MongoDbContext>();
 
-// Serviços de Autenticação - Os "seguranças" da cozinha
+// Repositórios - Acesso aos dados
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IPatientRepository, PatientRepository>();
+builder.Services.AddScoped<IEmotionMappingRepository, EmotionMappingRepository>();
+builder.Services.AddScoped<IHistoryRepository, HistoryRepository>();
+builder.Services.AddScoped<IPasswordResetRepository, PasswordResetRepository>();
+
+// Serviços de Negócio - Lógica da aplicação
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IPatientService, PatientService>();
+builder.Services.AddScoped<IEmotionMappingService, EmotionMappingService>();
+builder.Services.AddScoped<IHistoryService, HistoryService>();
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Validação - O "inspetor de qualidade" que checa se os ingredientes estão bons
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
@@ -71,6 +83,17 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => 
         policy.RequireRole("Admin"));
+});
+
+// CORS - Permitir chamadas do frontend
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
 });
 
 // Documentação da API - O "cardápio" que mostramos aos clientes
@@ -120,8 +143,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection(); // Como redirecionar clientes para a entrada segura
 
+app.UseCors("AllowAll"); // Permitir CORS
+
 app.UseAuthentication(); // Verificar os crachás na porta
 app.UseAuthorization(); // Decidir quem entra onde
+app.UseCors("AllowAll"); // Usar a política de CORS definida
 
 app.MapControllers(); // Abrir as portas da cozinha para os pedidos!
 

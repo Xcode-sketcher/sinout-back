@@ -1,8 +1,23 @@
-// --- SERVIÇO DE USUÁRIOS: O ASSISTENTE DO CHEF ---
-// Continuando na cozinha!
-// O UserService é como o "assistente do chef" que ajuda com os pratos de usuários.
-// Ele coordena as operações CRUD (Criar, Ler, Atualizar, Deletar) como organizar a despensa,
-// verificar estoques e preparar pedidos especiais para os admins.
+// ============================================================
+// 👥 SERVIÇO DE USUÁRIOS - O GERENTE DE RECURSOS HUMANOS
+// ============================================================
+// Analogia RPG: Este é o "Mestre de Guilda"!
+// Ele gerencia todos os membros da guilda (usuários): recruta novos,
+// promove, rebaixa, e mantém registro de todos os heróis.
+//
+// Analogia da Cozinha: É o "Gerente de Recursos Humanos"!
+// Contrata funcionários, gerencia escalas, atualiza cargos.
+//
+// Responsabilidades:
+// 1. CRUD de usuários (Create, Read, Update, Delete)
+// 2. Validar permissões antes de modificar
+// 3. Coordenar com Repository para acessar banco
+// 4. Aplicar regras de negócio (ex: só Admin pode criar Admin)
+//
+// Diferença entre Service e Repository:
+// - Service = Lógica de negócio (regras, validações, orquestração)
+// - Repository = Acesso direto ao banco (queries, CRUD simples)
+// ============================================================
 
 using APISinout.Data;
 using APISinout.Models;
@@ -11,10 +26,10 @@ namespace APISinout.Services;
 
 public class UserService : IUserService
 {
-    // O "estoque" onde guardamos os ingredientes
+    // 📚 INVENTÁRIO: O livro de registros de membros
     private readonly IUserRepository _userRepository;
 
-    // Preparar o assistente
+    // 🏗️ CONSTRUTOR
     public UserService(IUserRepository userRepository)
     {
         _userRepository = userRepository;
@@ -48,7 +63,8 @@ public class UserService : IUserService
         // Misturar os ingredientes para fazer o novo usuário
         var user = new User
         {
-            Id = await _userRepository.GetNextUserIdAsync(),
+            Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(), // Gerar ObjectId
+            UserId = await _userRepository.GetNextUserIdAsync(), // ID numérico sequencial
             Name = request.Name,
             Email = request.Email,
             DataCadastro = DateTime.UtcNow,
@@ -86,5 +102,19 @@ public class UserService : IUserService
         await GetByIdAsync(id);
         // Remover da despensa
         await _userRepository.DeleteUserAsync(id);
+    }
+
+
+    public async Task UpdatePatientNameAsync(int userId, string patientName)
+    {
+        Console.WriteLine($"[UserService] Atualizando nome do paciente - UserId={userId}, Nome='{patientName}'");
+        
+        // Verificar se usuário existe
+        var user = await GetByIdAsync(userId);
+        
+        // Atualizar no repository
+        await _userRepository.UpdatePatientNameAsync(userId, patientName);
+        
+        Console.WriteLine($"[UserService] Nome do paciente atualizado com sucesso!");
     }
 }

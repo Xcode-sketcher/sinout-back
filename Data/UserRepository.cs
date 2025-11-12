@@ -18,6 +18,7 @@ public interface IUserRepository
     Task DeleteUserAsync(int id); // Remover item
     Task<List<User>> GetAllAsync(); // Ver todo o inventário
     Task<int> GetNextUserIdAsync(); // Pegar próximo slot vazio
+    Task UpdatePatientNameAsync(int userId, string patientName); // Atualizar nome do paciente
 }
 
 // A "implementação" do inventário
@@ -34,10 +35,10 @@ public class UserRepository : IUserRepository
         _counters = context.Counters; // Baú dos contadores
     }
 
-    // Implementação: Pegar item por ID
-    public async Task<User?> GetByIdAsync(int id)
+    // Implementação: Pegar item por ID numérico (UserId)
+    public async Task<User?> GetByIdAsync(int userId)
     {
-        return await _users.Find(u => u.Id == id).FirstOrDefaultAsync();
+        return await _users.Find(u => u.UserId == userId).FirstOrDefaultAsync();
     }
 
     // Implementação: Procurar por email
@@ -53,21 +54,25 @@ public class UserRepository : IUserRepository
     }
 
     // Implementação: Atualizar item existente
-    public async Task UpdateUserAsync(int id, User user)
+    public async Task UpdateUserAsync(int userId, User user)
     {
-        var filter = Builders<User>.Filter.Eq(u => u.Id, id);
+        var filter = Builders<User>.Filter.Eq(u => u.UserId, userId);
         var update = Builders<User>.Update
             .Set(u => u.Name, user.Name)
             .Set(u => u.Email, user.Email)
             .Set(u => u.Status, user.Status)
-            .Set(u => u.Role, user.Role);
+            .Set(u => u.Role, user.Role)
+            .Set(u => u.Phone, user.Phone)
+            .Set(u => u.PasswordHash, user.PasswordHash)
+            .Set(u => u.LastLogin, user.LastLogin)
+            .Set(u => u.UpdatedAt, user.UpdatedAt);
         await _users.UpdateOneAsync(filter, update);
     }
 
     // Implementação: Remover item do inventário
-    public async Task DeleteUserAsync(int id)
+    public async Task DeleteUserAsync(int userId)
     {
-        await _users.DeleteOneAsync(u => u.Id == id);
+        await _users.DeleteOneAsync(u => u.UserId == userId);
     }
 
     // Implementação: Listar todos os itens
@@ -88,6 +93,20 @@ public class UserRepository : IUserRepository
         
         var counter = await _counters.FindOneAndUpdateAsync(filter, update, options);
         return counter?.Seq ?? 1; // Se não existir, começar do 1
+    }
+
+    public async Task UpdatePatientNameAsync(int userId, string patientName)
+    {
+        Console.WriteLine($"[UserRepository] Atualizando patient_name no MongoDB - UserId={userId}");
+        
+        var filter = Builders<User>.Filter.Eq(u => u.UserId, userId);
+        var update = Builders<User>.Update
+            .Set(u => u.PatientName, patientName)
+            .Set(u => u.UpdatedAt, DateTime.UtcNow);
+        
+        await _users.UpdateOneAsync(filter, update);
+        
+        Console.WriteLine($"[UserRepository] patient_name atualizado: '{patientName}'");
     }
 }
 

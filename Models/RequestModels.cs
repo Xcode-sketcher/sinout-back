@@ -22,3 +22,19 @@ public class UpdateUserRequest
     public bool? Status { get; set; } // Ativar/desativar (como congelar/descongelar)
     public string? Role { get; set; } // Mudar tipo de prato
 }
+
+// Receita: Registrar emoção do cuidador (vinda da API de Processamento)
+public class CaregiverEmotionRequest
+{
+    public int CaregiverId { get; set; } // ID do cuidador (userId)
+    public string? PatientName { get; set; } // Nome do paciente (campo de texto)
+    public DateTime? Timestamp { get; set; } // Quando a emoção foi detectada
+    public Dictionary<string, double>? EmotionsDetected { get; set; } // Todas as emoções detectadas
+    public string? DominantEmotion { get; set; } // Emoção dominante
+}
+
+// Receita: Atualizar nome do paciente
+public class UpdatePatientNameRequest
+{
+    public string PatientName { get; set; } = string.Empty; // Nome do paciente
+}

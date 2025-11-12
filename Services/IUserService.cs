@@ -10,4 +10,6 @@ public interface IUserService
     Task<User> CreateUserAsync(CreateUserRequest request, string createdBy);
     Task UpdateUserAsync(int id, UpdateUserRequest request);
     Task DeleteUserAsync(int id);
+
+    Task UpdatePatientNameAsync(int userId, string patientName);
 }

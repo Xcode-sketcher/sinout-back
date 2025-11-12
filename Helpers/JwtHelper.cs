@@ -16,14 +16,31 @@ public static class JwtHelper
     // Feitiço: Gerar um token mágico para o usuário
     public static string GenerateToken(User user, IConfiguration config)
     {
+        // Verificar se campos obrigatórios não são null
+        if (string.IsNullOrEmpty(user.Email))
+            throw new ArgumentException("Email do usuário não pode ser null ou vazio");
+        
+        if (string.IsNullOrEmpty(user.Role))
+            throw new ArgumentException("Role do usuário não pode ser null ou vazio");
+
+        // Debug: verificar valores
+        Console.WriteLine($"Gerando token para usuário: UserId={user.UserId}, Email={user.Email}, Role={user.Role}");
+        
         // Os "ingredientes" do feitiço: informações do usuário
         var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Email!), // Assunto principal
+            new Claim(JwtRegisteredClaimNames.Sub, user.Email), // Assunto principal
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // ID único do feitiço
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), // ID do jogador
-            new Claim(ClaimTypes.Role, user.Role!) // Cargo/poder do jogador
+            new Claim("userId", user.UserId.ToString()), // ID numérico do usuário
+            new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()), // ID padrão .NET
+            new Claim(ClaimTypes.Role, user.Role) // Cargo/poder do jogador
         };
+
+        // Debug: mostrar claims
+        foreach (var claim in claims)
+        {
+            Console.WriteLine($"Claim: {claim.Type} = {claim.Value}");
+        }
 
         // A "varinha mágica": chave secreta para assinar
         var key = new SymmetricSecurityKey(
