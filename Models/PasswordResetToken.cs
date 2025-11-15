@@ -38,34 +38,34 @@ public class PasswordResetToken
 // Request para solicitar reset de senha
 public class ForgotPasswordRequest
 {
-    public string? Email { get; set; }
+    public string Email { get; set; } = string.Empty;
 }
 
 // Request para redefinir senha com token
 public class ResetPasswordRequest
 {
-    public string? Token { get; set; }
-    public string? NewPassword { get; set; }
-    public string? ConfirmPassword { get; set; }
+    public string Token { get; set; } = string.Empty;
+    public string NewPassword { get; set; } = string.Empty;
+    public string ConfirmPassword { get; set; } = string.Empty;
 }
 
 // Request para alterar senha (usuário autenticado)
 public class ChangePasswordRequest
 {
-    public string? CurrentPassword { get; set; }
-    public string? NewPassword { get; set; }
-    public string? ConfirmPassword { get; set; }
+    public string CurrentPassword { get; set; } = string.Empty;
+    public string NewPassword { get; set; } = string.Empty;
+    public string ConfirmPassword { get; set; } = string.Empty;
 }
 
 // Resposta genérica de sucesso
 public class MessageResponse
 {
-    public string? Message { get; set; }
+    public string Message { get; set; }
     public bool Success { get; set; }
 
     public MessageResponse(string message, bool success = true)
     {
-        Message = message;
+        Message = message ?? string.Empty;
         Success = success;
     }
 }

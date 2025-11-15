@@ -5,6 +5,14 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>93070a21-3452-4e12-8891-337d3b40c6e4</UserSecretsId>
+    <!-- Disable SDK auto-generation of assembly attributes to avoid duplicate attribute errors
+         The IDE or other build step may be adding attributes in a separate file. If you prefer
+         auto-generation, uncomment and investigate the duplicate source that produces the
+         second assembly info file instead. -->
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <!-- Additionally disable generation of the TargetFrameworkAttribute to avoid duplicates
+          when the SDK or external tooling re-generates embedded attributes. -->
+        <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,6 +26,13 @@
     <PackageReference Include="Scalar.AspNetCore" Version="2.10.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="APISinout.Tests\**" />
+    <Content Remove="APISinout.Tests\**" />
+    <EmbeddedResource Remove="APISinout.Tests\**" />
+    <None Remove="APISinout.Tests\**" />
   </ItemGroup>
 
 </Project>

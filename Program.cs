@@ -57,6 +57,10 @@ builder.Services.AddScoped<IHistoryService, HistoryService>();
 builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
+// Serviços de Infraestrutura
+builder.Services.AddSingleton<IRateLimitService, RateLimitService>();
+builder.Services.AddHostedService<TokenCleanupService>();
+
 // Validação - O "inspetor de qualidade" que checa se os ingredientes estão bons
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
 builder.Services.AddFluentValidationAutoValidation();
@@ -152,3 +156,6 @@ app.UseCors("AllowAll"); // Usar a política de CORS definida
 app.MapControllers(); // Abrir as portas da cozinha para os pedidos!
 
 app.Run(); // Ligar as luzes e abrir as portas - a cozinha está funcionando!
+
+// Tornar a classe Program acessível para testes de integração
+public partial class Program { }

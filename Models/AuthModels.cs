@@ -33,6 +33,8 @@ public class AuthResponse
 // Apresentação do prato: Resposta do usuário (como decorar o prato para servir)
 public class UserResponse
 {
+    // Default constructor to support JSON deserialization
+    public UserResponse() { }
     public int UserId { get; set; } // ID numérico do usuário
     public string? Name { get; set; } // Nome
     public string? Email { get; set; } // Email
@@ -54,4 +56,10 @@ public class UserResponse
         Phone = user.Phone;
         LastLogin = user.LastLogin;
     }
+}
+
+// Request para reenviar código de reset (novo endpoint)
+public class ResendResetCodeRequest
+{
+    public string Email { get; set; } = string.Empty;
 }

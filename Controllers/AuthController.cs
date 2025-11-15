@@ -74,7 +74,8 @@ public class AuthController : ControllerBase
         {
             // ✨ FASE 2: Magia de criação (criar o usuário e gerar token)
             var response = await _authService.RegisterAsync(request);
-            return Ok(response);  // ✅ Sucesso! Retorna usuário + token
+            // Return 201 Created for resource creation
+            return Created(string.Empty, response);
         }
         catch (AppException ex)
         {
@@ -143,6 +144,29 @@ public class AuthController : ControllerBase
         catch (AppException ex)
         {
             // ⚠️ Email não encontrado ou erro ao enviar
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    // ============================================================
+    // 🔁 MISSÃO 3.1: REENVIAR CÓDIGO DE REDEFINIÇÃO
+    // ============================================================
+    // Analogia RPG: Caso o código tenha se perdido no caminho!
+    // O usuário pode solicitar um novo código se o anterior não chegou
+    // ou expirou. Rate limiting impede spam.
+    // ============================================================
+    [HttpPost("resend-reset-code")]  // Rota: POST /api/auth/resend-reset-code
+    public async Task<IActionResult> ResendResetCode([FromBody] ResendResetCodeRequest request)
+    {
+        try
+        {
+            // 📧 Gera novo código e reenvia email
+            var response = await _passwordResetService.ResendResetCodeAsync(request);
+            return Ok(response);  // ✅ Novo código enviado!
+        }
+        catch (AppException ex)
+        {
+            // ⚠️ Rate limit excedido ou erro ao enviar
             return BadRequest(new { message = ex.Message });
         }
     }
