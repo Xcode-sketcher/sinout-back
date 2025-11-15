@@ -36,6 +36,10 @@ public static class JwtHelper
             new Claim(ClaimTypes.Role, user.Role) // Cargo/poder do jogador
         };
 
+        // Also include simple "email" and "role" claims for simpler access by consumers/tests
+        claims.Add(new Claim("email", user.Email));
+        claims.Add(new Claim("role", user.Role));
+
         // Debug: mostrar claims
         foreach (var claim in claims)
         {
