@@ -12,6 +12,11 @@ obj/
 **/bin/
 **/obj/
 
+#Scripts
+scripts
+#Docs
+docs
+
 # Test output
 TestResults/
 *.trx
@@ -50,3 +55,7 @@ node_modules/
 .env
 .env.local
 .env.*.local
+# Ignore development appsettings with secrets
+appsettings.Development.json
+# Ignore production appsettings with secrets
+appsettings.json

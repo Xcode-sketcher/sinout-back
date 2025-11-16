@@ -1,0 +1,29 @@
+title = "Gitleaks configurações anti-vazamento"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "mongodb-connection-string"
+description = "MongoDB Connection String"
+regex = '''mongodb(\+srv)?:\/\/[^\s]+'''
+tags = ["database", "mongodb"]
+
+[[rules]]
+id = "jwt-secret-key"
+description = "JWT Secret Key"
+regex = '''(?i)(jwt[_-]?key|secret[_-]?key)\s*[:=]\s*["']?[A-Za-z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{32,}["']?'''
+tags = ["jwt", "secret"]
+
+[[rules]]
+id = "smtp-password"
+description = "SMTP Password"
+regex = '''(?i)(smtp[_-]?password|email[_-]?password)\s*[:=]\s*["'][^"']{8,}["']'''
+tags = ["smtp", "password"]
+
+[allowlist]
+description = "Global allowlist"
+paths = [
+  '''appsettings\.Development\.json\.example$''',
+  '''\.gitleaksignore$''',
+]
