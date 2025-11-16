@@ -83,6 +83,46 @@ public class AuthControllerIntegrationTests : IClassFixture<WebApplicationFactor
     }
 
     [Fact]
+    public async Task Register_WithWeakPassword_ShouldReturn400BadRequest()
+    {
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Name = "Weak Pass User",
+            Email = $"weakpass{Guid.NewGuid()}@test.com",
+            Password = "Test@1", // too short/weak as per validator
+            Phone = "+55 11 99999-9999",
+            PatientName = "Patient Test"
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/auth/register", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Register_WithEmptyPassword_ShouldReturn400BadRequest()
+    {
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Name = "Empty Pass User",
+            Email = $"emptypass{Guid.NewGuid()}@test.com",
+            Password = "", // empty password
+            Phone = "+55 11 99999-9999",
+            PatientName = "Patient Test"
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/auth/register", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task Login_WithValidCredentials_ShouldReturn200OK()
     {
         // Arrange - First register a user

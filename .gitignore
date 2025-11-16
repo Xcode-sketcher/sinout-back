@@ -1,17 +1,61 @@
-﻿# Arquivos e pastas do Visual Studio
+﻿# Visual Studio
 .vs/
 *.suo
 *.user
-
-# Pastas de Build (Crucial!)
-bin/
-obj/
-
-# Arquivos de usuário
 *.userosscache
 *.sln.docstates
+*.vscode/
 
-# Arquivos de log
+# Build folders
+bin/
+obj/
+**/bin/
+**/obj/
+
+#Scripts
+scripts
+#Docs
+docs
+
+# Test output
+TestResults/
+*.trx
+*.coverage
+coverage/**
+
+# Logs
 *.log
 
-# ... (O template padrão do Visual Studio pode ter mais coisas, o que é bom)
+# Rider/IDE files
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# NuGet
+*.nupkg
+packages/
+
+# Misc
+*.vsix
+*.testing
+
+# dotnet user-secrets (dev only, sensitive)
+secrets.json
+
+# CI / build system
+*.class
+*.cache
+
+# Node/npm (if any)
+node_modules/
+
+# Ignore dotenv files if exists
+.env
+.env.local
+.env.*.local
+# Ignore development appsettings with secrets
+appsettings.Development.json
+# Ignore production appsettings with secrets
+appsettings.json

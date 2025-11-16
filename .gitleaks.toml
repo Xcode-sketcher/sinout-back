@@ -1,0 +1,44 @@
+title = "Gitleaks configurações anti-vazamento"
+
+# This allowlist entry permits a local-only MongoDB connection string used in CI workflow
+# for fork-safe PRs (e.g. `mongodb://localhost:27017`). It only whitelists occurrences in
+# the `test-pr` workflow file to avoid accidentally allowing other MongoDB credentials.
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "mongodb-connection-string"
+description = "MongoDB Connection String"
+regex = '''mongodb(\+srv)?:\/\/[^\s]+'''
+tags = ["database", "mongodb"]
+
+[[rules]]
+id = "jwt-secret-key"
+description = "JWT Secret Key"
+regex = '''(?i)(jwt[_-]?key|secret[_-]?key)\s*[:=]\s*["']?[A-Za-z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{32,}["']?'''
+tags = ["jwt", "secret"]
+
+[[rules]]
+id = "smtp-password"
+description = "SMTP Password"
+regex = '''(?i)(smtp[_-]?password|email[_-]?password)\s*[:=]\s*["'][^"']{8,}["']'''
+tags = ["smtp", "password"]
+
+[allowlist]
+description = "Global allowlist"
+paths = [
+  '''appsettings\.Development\.json\.example$''',
+  '''\.gitleaksignore$''',
+  '''\.github/workflows/.*test-pr.*\.yml$''',
+]
+
+[[allowlist.rules]]
+description = "Allow local MongoDB connection string in PR test workflow"
+rules = ["mongodb-connection-string"]
+paths = [
+  '''\.github/workflows/.*test-pr.*\.yml$''',
+]
+regexes = [
+  '''mongodb(\+srv)?:\/\/(localhost|127\\.0\\.0\\.1)(:\d+)?'''
+]
