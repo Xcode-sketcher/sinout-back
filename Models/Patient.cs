@@ -58,6 +58,9 @@ public class PatientResponse
     public string? ProfilePhoto { get; set; }
     public string? CreatedBy { get; set; }
 
+    // Construtor sem parâmetros para desserialização JSON
+    public PatientResponse() { }
+
     public PatientResponse(Patient patient, string? caregiverName = null)
     {
         Id = patient.Id;

@@ -25,6 +25,7 @@ using FluentValidation.AspNetCore;
 using FluentValidation;
 using Scalar.AspNetCore;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.RateLimiting;
 
 // --- 2. A CHAVE SECRETA (A GRANDE CORRE��O) ---
 // Esta é a "receita secreta" da família! Guardamos ela aqui no topo,
@@ -130,6 +131,16 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+//Limite básio de taxa de pedidos
+builder.Services.AddRateLimiter(options => {
+    options.AddFixedWindowLimiter("limite-auth", opt =>
+    {
+        opt.AutoReplenishment = true;
+        opt.PermitLimit = 5;
+        opt.QueueLimit = 2;
+        opt.Window = TimeSpan.FromSeconds(10);
+    });
+});
 
 // --- 4. ABRINDO A COZINHA (CONFIGURANDO O APP) ---
 var app = builder.Build();
@@ -152,8 +163,9 @@ app.UseCors("AllowAll"); // Permitir CORS
 app.UseAuthentication(); // Verificar os crachás na porta
 app.UseAuthorization(); // Decidir quem entra onde
 app.UseCors("AllowAll"); // Usar a política de CORS definida
-
+app.UseRateLimiter();
 app.MapControllers(); // Abrir as portas da cozinha para os pedidos!
+
 
 app.Run(); // Ligar as luzes e abrir as portas - a cozinha está funcionando!
 

@@ -19,12 +19,14 @@ using FluentValidation;
 using APISinout.Models;
 using APISinout.Services;
 using APISinout.Helpers;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace APISinout.Controllers;
 
 // 🎮 Decoradores (como "buffs" no personagem):
 [ApiController]              // Marca: "Sou um controlador de API!"
-[Route("api/auth")]          // Rota base: todas as URLs começam com "/api/auth"
+[Route("api/auth")] 
+[EnableRateLimiting("limite-auth")]         // Rota base: todas as URLs começam com "/api/auth"
 public class AuthController : ControllerBase
 {
     // 🎒 INVENTÁRIO DO PORTEIRO (Dependências injetadas)

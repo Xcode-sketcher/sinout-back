@@ -68,6 +68,9 @@ public class EmotionMappingResponse
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 
+    // Construtor sem parâmetros para desserialização JSON
+    public EmotionMappingResponse() { }
+
     public EmotionMappingResponse(EmotionMapping mapping, string? userName = null)
     {
         Id = mapping.Id;
