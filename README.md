@@ -24,6 +24,7 @@ O projeto possui uma suíte de testes (unitários + integrações) e cobertura d
 - Cobertura de branches: **55.02%** (230 / 418)
 
 Meta de qualidade: atingir **>80%** de cobertura por linhas e branches.
+Bom dia 
 
 
 ## 👥Equipe
@@ -33,7 +34,7 @@ Meta de qualidade: atingir **>80%** de cobertura por linhas e branches.
 | Luana     | Product Owner         | [@luanarochamiron](https://github.com/luanarochamiron) |
 | Fabio     | Scrum Master          | [@FabioRoberto-ppt](https://github.com/FabioRoberto-ppt) |
 | Guilherme | Desenvolvedor         | [@GuilhermefDomingues](https://github.com/GuilhermefDomingues) |
-| Isaac     | Desenvolvedor         | [@IsaacZ33](https://github.com/IsaacZ33)             |
+| Erick Isaac     | Desenvolvedor         | [@IsaacZ33](https://github.com/IsaacZ33)             |
 | Felipe    | Desenvolvedor         | [@Felipe-Koshimizu](https://github.com/Felipe-Koshimizu) |
 | Eduardo   | Desenvolvedor e QA    | [@Xcode-sketcher](https://github.com/Xcode-sketcher) |
 
