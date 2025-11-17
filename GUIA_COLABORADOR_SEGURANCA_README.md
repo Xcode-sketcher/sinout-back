@@ -10,7 +10,7 @@ IMPORTANTE: NÃO comite secrets (por exemplo, `appsettings.Development.json`) no
 
 Abra um **PowerShell** no diretório do projeto, por exemplo:
 ```powershell
-cd C:\Users\Eduar\Downloads\PROA\sinout-back
+cd C:\Users\admin\Downloads\projeto\api-sinout
 ```
 
 Os exemplos abaixo usam `--project APISinout.csproj` para garantir que os comandos atinjam o projeto certo.
@@ -76,21 +76,25 @@ Lembre-se: para mapear chaves aninhadas use `__` (duplo underscore) em vez de `:
 
 - Definir JWT para a sessão atual:
 ```powershell
-$env:Jwt__Key = "CHAVE_JWT_MINIMAMENTE_SEGURA"
+$env:Jwt__Key = "<CHAVE_JWT_MINIMAMENTE_SEGURA_AQUI>"
+$env:Jwt__Issuer = "SinoutAPI"
+$env:Jwt__Audience = "SinoutClient"
 ```
 
 - Definir MongoDB apenas para a sessão:
 ```powershell
-$env:MongoDb__ConnectionString = "STRING_AQUI"
+$env:MongoDb__ConnectionString = "<STRING_DE_CONEXÃO_AQUI>"
+$env:MongoDb__DatabaseName = "<NOME_DO_BANCO_AQUI>"
 ```
 
 - Definir Email (Mailtrap) apenas para a sessão:
 ```powershell
-$env:Email__SmtpServer = "live.smtp.mailtrap.io"
-$env:Email__SmtpPort = "587"
-$env:Email__Username = "smtp@mailtrap.io"
-$env:Email__Password = "<SEU_TOKEN_MAILTRAP>"
-$env:Email__FromEmail = "hello@demomailtrap.co"
+$env:EMAIL__SMTPSERVER = "live.smtp.mailtrap.io"
+$env:EMAIL__SMTPPORT = "587"
+$env:EMAIL__USERNAME = "smtp@mailtrap.io"
+$env:EMAIL__PASSWORD = "<TOKEN_MAILTRAP>"
+$env:EMAIL__FROMEMAIL = "hello@demomailtrap.co"
+$env:EMAIL__FROMNAME = "Sinout - Sistema [DEV]"
 ```
 
 - Remover variável session:
