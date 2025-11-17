@@ -1,3 +1,9 @@
+// ============================================================
+// 🔓 TESTES DO LOGINREQUESTVALIDATOR - VALIDAÇÃO DE LOGIN
+// ============================================================
+// Valida as regras de validação para login de usuários,
+// incluindo formato de email e requisitos de senha.
+
 using Xunit;
 using FluentAssertions;
 using APISinout.Validators;
@@ -6,9 +12,6 @@ using APISinout.Tests.Fixtures;
 
 namespace APISinout.Tests.Unit.Validators;
 
-/// <summary>
-/// Testes para LoginRequestValidator
-/// </summary>
 public class LoginRequestValidatorTests
 {
     private readonly LoginRequestValidator _validator;

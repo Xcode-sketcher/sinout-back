@@ -1,3 +1,9 @@
+// ============================================================
+// 👶 TESTES DO PATIENTSERVICE - GESTÃO DE PACIENTES
+// ============================================================
+// Valida a lógica de negócio de CRUD de pacientes,
+// incluindo validações de dados e regras de autorização.
+
 using Xunit;
 using Moq;
 using FluentAssertions;

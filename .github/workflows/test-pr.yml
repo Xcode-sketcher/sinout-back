@@ -29,25 +29,6 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-
-      - name: Configure environment (fork-safe)
-        shell: bash
-        run: |
-          # Set env vars quietly. Use repository secrets for same-repo PRs, otherwise use safe fallbacks for forks.
-          if [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
-            echo "MongoDb__ConnectionString=mongodb://localhost:27017" >> $GITHUB_ENV
-            echo "MongoDb__DatabaseName=SinoutTest_${GITHUB_RUN_ID}" >> $GITHUB_ENV
-            echo "Jwt__Key=TEST-JWT-KEY-32-CHARS-MINIMUM-abcdef123456" >> $GITHUB_ENV
-            echo "Email__Password=placeholder" >> $GITHUB_ENV
-          else
-            echo "MongoDb__ConnectionString=${{ secrets.MONGODB_CONNECTION_STRING }}" >> $GITHUB_ENV
-            echo "MongoDb__DatabaseName=SinoutTest_${GITHUB_RUN_ID}" >> $GITHUB_ENV
-            echo "Jwt__Key=${{ secrets.JWT_SECRET_KEY }}" >> $GITHUB_ENV
-            echo "Email__Password=${{ secrets.MAILTRAP_API_TOKEN }}" >> $GITHUB_ENV
-          fi
-
       - name: Wait for MongoDB
         run: |
           sudo apt-get update -y && sudo apt-get install -y netcat-openbsd
@@ -57,14 +38,124 @@ jobs:
             sleep 1
           done
 
-      - name: Run tests
+      - name: Run tests with coverage (trusted)
+        if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
         env:
           ASPNETCORE_ENVIRONMENT: Development
-        run: dotnet test --no-build --configuration Release --verbosity minimal --logger "trx;LogFileName=test-results.trx"
+          EMAIL__SMTPSERVER: ${{ secrets.EMAIL__SMTPSERVER }}
+          EMAIL__SMTPPORT: ${{ secrets.EMAIL__SMTPPORT }}
+          EMAIL__USERNAME: ${{ secrets.EMAIL__USERNAME }}
+          EMAIL__PASSWORD: ${{ secrets.EMAIL__PASSWORD }}
+          EMAIL__FROMEMAIL: ${{ secrets.EMAIL__FROMEMAIL }}
+          EMAIL__FROMNAME: ${{ secrets.EMAIL__FROMNAME }}
+          MongoDb__ConnectionString: mongodb://localhost:27017
+          MongoDb__DatabaseName: SinoutTest_${{ github.run_id }}
+          Jwt__Key: ${{ secrets.JWT__KEY }}
+          Jwt__Issuer: ${{ secrets.JWT__ISSUER }}
+          Jwt__Audience: ${{ secrets.JWT__AUDIENCE }}
+        run: |
+          dotnet test APISinout.Tests/APISinout.Tests.csproj \
+            --configuration Release \
+            --verbosity normal \
+            --filter "Category!=ExternalEmail" \
+            --logger "console;verbosity=normal" \
+            --logger "trx;LogFileName=test-results.trx" \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ${GITHUB_WORKSPACE}/TestResults \
+            --diag ./TestResults/dotnet-test-diagnostic.log
+
+      - name: Run tests with coverage (forked PR)
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          EMAIL__SMTPSERVER: localhost
+          EMAIL__SMTPPORT: 2525
+          EMAIL__USERNAME: mock-user
+          EMAIL__PASSWORD: mock-password
+          EMAIL__FROMEMAIL: mock@sinout.local
+          EMAIL__FROMNAME: Sinout Mock Environment
+          MongoDb__ConnectionString: mongodb://localhost:27017
+          MongoDb__DatabaseName: SinoutTest_${{ github.run_id }}
+          Jwt__Key: TEST-JWT-KEY-32-CHARS-MINIMUM-abcdef123456
+          Jwt__Issuer: SinoutAPI
+          Jwt__Audience: SinoutClient
+        run: |
+          dotnet test APISinout.Tests/APISinout.Tests.csproj \
+            --configuration Release \
+            --verbosity normal \
+            --filter "Category!=ExternalEmail" \
+            --logger "console;verbosity=normal" \
+            --logger "trx;LogFileName=test-results.trx" \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ${GITHUB_WORKSPACE}/TestResults \
+            --diag ./TestResults/dotnet-test-diagnostic.log
+
+      - name: Debug TestResults (trusted/fork)
+        if: always()
+        run: |
+          echo "Working directory: $(pwd)"
+          echo "List workspace content (top-level):"
+          ls -la
+          echo "List TestResults folder (root):"
+          ls -la ./TestResults || true
+          echo "Find files in TestResults (recursive):"
+          find ./TestResults -type f -print || true
+
+      - name: Print MongoDB container logs
+        if: always()
+        run: |
+          echo "Listing MongoDB-related containers"
+          docker ps --filter ancestor=mongo:6.0 --format "table {{.ID}}\t{{.Image}}\t{{.Names}}"
+          for id in $(docker ps --filter ancestor=mongo:6.0 -q); do
+            echo "==== LOGS FOR $id ====";
+            docker logs --tail 200 $id || true;
+          done
+
+      - name: Display coverage summary
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host "========================================" -ForegroundColor Cyan
+          Write-Host "  COVERAGE SUMMARY" -ForegroundColor Cyan
+          Write-Host "========================================" -ForegroundColor Cyan
+          
+          $coverageFile = Get-ChildItem -Path ./TestResults -Recurse -Filter "coverage.cobertura.xml" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          
+          if ($coverageFile) {
+              [xml]$coverage = Get-Content -Path $coverageFile.FullName -Raw -Encoding UTF8
+              $lineRate = [double]$coverage.coverage.'line-rate'
+              $branchRate = [double]$coverage.coverage.'branch-rate'
+              $linesCovered = [int]$coverage.coverage.'lines-covered'
+              $linesValid = [int]$coverage.coverage.'lines-valid'
+              $branchesCovered = [int]$coverage.coverage.'branches-covered'
+              $branchesValid = [int]$coverage.coverage.'branches-valid'
+              
+              $linePercent = [math]::Round($lineRate * 100, 2)
+              $branchPercent = [math]::Round($branchRate * 100, 2)
+              
+              # Determine colors
+              $lineColor = if ($lineRate -ge 0.80) { "Green" } elseif ($lineRate -ge 0.60) { "Yellow" } else { "Red" }
+              $branchColor = if ($branchRate -ge 0.80) { "Green" } elseif ($branchRate -ge 0.60) { "Yellow" } else { "Red" }
+              
+              Write-Host "Line Coverage:   $linePercent% ($linesCovered / $linesValid)" -ForegroundColor $lineColor
+              Write-Host "Branch Coverage: $branchPercent% ($branchesCovered / $branchesValid)" -ForegroundColor $branchColor
+              Write-Host "========================================" -ForegroundColor Cyan
+          } else {
+              Write-Host "WARNING: Coverage file not found" -ForegroundColor Yellow
+          }
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: '**/test-results.trx'
+          path: ./TestResults/**/*.trx
+          if-no-files-found: warn
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: ./TestResults/**/coverage.cobertura.xml
+          if-no-files-found: warn

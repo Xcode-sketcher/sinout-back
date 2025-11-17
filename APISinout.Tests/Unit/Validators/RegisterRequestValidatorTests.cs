@@ -1,3 +1,9 @@
+// ============================================================
+// ✅ TESTES DO REGISTERREQUESTVALIDATOR - VALIDAÇÃO DE REGISTRO
+// ============================================================
+// Valida as regras de validação para registro de novos usuários,
+// incluindo email, senha, nome e nome do paciente.
+
 using Xunit;
 using FluentAssertions;
 using APISinout.Validators;
@@ -6,9 +12,6 @@ using APISinout.Tests.Fixtures;
 
 namespace APISinout.Tests.Unit.Validators;
 
-/// <summary>
-/// Testes completos para RegisterRequestValidator
-/// </summary>
 public class RegisterRequestValidatorTests
 {
     private readonly RegisterRequestValidator _validator;

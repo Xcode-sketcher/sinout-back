@@ -1,3 +1,9 @@
+// ============================================================
+// 🎫 TESTES DO JWTHELPER - GERAÇÃO E VALIDAÇÃO DE TOKENS
+// ============================================================
+// Valida a geração de tokens JWT, inclusão de claims,
+// assinatura e validação de tokens.
+
 using Xunit;
 using FluentAssertions;
 using APISinout.Helpers;

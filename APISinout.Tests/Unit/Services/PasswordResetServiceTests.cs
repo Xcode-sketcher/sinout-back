@@ -1,3 +1,9 @@
+// ============================================================
+// 🔑 TESTES DO PASSWORDRESETSERVICE - RECUPERAÇÃO DE SENHA
+// ============================================================
+// Valida o fluxo completo de recuperação de senha:
+// solicitação, validação de código, reset e alteração de senha.
+
 using Xunit;
 using Moq;
 using FluentAssertions;

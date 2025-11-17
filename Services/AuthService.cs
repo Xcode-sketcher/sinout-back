@@ -8,6 +8,7 @@ using APISinout.Models;
 using APISinout.Data;
 using APISinout.Helpers;
 
+
 namespace APISinout.Services;
 
 public class AuthService : IAuthService
@@ -37,8 +38,8 @@ public class AuthService : IAuthService
             throw new AppException("Email inválido");
 
         // Validar senha forte
-        if (request.Password.Length < 6)
-            throw new AppException("Senha deve ter no mínimo 6 caracteres");
+        if (request.Password.Length < 8)
+            throw new AppException("Senha deve ter no mínimo 8 caracteres");
 
         // Verificar se já existe esse email no banco
         if (await _userRepository.GetByEmailAsync(request.Email.ToLower().Trim()) != null)
@@ -67,7 +68,7 @@ public class AuthService : IAuthService
             Status = true,
             Role = role,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            CreatedBy = "self-registration",
+            CreatedBy = "cadastro",
             LastLogin = null
         };
 

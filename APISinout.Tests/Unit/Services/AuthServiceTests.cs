@@ -1,3 +1,9 @@
+// ============================================================
+// 🔐 TESTES DO AUTHSERVICE - AUTENTICAÇÃO E REGISTRO
+// ============================================================
+// Valida a lógica de negócio de autenticação, registro de usuários,
+// geração de tokens JWT e validação de credenciais.
+
 using Xunit;
 using Moq;
 using FluentAssertions;
