@@ -60,7 +60,7 @@ jobs:
       - name: Run tests
         env:
           ASPNETCORE_ENVIRONMENT: Development
-        run: dotnet test --no-build --configuration Release --verbosity minimal --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test --configuration Release --verbosity minimal --logger "trx;LogFileName=test-results.trx"
 
       - name: Upload test results
         if: always()
