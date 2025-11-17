@@ -57,10 +57,39 @@ jobs:
             sleep 1
           done
 
-      - name: Run tests
+      - name: Run tests with coverage
         env:
           ASPNETCORE_ENVIRONMENT: Development
-        run: dotnet test --configuration Release --verbosity minimal --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
+
+      - name: Display coverage summary
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host "========================================" -ForegroundColor Cyan
+          Write-Host "  COVERAGE SUMMARY" -ForegroundColor Cyan
+          Write-Host "========================================" -ForegroundColor Cyan
+          
+          $coverageFile = Get-ChildItem -Path ./TestResults -Recurse -Filter "coverage.cobertura.xml" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          
+          if ($coverageFile) {
+              [xml]$coverage = Get-Content -Path $coverageFile.FullName -Raw -Encoding UTF8
+              $lineRate = [double]$coverage.coverage.'line-rate'
+              $branchRate = [double]$coverage.coverage.'branch-rate'
+              $linesCovered = [int]$coverage.coverage.'lines-covered'
+              $linesValid = [int]$coverage.coverage.'lines-valid'
+              $branchesCovered = [int]$coverage.coverage.'branches-covered'
+              $branchesValid = [int]$coverage.coverage.'branches-valid'
+              
+              $linePercent = [math]::Round($lineRate * 100, 2)
+              $branchPercent = [math]::Round($branchRate * 100, 2)
+              
+              Write-Host "Line Coverage:   $linePercent% ($linesCovered / $linesValid)" -ForegroundColor $(if ($lineRate -ge 0.80) { "Green" } elseif ($lineRate -ge 0.60) { "Yellow" } else { "Red" })
+              Write-Host "Branch Coverage: $branchPercent% ($branchesCovered / $branchesValid)" -ForegroundColor $(if ($branchRate -ge 0.80) { "Green" } elseif ($branchRate -ge 0.60) { "Yellow" } else { "Red" })
+              Write-Host "========================================" -ForegroundColor Cyan
+          } else {
+              Write-Host "WARNING: Coverage file not found" -ForegroundColor Yellow
+          }
 
       - name: Upload test results
         if: always()
@@ -68,3 +97,10 @@ jobs:
         with:
           name: test-results
           path: '**/test-results.trx'
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: '**/coverage.cobertura.xml'
