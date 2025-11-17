@@ -38,20 +38,38 @@ jobs:
             sleep 1
           done
 
-      - name: Run tests with coverage
+      - name: Run tests with coverage (trusted)
+        if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
         env:
           ASPNETCORE_ENVIRONMENT: Development
-          EMAIL__SMTPSERVER: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) && secrets.EMAIL__SMTPSERVER || 'localhost' }}
-          EMAIL__SMTPPORT: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) && secrets.EMAIL__SMTPPORT || '2525' }}
-          EMAIL__USERNAME: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) && secrets.EMAIL__USERNAME || 'mock-user' }}
-          EMAIL__PASSWORD: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) && secrets.EMAIL__PASSWORD || 'mock-password' }}
-          EMAIL__FROMEMAIL: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) && secrets.EMAIL__FROMEMAIL || 'mock@sinout.local' }}
-          EMAIL__FROMNAME: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) && secrets.EMAIL__FROMNAME || 'Sinout Mock Environment' }}
-          MongoDb__ConnectionString: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) && secrets.MONGODB__CONNECTIONSTRING || 'mongodb://localhost:27017' }}
-          MongoDb__DatabaseName: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) && secrets.MONGODB__DATABASENAME || format('SinoutTest_{0}', github.run_id) }}
-          Jwt__Key: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) && secrets.JWT__KEY || 'TEST-JWT-KEY-32-CHARS-MINIMUM-abcdef123456' }}
-          Jwt__Issuer: ${{ secrets.JWT__ISSUER || 'SinoutAPI' }}
-          Jwt__Audience: ${{ secrets.JWT__AUDIENCE || 'SinoutClient' }}
+          EMAIL__SMTPSERVER: ${{ secrets.EMAIL__SMTPSERVER }}
+          EMAIL__SMTPPORT: ${{ secrets.EMAIL__SMTPPORT }}
+          EMAIL__USERNAME: ${{ secrets.EMAIL__USERNAME }}
+          EMAIL__PASSWORD: ${{ secrets.EMAIL__PASSWORD }}
+          EMAIL__FROMEMAIL: ${{ secrets.EMAIL__FROMEMAIL }}
+          EMAIL__FROMNAME: ${{ secrets.EMAIL__FROMNAME }}
+          MongoDb__ConnectionString: ${{ secrets.MONGODB__CONNECTIONSTRING }}
+          MongoDb__DatabaseName: ${{ secrets.MONGODB__DATABASENAME }}
+          Jwt__Key: ${{ secrets.JWT__KEY }}
+          Jwt__Issuer: ${{ secrets.JWT__ISSUER }}
+          Jwt__Audience: ${{ secrets.JWT__AUDIENCE }}
+        run: dotnet test APISinout.Tests/APISinout.Tests.csproj --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
+
+      - name: Run tests with coverage (forked PR)
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          EMAIL__SMTPSERVER: localhost
+          EMAIL__SMTPPORT: 2525
+          EMAIL__USERNAME: mock-user
+          EMAIL__PASSWORD: mock-password
+          EMAIL__FROMEMAIL: mock@sinout.local
+          EMAIL__FROMNAME: Sinout Mock Environment
+          MongoDb__ConnectionString: mongodb://localhost:27017
+          MongoDb__DatabaseName: SinoutTest_${{ github.run_id }}
+          Jwt__Key: TEST-JWT-KEY-32-CHARS-MINIMUM-abcdef123456
+          Jwt__Issuer: SinoutAPI
+          Jwt__Audience: SinoutClient
         run: dotnet test APISinout.Tests/APISinout.Tests.csproj --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
 
       - name: Display coverage summary
