@@ -53,7 +53,7 @@ jobs:
           Jwt__Key: ${{ secrets.JWT__KEY }}
           Jwt__Issuer: ${{ secrets.JWT__ISSUER }}
           Jwt__Audience: ${{ secrets.JWT__AUDIENCE }}
-        run: dotnet test APISinout.Tests/APISinout.Tests.csproj --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
+        run: dotnet test APISinout.Tests/APISinout.Tests.csproj --configuration Release --verbosity normal --filter "Category!=ExternalEmail" --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
 
       - name: Run tests with coverage (forked PR)
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
@@ -70,7 +70,7 @@ jobs:
           Jwt__Key: TEST-JWT-KEY-32-CHARS-MINIMUM-abcdef123456
           Jwt__Issuer: SinoutAPI
           Jwt__Audience: SinoutClient
-        run: dotnet test APISinout.Tests/APISinout.Tests.csproj --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
+        run: dotnet test APISinout.Tests/APISinout.Tests.csproj --configuration Release --verbosity normal --filter "Category!=ExternalEmail" --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
 
       - name: Display coverage summary
         if: always()
