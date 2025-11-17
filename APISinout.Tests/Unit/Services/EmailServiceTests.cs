@@ -40,6 +40,7 @@ public class EmailServiceTests
     }
 
     [Fact(Skip = "Teste de envio de email real - requer SMTP configurado")]
+    [Trait("Category", "ExternalEmail")]
     public async Task SendPasswordResetEmailAsync_WithoutCredentials_ShouldLogAndReturnWithoutError()
     {
         // Arrange
@@ -77,6 +78,7 @@ public class EmailServiceTests
     }
 
     [Fact(Skip = "Teste de envio de email real - requer SMTP configurado")]
+    [Trait("Category", "ExternalEmail")]
     public async Task SendPasswordResetEmailAsync_WithValidEmail_ShouldLogInformation()
     {
         // Arrange
@@ -117,6 +119,7 @@ public class EmailServiceTests
     }
 
     [Fact(Skip = "Teste de envio de email real - requer SMTP configurado")]
+    [Trait("Category", "ExternalEmail")]
     public async Task SendPasswordResetEmailAsync_ShouldLogResetCodeInDevMode()
     {
         // Arrange
