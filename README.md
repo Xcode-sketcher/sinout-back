@@ -26,6 +26,7 @@ O projeto possui uma suíte de testes (unitários + integrações) e cobertura d
 Meta de qualidade: atingir **>80%** de cobertura por linhas e branches.
 
 
+
 ## 👥Equipe
 
 | Nome      | Função                | GitHub                                               |
