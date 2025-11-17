@@ -26,56 +26,6 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Configure environment (fork-safe)
-        shell: bash
-        env:
-          EMAIL__SMTPSERVER: ${{ secrets.EMAIL__SMTPSERVER }}
-          EMAIL__SMTPPORT: ${{ secrets.EMAIL__SMTPPORT }}
-          EMAIL__USERNAME: ${{ secrets.EMAIL__USERNAME }}
-          EMAIL__PASSWORD: ${{ secrets.EMAIL__PASSWORD }}
-          EMAIL__FROMEMAIL: ${{ secrets.EMAIL__FROMEMAIL }}
-          EMAIL__FROMNAME: ${{ secrets.EMAIL__FROMNAME }}
-          MONGODB__CONNECTIONSTRING: ${{ secrets.MONGODB__CONNECTIONSTRING }}
-          MONGODB__DATABASENAME: ${{ secrets.MONGODB__DATABASENAME }}
-          JWT__KEY: ${{ secrets.JWT__KEY }}
-          JWT__ISSUER: ${{ secrets.JWT__ISSUER }}
-          JWT__AUDIENCE: ${{ secrets.JWT__AUDIENCE }}
-        run: |
-          is_same_repo_pr=false
-          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.head.repo.full_name }}" = "${{ github.repository }}" ]; then
-            is_same_repo_pr=true
-          fi
-
-          if [ "${{ github.event_name }}" = "push" ] || [ "$is_same_repo_pr" = "true" ]; then
-            {
-              echo "EMAIL__SMTPSERVER=${EMAIL__SMTPSERVER}"
-              echo "EMAIL__SMTPPORT=${EMAIL__SMTPPORT}"
-              echo "EMAIL__USERNAME=${EMAIL__USERNAME}"
-              echo "EMAIL__PASSWORD=${EMAIL__PASSWORD}"
-              echo "EMAIL__FROMEMAIL=${EMAIL__FROMEMAIL}"
-              echo "EMAIL__FROMNAME=${EMAIL__FROMNAME}"
-              echo "MongoDb__ConnectionString=${MONGODB__CONNECTIONSTRING}"
-              echo "MongoDb__DatabaseName=${MONGODB__DATABASENAME}"
-              echo "Jwt__Key=${JWT__KEY}"
-              echo "Jwt__Issuer=${JWT__ISSUER}"
-              echo "Jwt__Audience=${JWT__AUDIENCE}"
-            } >> $GITHUB_ENV
-          else
-            {
-              echo "EMAIL__SMTPSERVER=localhost"
-              echo "EMAIL__SMTPPORT=2525"
-              echo "EMAIL__USERNAME=mock-user"
-              echo "EMAIL__PASSWORD=mock-password"
-              echo "EMAIL__FROMEMAIL=mock@sinout.local"
-              echo "EMAIL__FROMNAME=Sinout Mock Environment"
-              echo "MongoDb__ConnectionString=mongodb://localhost:27017"
-              echo "MongoDb__DatabaseName=SinoutTest_${GITHUB_RUN_ID}"
-              echo "Jwt__Key=TEST-JWT-KEY-32-CHARS-MINIMUM-abcdef123456"
-              echo "Jwt__Issuer=SinoutAPI"
-              echo "Jwt__Audience=SinoutClient"
-            } >> $GITHUB_ENV
-          fi
-
       - name: Restore dependencies
         run: dotnet restore
 
@@ -91,6 +41,17 @@ jobs:
       - name: Run tests with coverage
         env:
           ASPNETCORE_ENVIRONMENT: Development
+          EMAIL__SMTPSERVER: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) && secrets.EMAIL__SMTPSERVER || 'localhost' }}
+          EMAIL__SMTPPORT: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) && secrets.EMAIL__SMTPPORT || '2525' }}
+          EMAIL__USERNAME: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) && secrets.EMAIL__USERNAME || 'mock-user' }}
+          EMAIL__PASSWORD: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) && secrets.EMAIL__PASSWORD || 'mock-password' }}
+          EMAIL__FROMEMAIL: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) && secrets.EMAIL__FROMEMAIL || 'mock@sinout.local' }}
+          EMAIL__FROMNAME: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) && secrets.EMAIL__FROMNAME || 'Sinout Mock Environment' }}
+          MongoDb__ConnectionString: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) && secrets.MONGODB__CONNECTIONSTRING || 'mongodb://localhost:27017' }}
+          MongoDb__DatabaseName: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) && secrets.MONGODB__DATABASENAME || format('SinoutTest_{0}', github.run_id) }}
+          Jwt__Key: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) && secrets.JWT__KEY || 'TEST-JWT-KEY-32-CHARS-MINIMUM-abcdef123456' }}
+          Jwt__Issuer: ${{ secrets.JWT__ISSUER || 'SinoutAPI' }}
+          Jwt__Audience: ${{ secrets.JWT__AUDIENCE || 'SinoutClient' }}
         run: dotnet test APISinout.Tests/APISinout.Tests.csproj --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
 
       - name: Display coverage summary
