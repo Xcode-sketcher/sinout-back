@@ -9,16 +9,13 @@ using APISinout.Tests.Fixtures;
 
 namespace APISinout.Tests.Integration.Controllers;
 
-/// <summary>
-/// Testes de integração para PatientController
-/// Testa operações CRUD de pacientes com validação de permissões
-/// </summary>
-public class PatientControllerIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+
+public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicationFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly TestWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
-    public PatientControllerIntegrationTests(WebApplicationFactory<Program> factory)
+    public PatientControllerIntegrationTests(TestWebApplicationFactory factory)
     {
         _factory = factory;
         _client = factory.CreateClient();

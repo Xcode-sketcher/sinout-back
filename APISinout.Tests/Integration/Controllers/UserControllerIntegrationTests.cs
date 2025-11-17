@@ -9,16 +9,13 @@ using APISinout.Tests.Fixtures;
 
 namespace APISinout.Tests.Integration.Controllers;
 
-/// <summary>
-/// Testes de integração para UserController
-/// Testa operações de gerenciamento de usuários
-/// </summary>
-public class UserControllerIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+
+public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly TestWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
-    public UserControllerIntegrationTests(WebApplicationFactory<Program> factory)
+    public UserControllerIntegrationTests(TestWebApplicationFactory factory)
     {
         _factory = factory;
         _client = factory.CreateClient();

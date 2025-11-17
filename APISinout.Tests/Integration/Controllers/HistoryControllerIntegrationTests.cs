@@ -9,16 +9,13 @@ using APISinout.Tests.Fixtures;
 
 namespace APISinout.Tests.Integration.Controllers;
 
-/// <summary>
-/// Testes de integração para HistoryController
-/// Testa endpoints de histórico e estatísticas de emoções
-/// </summary>
-public class HistoryControllerIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+
+public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicationFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly TestWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
-    public HistoryControllerIntegrationTests(WebApplicationFactory<Program> factory)
+    public HistoryControllerIntegrationTests(TestWebApplicationFactory factory)
     {
         _factory = factory;
         _client = factory.CreateClient();

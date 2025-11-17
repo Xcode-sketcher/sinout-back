@@ -8,16 +8,13 @@ using APISinout.Tests.Fixtures;
 
 namespace APISinout.Tests.Integration.Controllers;
 
-/// <summary>
-/// Testes de integração para AuthController
-/// Testa fluxos completos de autenticação
-/// </summary>
-public class AuthControllerIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+
+public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly TestWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
-    public AuthControllerIntegrationTests(WebApplicationFactory<Program> factory)
+    public AuthControllerIntegrationTests(TestWebApplicationFactory factory)
     {
         _factory = factory;
         _client = factory.CreateClient();

@@ -9,16 +9,13 @@ using APISinout.Tests.Fixtures;
 
 namespace APISinout.Tests.Integration.Controllers;
 
-/// <summary>
-/// Testes de integração para EmotionMappingController
-/// Testa CRUD de mapeamentos de emoções com validação de permissões e limites
-/// </summary>
-public class EmotionMappingControllerIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+
+public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApplicationFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly TestWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
-    public EmotionMappingControllerIntegrationTests(WebApplicationFactory<Program> factory)
+    public EmotionMappingControllerIntegrationTests(TestWebApplicationFactory factory)
     {
         _factory = factory;
         _client = factory.CreateClient();
