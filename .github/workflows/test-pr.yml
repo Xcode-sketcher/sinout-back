@@ -60,7 +60,7 @@ jobs:
       - name: Run tests with coverage
         env:
           ASPNETCORE_ENVIRONMENT: Development
-        run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
+        run: dotnet test APISinout.Tests/APISinout.Tests.csproj --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
 
       - name: Display coverage summary
         if: always()
@@ -96,11 +96,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: '**/test-results.trx'
+          path: |
+            ./TestResults/**/*.trx
+            APISinout.Tests/TestResults/**/*.trx
 
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: '**/coverage.cobertura.xml'
+          path: |
+            ./TestResults/**/coverage.cobertura.xml
+            APISinout.Tests/TestResults/**/coverage.cobertura.xml
