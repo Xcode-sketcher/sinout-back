@@ -12,9 +12,6 @@ using APISinout.Tests.Fixtures;
 
 namespace APISinout.Tests.Unit.Validators;
 
-/// <summary>
-/// Testes completos para RegisterRequestValidator
-/// </summary>
 public class RegisterRequestValidatorTests
 {
     private readonly RegisterRequestValidator _validator;

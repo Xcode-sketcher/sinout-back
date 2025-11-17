@@ -12,9 +12,6 @@ using APISinout.Tests.Fixtures;
 
 namespace APISinout.Tests.Unit.Validators;
 
-/// <summary>
-/// Testes para LoginRequestValidator
-/// </summary>
 public class LoginRequestValidatorTests
 {
     private readonly LoginRequestValidator _validator;
