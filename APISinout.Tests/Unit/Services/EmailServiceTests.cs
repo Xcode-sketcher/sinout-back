@@ -1,3 +1,9 @@
+// ============================================================
+// 📧 TESTES DO EMAILSERVICE - ENVIO DE EMAILS
+// ============================================================
+// Valida o envio de emails de recuperação de senha,
+// notificações de alteração de senha e logs em modo desenvolvimento.
+
 using Xunit;
 using Moq;
 using FluentAssertions;

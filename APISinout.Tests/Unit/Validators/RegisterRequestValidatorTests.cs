@@ -1,3 +1,9 @@
+// ============================================================
+// ✅ TESTES DO REGISTERREQUESTVALIDATOR - VALIDAÇÃO DE REGISTRO
+// ============================================================
+// Valida as regras de validação para registro de novos usuários,
+// incluindo email, senha, nome e nome do paciente.
+
 using Xunit;
 using FluentAssertions;
 using APISinout.Validators;
