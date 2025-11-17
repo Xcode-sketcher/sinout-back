@@ -1,0 +1,64 @@
+name: 'Gitleaks - Secret scan'
+
+on:
+  pull_request:
+    branches: [ dev, dev-revisao, main ]
+  push:
+    branches: [ dev, dev-revisao, main ]
+
+jobs:
+  gitleaks:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    permissions:
+      contents: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
+  gitleaks-fork:
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code (PR head)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install helper tools
+        run: |
+          # Install jq only. We run gitleaks in a Docker container for isolation.
+          sudo apt-get update -y && sudo apt-get install -y jq
+
+      - name: Run gitleaks (Docker) on workspace
+        run: |
+          # Run gitleaks via container to avoid running untrusted binaries on the runner host.
+          GL_VERSION=8.24.3
+          touch gitleaks-report.json
+          docker run --rm -v "$PWD":/src -w /src zricethezav/gitleaks:${GL_VERSION} detect --source . --config .gitleaks.toml --report-path gitleaks-report.json --report-format json || true
+
+      - name: Upload gitleaks report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-report
+          path: gitleaks-report.json
+
+      - name: Fail job if leaks found
+        run: |
+          if [ -f gitleaks-report.json ] && [ "$(jq length gitleaks-report.json)" -gt 0 ]; then
+            echo "Gitleaks found leaks in the PR workspace"
+            jq . gitleaks-report.json
+            exit 1
+          fi
