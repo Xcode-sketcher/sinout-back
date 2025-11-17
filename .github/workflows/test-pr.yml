@@ -26,17 +26,10 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-
       - name: Configure environment (fork-safe)
         shell: bash
         run: |
-          # Set env vars quietly. Use repository secrets for same-repo PRs, otherwise use safe fallbacks for forks.
-          if [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
             echo "MongoDb__ConnectionString=mongodb://localhost:27017" >> $GITHUB_ENV
             echo "MongoDb__DatabaseName=SinoutTest_${GITHUB_RUN_ID}" >> $GITHUB_ENV
             echo "Jwt__Key=TEST-JWT-KEY-32-CHARS-MINIMUM-abcdef123456" >> $GITHUB_ENV
@@ -47,6 +40,9 @@ jobs:
             echo "Jwt__Key=${{ secrets.JWT_SECRET_KEY }}" >> $GITHUB_ENV
             echo "Email__Password=${{ secrets.MAILTRAP_API_TOKEN }}" >> $GITHUB_ENV
           fi
+
+      - name: Restore dependencies
+        run: dotnet restore
 
       - name: Wait for MongoDB
         run: |
@@ -60,7 +56,7 @@ jobs:
       - name: Run tests with coverage
         env:
           ASPNETCORE_ENVIRONMENT: Development
-        run: dotnet test APISinout.Tests/APISinout.Tests.csproj --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
+        run: dotnet test APISinout.Tests/APISinout.Tests.csproj --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
 
       - name: Display coverage summary
         if: always()
@@ -84,8 +80,12 @@ jobs:
               $linePercent = [math]::Round($lineRate * 100, 2)
               $branchPercent = [math]::Round($branchRate * 100, 2)
               
-              Write-Host "Line Coverage:   $linePercent% ($linesCovered / $linesValid)" -ForegroundColor $(if ($lineRate -ge 0.80) { "Green" } elseif ($lineRate -ge 0.60) { "Yellow" } else { "Red" })
-              Write-Host "Branch Coverage: $branchPercent% ($branchesCovered / $branchesValid)" -ForegroundColor $(if ($branchRate -ge 0.80) { "Green" } elseif ($branchRate -ge 0.60) { "Yellow" } else { "Red" })
+              # Determine colors
+              $lineColor = if ($lineRate -ge 0.80) { "Green" } elseif ($lineRate -ge 0.60) { "Yellow" } else { "Red" }
+              $branchColor = if ($branchRate -ge 0.80) { "Green" } elseif ($branchRate -ge 0.60) { "Yellow" } else { "Red" }
+              
+              Write-Host "Line Coverage:   $linePercent% ($linesCovered / $linesValid)" -ForegroundColor $lineColor
+              Write-Host "Branch Coverage: $branchPercent% ($branchesCovered / $branchesValid)" -ForegroundColor $branchColor
               Write-Host "========================================" -ForegroundColor Cyan
           } else {
               Write-Host "WARNING: Coverage file not found" -ForegroundColor Yellow
@@ -96,15 +96,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: |
-            ./TestResults/**/*.trx
-            APISinout.Tests/TestResults/**/*.trx
+          path: ./TestResults/**/*.trx
+          if-no-files-found: warn
 
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: |
-            ./TestResults/**/coverage.cobertura.xml
-            APISinout.Tests/TestResults/**/coverage.cobertura.xml
+          path: ./TestResults/**/coverage.cobertura.xml
+          if-no-files-found: warn
