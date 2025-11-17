@@ -24,7 +24,7 @@ O projeto possui uma suíte de testes (unitários + integrações) e cobertura d
 - Cobertura de branches: **55.02%** (230 / 418)
 
 Meta de qualidade: atingir **>80%** de cobertura por linhas e branches.
-Bom dia 
+
 
 
 ## 👥Equipe
