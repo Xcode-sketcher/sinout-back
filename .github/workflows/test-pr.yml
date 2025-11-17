@@ -48,8 +48,8 @@ jobs:
           EMAIL__PASSWORD: ${{ secrets.EMAIL__PASSWORD }}
           EMAIL__FROMEMAIL: ${{ secrets.EMAIL__FROMEMAIL }}
           EMAIL__FROMNAME: ${{ secrets.EMAIL__FROMNAME }}
-          MongoDb__ConnectionString: ${{ secrets.MONGODB__CONNECTIONSTRING }}
-          MongoDb__DatabaseName: ${{ secrets.MONGODB__DATABASENAME }}
+          MongoDb__ConnectionString: mongodb://localhost:27017
+          MongoDb__DatabaseName: SinoutTest_${{ github.run_id }}
           Jwt__Key: ${{ secrets.JWT__KEY }}
           Jwt__Issuer: ${{ secrets.JWT__ISSUER }}
           Jwt__Audience: ${{ secrets.JWT__AUDIENCE }}
