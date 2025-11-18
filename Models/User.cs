@@ -50,4 +50,14 @@ public class User
     
     [BsonElement("nome_paciente")]
     public string? PatientName { get; set; } // Nome do paciente (1:1 cuidador-paciente)
+
+    // --- NOVOS CAMPOS PARA LIMITADOR DE LOGIN ---
+
+    [BsonElement("failed_login_attempts")] // Rótulo no freezer
+    [BsonDefaultValue(0)] // Garante que o prato começa com 0
+    public int FailedLoginAttempts { get; set; }
+
+    [BsonElement("lockout_end_date")] // Data de "saída do castigo"
+    [BsonIgnoreIfNull] // Não guardar no freezer se estiver vazio
+    public DateTime? LockoutEndDate { get; set; } // O '?' significa que pode estar vazio
 }

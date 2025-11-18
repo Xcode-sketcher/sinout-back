@@ -83,32 +83,82 @@ public class AuthService : IAuthService
     }
 
     // Receita: Fazer login
-    public async Task<AuthResponse> LoginAsync(LoginRequest request)
+    // Receita: Fazer login (VERSÃO ATUALIZADA COM SEGURANÇA)
+    public async Task<AuthResponse> LoginAsync(LoginRequest request)
     {
-        // Verificar campos obrigatórios
-        if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+        // Verificar campos obrigatórios (igual ao original)
+        if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
             throw new AppException("Email e senha são obrigatórios");
 
-        // Buscar usuário
-        var user = await _userRepository.GetByEmailAsync(request.Email.ToLower().Trim());
-        
-        // Verificar credenciais e status
-        if (user == null || !user.Status || 
-            !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-            throw new AppException("Credenciais inválidas");
+        // Buscar usuário (igual ao original)
+        var user = await _userRepository.GetByEmailAsync(request.Email.ToLower().Trim());
 
-        // Garantir que o usuário tenha uma Role definida (para usuários antigos)
-        if (string.IsNullOrEmpty(user.Role))
+        // --- 1. NOVA VERIFICAÇÃO DE SEGURANÇA (USUÁRIO EXISTE?) ---
+        // Se o email não existe, lançamos o erro padrão.
+        // Fazemos isso ANTES de checar a senha para não dar erro de "usuário nulo".
+        if (user == null || !user.Status)
+        {
+            throw new AppException("Credenciais inválidas");
+        }
+
+        // --- 2. NOVA VERIFICAÇÃO DE SEGURANÇA (CONTA BLOQUEADA?) ---
+        // O "prato" está "queimado" (bloqueado)?
+        // Verificamos se existe uma data de bloqueio E se essa data AINDA É no futuro.
+        if (user.LockoutEndDate.HasValue && user.LockoutEndDate > DateTime.UtcNow)
+        {
+            // Sim, está bloqueado. Avise o usuário e pare tudo.
+            var timeLeft = (user.LockoutEndDate.Value - DateTime.UtcNow).Minutes;
+            throw new AppException($"Conta bloqueada. Tente novamente em {timeLeft + 1} minutos.");
+        }
+
+        // --- 3. VERIFICAÇÃO DE CREDENCIAIS (SENHA) ---
+        // A "receita secreta" (senha) bate?
+        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        {
+            // --- 4. LÓGICA DE FALHA (SENHA INCORRETA!) ---
+            // Anotar a falha no "rótulo" do prato.
+            user.FailedLoginAttempts++;
+
+            // Define o limite (ex: 5 tentativas)
+            const int MAX_ATTEMPTS = 5;
+
+            if (user.FailedLoginAttempts >= MAX_ATTEMPTS)
+            {
+                // Atingiu o limite! Bloqueie a conta por 15 minutos.
+                user.LockoutEndDate = DateTime.UtcNow.AddMinutes(15);
+                user.FailedLoginAttempts = 0; // Zera as tentativas para o próximo ciclo
+            }
+
+            // Salva as mudanças (tentativa ou bloqueio) no banco
+            // Usamos o UserId (int) porque sua função UpdateUserAsync espera ele!
+            await _userRepository.UpdateUserAsync(user.UserId, user);
+
+            // Lança o erro padrão (nunca diga ao usuário que a *senha* estava errada)
+            throw new AppException("Credenciais inválidas");
+        }
+
+        // --- 5. LÓGICA DE SUCESSO (SENHA CORRETA!) ---
+
+        // Garantir que o usuário tenha uma Role definida (igual ao original)
+        if (string.IsNullOrEmpty(user.Role))
         {
             user.Role = UserRole.Caregiver.ToString();
         }
 
-        // Atualizar último login
-        user.LastLogin = DateTime.UtcNow;
+        // Atualizar último login (igual ao original)
+        user.LastLogin = DateTime.UtcNow;
+
+        // --- NOVA LÓGICA DE SUCESSO ---
+        // Se ele acertou, temos que limpar o histórico de falhas!
+        user.FailedLoginAttempts = 0;
+        user.LockoutEndDate = null;
+
+        // Salva TODAS as atualizações de sucesso (LastLogin, FailedAttempts, LockoutEnd)
         await _userRepository.UpdateUserAsync(user.UserId, user);
 
-        // Retornar resposta com token
-        return new AuthResponse { 
+        // Retornar resposta com token (igual ao original)
+        return new AuthResponse
+        {
             User = new UserResponse(user),
             Token = JwtHelper.GenerateToken(user, _config)
         };
