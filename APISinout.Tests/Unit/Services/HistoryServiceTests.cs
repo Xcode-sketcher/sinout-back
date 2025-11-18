@@ -11,6 +11,7 @@ using APISinout.Data;
 using APISinout.Models;
 using APISinout.Services;
 using APISinout.Helpers;
+using System.Threading.Tasks;
 
 namespace APISinout.Tests.Unit.Services;
 
@@ -99,6 +100,17 @@ public class HistoryServiceTests
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
             _service.GetHistoryByUserAsync(userId, currentUserId, "Caregiver", 24));
+    }
+    [Fact]
+    public async Task GetHistoryByUserAsync_UserNotFound_ThrowsException()
+    {
+        // Given
+        var userId = 999;
+        _userRepoMock.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync((User?)null);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<AppException>(() =>
+            _service.GetHistoryByUserAsync(userId, 1, "Admin", 24));
     }
     #endregion
 }
