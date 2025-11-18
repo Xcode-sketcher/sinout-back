@@ -108,4 +108,68 @@ public class TokenCleanupServiceTests
         // Assert - pode ter executado 0 ou 1 vez dependendo do timing
         _repositoryMock.Verify(x => x.DeleteExpiredTokensAsync(), Times.AtMost(1));
     }
+    [Fact]
+    public async Task CleanupExpiredTokensAsync_LogsStart_BeforeCleanup()
+    {
+        // Arrange
+        var service = new TokenCleanupService(_serviceProviderMock.Object, _loggerMock.Object);
+        var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromMilliseconds(100));
+
+        _repositoryMock.Setup(x => x.DeleteExpiredTokensAsync()).Returns(Task.CompletedTask);
+
+        // Act
+        try
+        {
+            await service.StartAsync(cts.Token);
+            await Task.Delay(50);
+            await service.StopAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Esperado
+        }
+
+        // Assert
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Iniciando limpeza")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.AtMost(1));
+    }
+    [Fact]
+    public async Task CleanupExpiredTokensAsync_LogsCompletion_AfterCleanup()
+    {
+        // Arrange
+        var service = new TokenCleanupService(_serviceProviderMock.Object, _loggerMock.Object);
+        var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromMilliseconds(100));
+
+        _repositoryMock.Setup(x => x.DeleteExpiredTokensAsync()).Returns(Task.CompletedTask);
+
+        // Act
+        try
+        {
+            await service.StartAsync(cts.Token);
+            await Task.Delay(50);
+            await service.StopAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Esperado
+        }
+
+        // Assert
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Limpeza concluída")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.AtMost(1));
+    }
 }
