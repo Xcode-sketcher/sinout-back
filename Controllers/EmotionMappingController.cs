@@ -19,6 +19,7 @@
 // ============================================================
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using APISinout.Models;
 using APISinout.Services;
@@ -29,6 +30,7 @@ namespace APISinout.Controllers;
 [ApiController]
 [Route("api/emotion-mappings")]
 [Authorize]  // 🔐 Só usuários autenticados podem gerenciar regras
+[EnableRateLimiting("limite-api")]
 public class EmotionMappingController : ControllerBase
 {
     // 📜 INVENTÁRIO: O livro de traduções
@@ -80,7 +82,7 @@ public class EmotionMappingController : ControllerBase
     // 📖 MISSÃO 2: VER REGRAS DE UM USUÁRIO ESPECÍFICO
     // ============================================================
     // Analogia RPG: Ler o grimório de outro mago!
-    // Admin pode ler qualquer grimório, Caregiver só o próprio.
+    // Admin pode ler qualquer grimório, Cuidador só o próprio.
     // ============================================================
     [HttpGet("user/{userId}")]  // Rota: GET /api/emotion-mappings/user/123
     public async Task<IActionResult> GetMappingsByUser(int userId)

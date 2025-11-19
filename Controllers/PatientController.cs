@@ -2,20 +2,21 @@
 // 🏥 CONTROLADOR DE PACIENTES - O LIVRO DE PACIENTES
 // ============================================================
 // Analogia RPG: Este é o "Livro de Missões" onde cada missão representa um paciente!
-// Cada Caregiver (jogador) tem suas próprias missões (pacientes) para cuidar.
+// Cada Cuidador (jogador) tem suas próprias missões (pacientes) para cuidar.
 // O Admin (Game Master) pode ver e gerenciar todas as missões de todos os jogadores.
 //
 // Analogia Médica: É o "Prontuário Médico"!
 // Cada paciente tem seu prontuário com informações importantes.
-// Médicos (caregivers) acessam prontuários dos seus pacientes,
+// Médicos (cuidadores) acessam prontuários dos seus pacientes,
 // e o diretor do hospital (admin) pode acessar qualquer prontuário.
 //
 // Regras de acesso:
 // - 👑 Admin: Pode gerenciar TODOS os pacientes
-// - 👨‍⚕️ Caregiver: Só pode gerenciar seus PRÓPRIOS pacientes
+// - 👨‍⚕️ Cuidador: Só pode gerenciar seus PRÓPRIOS pacientes
 // ============================================================
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using APISinout.Models;
 using APISinout.Services;
@@ -26,6 +27,7 @@ namespace APISinout.Controllers;
 [ApiController]
 [Route("api/patients")]
 [Authorize]  // 🔐 Todos os endpoints exigem autenticação
+[EnableRateLimiting("limite-api")]
 public class PatientController : ControllerBase
 {
     // 📋 INVENTÁRIO: O livro de prontuários
@@ -41,7 +43,7 @@ public class PatientController : ControllerBase
     // ✨ MISSÃO 1: CRIAR NOVO PACIENTE
     // ============================================================
     // Analogia RPG: Aceitar uma nova missão!
-    // Caregiver pode criar paciente para si mesmo.
+    // Cuidador pode criar paciente para si mesmo.
     // Admin pode criar paciente e atribuir a qualquer cuidador.
     //
     // Analogia Médica: Admitir novo paciente no hospital!
@@ -94,7 +96,7 @@ public class PatientController : ControllerBase
     // ============================================================
     // Analogia RPG: Ver lista de missões!
     // - Admin vê TODAS as missões de TODOS os jogadores
-    // - Caregiver vê apenas SUAS próprias missões
+    // - Cuidador vê apenas SUAS próprias missões
     // ============================================================
     [HttpGet]  // Rota: GET /api/patients
     public async Task<IActionResult> GetPatients()
@@ -112,8 +114,8 @@ public class PatientController : ControllerBase
             }
             else
             {
-                // 👨‍⚕️ Caregiver: ver apenas os seus
-                var myPatients = await _patientService.GetPatientsByCaregiverAsync(userId);
+                // 👨‍⚕️ Cuidador: ver apenas os seus
+                var myPatients = await _patientService.GetPatientsByCuidadorAsync(userId);
                 return Ok(myPatients);
             }
         }
@@ -129,13 +131,13 @@ public class PatientController : ControllerBase
     // Analogia RPG: Ver as missões de um jogador específico!
     // Só o Game Master (Admin) pode fazer isso.
     // ============================================================
-    [HttpGet("caregiver/{caregiverId}")]  // Rota: GET /api/patients/caregiver/123
+    [HttpGet("cuidador/{cuidadorId}")]  // Rota: GET /api/patients/cuidador/123
     [Authorize(Roles = "Admin")]  // 👑 SÓ ADMIN
-    public async Task<IActionResult> GetPatientsByCaregiver(int caregiverId)
+    public async Task<IActionResult> GetPatientsByCuidador(int cuidadorId)
     {
         try
         {
-            var patients = await _patientService.GetPatientsByCaregiverAsync(caregiverId);
+            var patients = await _patientService.GetPatientsByCuidadorAsync(cuidadorId);
             return Ok(patients);
         }
         catch (AppException ex)

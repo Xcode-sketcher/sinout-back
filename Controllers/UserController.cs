@@ -11,10 +11,11 @@
 //
 // Permissões:
 // - 👑 Admin: Pode fazer TUDO (criar, editar, deletar qualquer usuário)
-// - 👤 Caregiver: Só pode ver o próprio perfil e atualizar nome do paciente
+// - 👤 Cuidador: Só pode ver o próprio perfil e atualizar nome do paciente
 // ============================================================
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using APISinout.Models;
 using APISinout.Services;
@@ -23,6 +24,7 @@ using APISinout.Helpers;
 namespace APISinout.Controllers;
 
 [Authorize]  // 🔐 Todos os endpoints precisam de autenticação
+[EnableRateLimiting("limite-api")]
 [ApiController]
 [Route("api/users")]
 public class UserController : ControllerBase
@@ -55,7 +57,7 @@ public class UserController : ControllerBase
     // ✨ MISSÃO 2: CRIAR NOVO USUÁRIO (APENAS ADMIN)
     // ============================================================
     // Analogia RPG: Criar novo personagem no jogo!
-    // Admin pode criar tanto Admin quanto Caregiver.
+    // Admin pode criar tanto Admin quanto Cuidador.
     // É como o Game Master adicionando um novo NPC ou jogador.
     // ============================================================
     [Authorize(Roles = "Admin")]  // 👑 SÓ ADMIN
@@ -168,7 +170,7 @@ public class UserController : ControllerBase
     // 📝 MISSÃO 7: ATUALIZAR NOME DO PACIENTE (QUALQUER USUÁRIO AUTENTICADO)
     // ============================================================
     // Analogia RPG: Dar nome ao "NPC Companheiro"!
-    // Cada Caregiver pode dar/mudar o nome do paciente que está cuidando.
+    // Cada Cuidador pode dar/mudar o nome do paciente que está cuidando.
     // É como personalizar o nome do seu "pet" ou "companheiro" no jogo.
     //
     // Diferente das outras rotas, esta é acessível a qualquer usuário autenticado,
@@ -198,16 +200,16 @@ public class UserController : ControllerBase
     // 👨‍⚕️ MISSÃO 8: LISTAR TODOS OS CUIDADORES (APENAS ADMIN)
     // ============================================================
     // Analogia RPG: Ver lista de todos os "Healers" (Curandeiros)!
-    // Filtra a lista de usuários para mostrar apenas os Caregivers.
+    // Filtra a lista de usuários para mostrar apenas os Cuidadores.
     // Útil para Admin ver todos os cuidadores cadastrados.
     // ============================================================
     [Authorize(Roles = "Admin")]  // 👑 SÓ ADMIN
-    [HttpGet("caregivers")]  // Rota: GET /api/users/caregivers
-    public async Task<IActionResult> GetAllCaregivers()
+    [HttpGet("cuidadores")]  // Rota: GET /api/users/cuidadores
+    public async Task<IActionResult> GetAllCuidadores()
     {
-        // 📜 Buscar todos e filtrar apenas Caregivers
+        // 📜 Buscar todos e filtrar apenas Cuidadores
         var users = await _userService.GetAllAsync();
-        var caregivers = users.Where(u => u.Role == UserRole.Caregiver.ToString()).Select(u => new UserResponse(u));
-        return Ok(caregivers);
+        var cuidadores = users.Where(u => u.Role == UserRole.Cuidador.ToString()).Select(u => new UserResponse(u));
+        return Ok(cuidadores);
     }
 }

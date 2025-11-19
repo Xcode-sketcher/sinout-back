@@ -134,7 +134,7 @@ public class AuthorizationHelperTests
         {
             new Claim("userId", "123"),
             new Claim(ClaimTypes.Email, "test@example.com"),
-            new Claim(ClaimTypes.Role, "Caregiver")
+            new Claim(ClaimTypes.Role, "Cuidador")
         };
         var identity = new ClaimsIdentity(claims, "TestAuth");
         var claimsPrincipal = new ClaimsPrincipal(identity);
@@ -185,13 +185,13 @@ public class AuthorizationHelperTests
     }
 
     [Fact]
-    public void IsAdmin_CaregiverRole_ReturnsFalse()
+    public void IsAdmin_CuidadorRole_ReturnsFalse()
     {
         // Arrange
         var claims = new List<Claim>
         {
             new Claim("userId", "123"),
-            new Claim(ClaimTypes.Role, UserRole.Caregiver.ToString())
+            new Claim(ClaimTypes.Role, UserRole.Cuidador.ToString())
         };
         var identity = new ClaimsIdentity(claims, "TestAuth");
         var claimsPrincipal = new ClaimsPrincipal(identity);
@@ -204,26 +204,26 @@ public class AuthorizationHelperTests
     }
 
     [Fact]
-    public void IsCaregiver_CaregiverRole_ReturnsTrue()
+    public void IsCuidador_CuidadorRole_ReturnsTrue()
     {
         // Arrange
         var claims = new List<Claim>
         {
             new Claim("userId", "123"),
-            new Claim(ClaimTypes.Role, UserRole.Caregiver.ToString())
+            new Claim(ClaimTypes.Role, UserRole.Cuidador.ToString())
         };
         var identity = new ClaimsIdentity(claims, "TestAuth");
         var claimsPrincipal = new ClaimsPrincipal(identity);
 
         // Act
-        var result = AuthorizationHelper.IsCaregiver(claimsPrincipal);
+        var result = AuthorizationHelper.IsCuidador(claimsPrincipal);
 
         // Assert
         result.Should().BeTrue();
     }
 
     [Fact]
-    public void IsCaregiver_AdminRole_ReturnsFalse()
+    public void IsCuidador_AdminRole_ReturnsFalse()
     {
         // Arrange
         var claims = new List<Claim>
@@ -235,7 +235,7 @@ public class AuthorizationHelperTests
         var claimsPrincipal = new ClaimsPrincipal(identity);
 
         // Act
-        var result = AuthorizationHelper.IsCaregiver(claimsPrincipal);
+        var result = AuthorizationHelper.IsCuidador(claimsPrincipal);
 
         // Assert
         result.Should().BeFalse();

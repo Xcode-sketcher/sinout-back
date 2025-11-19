@@ -7,5 +7,5 @@ namespace APISinout.Models;
 public enum UserRole
 {
     Admin,
-    Caregiver
+    Cuidador
 }

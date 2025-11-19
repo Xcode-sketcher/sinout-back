@@ -21,26 +21,26 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
         _client = factory.CreateClient();
     }
 
-    private async Task<(string token, int userId)> GetCaregiverTokenAndId()
+    private async Task<(string token, int userId)> GetCuidadorTokenAndId()
     {
-        var caregiverEmail = $"caregiver{Guid.NewGuid()}@test.com";
-        var caregiverPassword = "Caregiver@123";
+        var cuidadorEmail = $"cuidador{Guid.NewGuid()}@test.com";
+        var cuidadorPassword = "Cuidador@123";
         
         var registerRequest = new RegisterRequest
         {
-            Name = "Caregiver User",
-            Email = caregiverEmail,
-            Password = caregiverPassword,
+            Name = "Cuidador User",
+            Email = cuidadorEmail,
+            Password = cuidadorPassword,
             Phone = "+55 11 99999-2002",
-            PatientName = "Caregiver Patient"
+            PatientName = "Cuidador Patient"
         };
 
         await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
 
         var loginRequest = new LoginRequest
         {
-            Email = caregiverEmail,
-            Password = caregiverPassword
+            Email = cuidadorEmail,
+            Password = cuidadorPassword
         };
 
         var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
@@ -52,7 +52,7 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetMyHistory_WithValidToken_ShouldReturn200OK()
     {
         // Arrange
-        var (token, _) = await GetCaregiverTokenAndId();
+        var (token, _) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act
@@ -78,7 +78,7 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetMyHistory_WithCustomHours_ShouldReturn200OK()
     {
         // Arrange
-        var (token, _) = await GetCaregiverTokenAndId();
+        var (token, _) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act
@@ -94,7 +94,7 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetHistoryByUser_AsOwner_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCaregiverTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act
@@ -112,8 +112,8 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetHistoryByUser_AsNonOwner_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token1, _) = await GetCaregiverTokenAndId();
-        var (_, userId2) = await GetCaregiverTokenAndId();
+        var (token1, _) = await GetCuidadorTokenAndId();
+        var (_, userId2) = await GetCuidadorTokenAndId();
         
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token1);
 
@@ -128,7 +128,7 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetMyStatistics_WithValidToken_ShouldReturn200OK()
     {
         // Arrange
-        var (token, _) = await GetCaregiverTokenAndId();
+        var (token, _) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act
@@ -154,7 +154,7 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetMyStatistics_WithCustomHours_ShouldReturn200OK()
     {
         // Arrange
-        var (token, _) = await GetCaregiverTokenAndId();
+        var (token, _) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act
@@ -170,7 +170,7 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetUserStatistics_AsOwner_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCaregiverTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act
@@ -188,8 +188,8 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetUserStatistics_AsNonOwner_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token1, _) = await GetCaregiverTokenAndId();
-        var (_, userId2) = await GetCaregiverTokenAndId();
+        var (token1, _) = await GetCuidadorTokenAndId();
+        var (_, userId2) = await GetCuidadorTokenAndId();
         
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token1);
 
@@ -200,13 +200,13 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    // Rotas POST /api/history não existem - usar POST /api/history/caregiver-emotion
+    // Rotas POST /api/history não existem - usar POST /api/history/cuidador-emotion
 
     [Fact]
     public async Task GetHistoryByFilter_WithValidFilter_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCaregiverTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var filter = new
@@ -246,10 +246,10 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     // Teste de cleanup requer admin - removido por enquanto
 
     [Fact]
-    public async Task ClearOldHistory_AsCaregiver_ShouldReturn403Forbidden()
+    public async Task ClearOldHistory_AsCuidador_ShouldReturn403Forbidden()
     {
         // Arrange
-        var (token, _) = await GetCaregiverTokenAndId();
+        var (token, _) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act
@@ -260,4 +260,68 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     }
 
     // Rotas GET /api/history/trends/user/{userId} não existem
+
+    [Fact]
+    public async Task SaveCuidadorEmotion_ValidRequest_ShouldReturn200OK()
+    {
+        // Arrange
+        var (token, userId) = await GetCuidadorTokenAndId();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var request = new
+        {
+            cuidadorId = userId,
+            patientName = "Test Patient",
+            dominantEmotion = "happy",
+            emotionsDetected = new Dictionary<string, double> { { "happy", 0.9 } },
+            timestamp = DateTime.UtcNow
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/history/cuidador-emotion", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task SaveCuidadorEmotion_InvalidRequest_ShouldReturn400BadRequest()
+    {
+        // Arrange
+        var (token, _) = await GetCuidadorTokenAndId();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var request = new
+        {
+            cuidadorId = 0 // Invalid ID
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/history/cuidador-emotion", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task SaveCuidadorEmotion_AsOtherUser_ShouldReturn403Forbidden()
+    {
+        // Arrange
+        var (token, userId) = await GetCuidadorTokenAndId();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var request = new
+        {
+            cuidadorId = userId + 1, // Trying to save for another user
+            patientName = "Test Patient",
+            dominantEmotion = "happy",
+            emotionsDetected = new Dictionary<string, double> { { "happy", 0.9 } }
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/history/cuidador-emotion", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
 }

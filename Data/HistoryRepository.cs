@@ -25,6 +25,12 @@ public class HistoryRepository : IHistoryRepository
         _history = context.HistoryRecords;
     }
 
+    // Construtor para testes unitários
+    public HistoryRepository(IMongoCollection<HistoryRecord> historyCollection)
+    {
+        _history = historyCollection;
+    }
+
     public async Task<HistoryRecord?> GetByIdAsync(string id)
     {
         return await _history.Find(h => h.Id == id).FirstOrDefaultAsync();

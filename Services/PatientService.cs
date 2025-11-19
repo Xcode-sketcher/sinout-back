@@ -11,7 +11,7 @@ public interface IPatientService
 {
     Task<PatientResponse> CreatePatientAsync(PatientRequest request, int currentUserId, string currentUserRole);
     Task<PatientResponse> GetPatientByIdAsync(int id, int currentUserId, string currentUserRole);
-    Task<List<PatientResponse>> GetPatientsByCaregiverAsync(int caregiverId);
+    Task<List<PatientResponse>> GetPatientsByCuidadorAsync(int cuidadorId);
     Task<List<PatientResponse>> GetAllPatientsAsync(); // Apenas Admin
     Task<PatientResponse> UpdatePatientAsync(int id, PatientRequest request, int currentUserId, string currentUserRole);
     Task DeletePatientAsync(int id, int currentUserId, string currentUserRole);
@@ -34,38 +34,38 @@ public class PatientService : IPatientService
             throw new AppException("Nome do paciente é obrigatório");
 
         // Definir o cuidador
-        int caregiverId;
+        int cuidadorId;
         string createdBy;
 
         if (currentUserRole == UserRole.Admin.ToString())
         {
             // Admin pode criar paciente para qualquer cuidador
-            if (!request.CaregiverId.HasValue)
+            if (!request.CuidadorId.HasValue)
                 throw new AppException("Administrador deve especificar o cuidador");
 
-            var caregiver = await _userRepository.GetByIdAsync(request.CaregiverId.Value);
-            if (caregiver == null || caregiver.Role != UserRole.Caregiver.ToString())
+            var cuidador = await _userRepository.GetByIdAsync(request.CuidadorId.Value);
+            if (cuidador == null || cuidador.Role != UserRole.Cuidador.ToString())
                 throw new AppException("Cuidador inválido");
 
-            caregiverId = request.CaregiverId.Value;
+            cuidadorId = request.CuidadorId.Value;
             createdBy = $"admin_{currentUserId}";
         }
-        else if (currentUserRole == UserRole.Caregiver.ToString())
+        else if (currentUserRole == UserRole.Cuidador.ToString())
         {
-            // Caregiver só pode criar para si mesmo
-            caregiverId = currentUserId;
+            // Cuidador só pode criar para si mesmo
+            cuidadorId = currentUserId;
             createdBy = "self";
         }
         else
         {
-            throw new AppException($"Apenas {UserRole.Admin} e {UserRole.Caregiver} podem cadastrar pacientes");
+            throw new AppException($"Apenas {UserRole.Admin} e {UserRole.Cuidador} podem cadastrar pacientes");
         }
 
         var patient = new Patient
         {
             Id = await _patientRepository.GetNextPatientIdAsync(),
             Name = request.Name.Trim(),
-            CaregiverId = caregiverId,
+            CuidadorId = cuidadorId,
             DataCadastro = DateTime.UtcNow,
             Status = true,
             AdditionalInfo = request.AdditionalInfo?.Trim(),
@@ -75,8 +75,8 @@ public class PatientService : IPatientService
 
         await _patientRepository.CreatePatientAsync(patient);
 
-        var caregiverUser = await _userRepository.GetByIdAsync(caregiverId);
-        return new PatientResponse(patient, caregiverUser?.Name);
+        var cuidadorUser = await _userRepository.GetByIdAsync(cuidadorId);
+        return new PatientResponse(patient, cuidadorUser?.Name);
     }
 
     public async Task<PatientResponse> GetPatientByIdAsync(int id, int currentUserId, string currentUserRole)
@@ -86,19 +86,19 @@ public class PatientService : IPatientService
             throw new AppException("Paciente não encontrado");
 
         // Verificar permissão
-        if (currentUserRole != UserRole.Admin.ToString() && patient.CaregiverId != currentUserId)
+        if (currentUserRole != UserRole.Admin.ToString() && patient.CuidadorId != currentUserId)
             throw new AppException("Acesso negado");
 
-        var caregiver = await _userRepository.GetByIdAsync(patient.CaregiverId);
-        return new PatientResponse(patient, caregiver?.Name);
+        var cuidador = await _userRepository.GetByIdAsync(patient.CuidadorId);
+        return new PatientResponse(patient, cuidador?.Name);
     }
 
-    public async Task<List<PatientResponse>> GetPatientsByCaregiverAsync(int caregiverId)
+    public async Task<List<PatientResponse>> GetPatientsByCuidadorAsync(int cuidadorId)
     {
-        var patients = await _patientRepository.GetByCaregiverIdAsync(caregiverId);
-        var caregiver = await _userRepository.GetByIdAsync(caregiverId);
+        var patients = await _patientRepository.GetByCuidadorIdAsync(cuidadorId);
+        var cuidador = await _userRepository.GetByIdAsync(cuidadorId);
 
-        return patients.Select(p => new PatientResponse(p, caregiver?.Name)).ToList();
+        return patients.Select(p => new PatientResponse(p, cuidador?.Name)).ToList();
     }
 
     public async Task<List<PatientResponse>> GetAllPatientsAsync()
@@ -108,8 +108,8 @@ public class PatientService : IPatientService
 
         foreach (var patient in patients)
         {
-            var caregiver = await _userRepository.GetByIdAsync(patient.CaregiverId);
-            responses.Add(new PatientResponse(patient, caregiver?.Name));
+            var cuidador = await _userRepository.GetByIdAsync(patient.CuidadorId);
+            responses.Add(new PatientResponse(patient, cuidador?.Name));
         }
 
         return responses;
@@ -122,7 +122,7 @@ public class PatientService : IPatientService
             throw new AppException("Paciente não encontrado");
 
         // Verificar permissão
-        if (currentUserRole != UserRole.Admin.ToString() && patient.CaregiverId != currentUserId)
+        if (currentUserRole != UserRole.Admin.ToString() && patient.CuidadorId != currentUserId)
             throw new AppException("Acesso negado");
 
         if (!string.IsNullOrEmpty(request.Name))
@@ -135,19 +135,19 @@ public class PatientService : IPatientService
             patient.ProfilePhoto = request.ProfilePhoto;
 
         // Apenas Admin pode mudar o cuidador
-        if (request.CaregiverId.HasValue && currentUserRole == UserRole.Admin.ToString())
+        if (request.CuidadorId.HasValue && currentUserRole == UserRole.Admin.ToString())
         {
-            var newCaregiver = await _userRepository.GetByIdAsync(request.CaregiverId.Value);
-            if (newCaregiver == null || newCaregiver.Role != UserRole.Caregiver.ToString())
+            var newCuidador = await _userRepository.GetByIdAsync(request.CuidadorId.Value);
+            if (newCuidador == null || newCuidador.Role != UserRole.Cuidador.ToString())
                 throw new AppException("Cuidador inválido");
             
-            patient.CaregiverId = request.CaregiverId.Value;
+            patient.CuidadorId = request.CuidadorId.Value;
         }
 
         await _patientRepository.UpdatePatientAsync(id, patient);
 
-        var caregiver = await _userRepository.GetByIdAsync(patient.CaregiverId);
-        return new PatientResponse(patient, caregiver?.Name);
+        var cuidador = await _userRepository.GetByIdAsync(patient.CuidadorId);
+        return new PatientResponse(patient, cuidador?.Name);
     }
 
     public async Task DeletePatientAsync(int id, int currentUserId, string currentUserRole)
@@ -157,7 +157,7 @@ public class PatientService : IPatientService
             throw new AppException("Paciente não encontrado");
 
         // Verificar permissão
-        if (currentUserRole != UserRole.Admin.ToString() && patient.CaregiverId != currentUserId)
+        if (currentUserRole != UserRole.Admin.ToString() && patient.CuidadorId != currentUserId)
             throw new AppException("Acesso negado");
 
         await _patientRepository.DeletePatientAsync(id);

@@ -43,7 +43,7 @@ public class EmotionMappingServiceTests
             Message = "Quero água",
             Priority = 1
         };
-        var user = new User { UserId = 1, Name = "Test User", Role = "Caregiver" };
+        var user = new User { UserId = 1, Name = "Test User", Role = "Cuidador" };
 
         _userRepoMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(user);
         _mappingRepoMock.Setup(x => x.CountByUserAndEmotionAsync(1, "happy")).ReturnsAsync(0);
@@ -51,7 +51,7 @@ public class EmotionMappingServiceTests
         _mappingRepoMock.Setup(x => x.CreateMappingAsync(It.IsAny<EmotionMapping>())).Returns(Task.CompletedTask);
 
         // Act
-        var result = await _service.CreateMappingAsync(request, 1, "Caregiver");
+        var result = await _service.CreateMappingAsync(request, 1, "Cuidador");
 
         // Assert
         result.Should().NotBeNull();
@@ -77,7 +77,7 @@ public class EmotionMappingServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Caregiver"));
+            _service.CreateMappingAsync(request, 1, "Cuidador"));
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class EmotionMappingServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Caregiver"));
+            _service.CreateMappingAsync(request, 1, "Cuidador"));
     }
 
     [Fact]
@@ -115,7 +115,7 @@ public class EmotionMappingServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Caregiver"));
+            _service.CreateMappingAsync(request, 1, "Cuidador"));
     }
 
     [Fact]
@@ -134,7 +134,7 @@ public class EmotionMappingServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Caregiver"));
+            _service.CreateMappingAsync(request, 1, "Cuidador"));
     }
 
     [Fact]
@@ -154,7 +154,7 @@ public class EmotionMappingServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Caregiver"));
+            _service.CreateMappingAsync(request, 1, "Cuidador"));
     }
 
     [Fact]
@@ -173,7 +173,7 @@ public class EmotionMappingServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Caregiver"));
+            _service.CreateMappingAsync(request, 1, "Cuidador"));
     }
 
     [Fact]
@@ -189,14 +189,14 @@ public class EmotionMappingServiceTests
             Message = "Test",
             Priority = 1
         };
-        var user = new User { UserId = 1, Name = "Test User", Role = "Caregiver" };
+        var user = new User { UserId = 1, Name = "Test User", Role = "Cuidador" };
 
         _userRepoMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(user);
         _mappingRepoMock.Setup(x => x.CountByUserAndEmotionAsync(1, "happy")).ReturnsAsync(2); // Já tem 2
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Caregiver"));
+            _service.CreateMappingAsync(request, 1, "Cuidador"));
     }
 
     [Fact]
@@ -222,7 +222,7 @@ public class EmotionMappingServiceTests
             Message = "Existing",
             Priority = 1
         };
-        var user = new User { UserId = 1, Name = "Test User", Role = "Caregiver" };
+        var user = new User { UserId = 1, Name = "Test User", Role = "Cuidador" };
 
         _userRepoMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(user);
         _mappingRepoMock.Setup(x => x.CountByUserAndEmotionAsync(1, "happy")).ReturnsAsync(1);
@@ -231,7 +231,7 @@ public class EmotionMappingServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Caregiver"));
+            _service.CreateMappingAsync(request, 1, "Cuidador"));
     }
 
     [Fact]
@@ -248,9 +248,9 @@ public class EmotionMappingServiceTests
             Priority = 1
         };
 
-        // Act & Assert - Caregiver trying to create for another user
+        // Act & Assert - Cuidador trying to create for another user
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Caregiver"));
+            _service.CreateMappingAsync(request, 1, "Cuidador"));
     }
     [Fact]
     public async Task CreateMappingAsync_AdminCanCreateForOtherUsers()
@@ -265,7 +265,7 @@ public class EmotionMappingServiceTests
             Message = "Admin created",
             Priority = 1
         };
-        var user = new User { UserId = 2, Name = "Other User", Role = "Caregiver" };
+        var user = new User { UserId = 2, Name = "Other User", Role = "Cuidador" };
 
         _userRepoMock.Setup(x => x.GetByIdAsync(2)).ReturnsAsync(user);
         _mappingRepoMock.Setup(x => x.CountByUserAndEmotionAsync(2, "happy")).ReturnsAsync(0);

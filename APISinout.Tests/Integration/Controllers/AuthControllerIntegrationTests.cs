@@ -31,7 +31,7 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
             Password = "Test@123",
             Phone = "+55 11 99999-9999",
             PatientName = "Patient Test",
-            Role = "Caregiver"
+            Role = "Cuidador"
         };
 
         // Act

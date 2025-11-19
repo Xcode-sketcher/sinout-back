@@ -35,26 +35,26 @@ public class PatientServiceTests
     #region CreatePatient Tests
 
     [Fact]
-    public async Task CreatePatientAsync_AsCaregiver_ShouldCreateForSelf()
+    public async Task CreatePatientAsync_AsCuidador_ShouldCreateForSelf()
     {
         // Arrange
-        var caregiverId = 1;
+        var cuidadorId = 1;
         var request = PatientFixtures.CreateValidPatientRequest();
         
         _mockPatientRepository.Setup(x => x.GetNextPatientIdAsync()).ReturnsAsync(1);
         _mockPatientRepository.Setup(x => x.CreatePatientAsync(It.IsAny<Patient>())).Returns(Task.CompletedTask);
-        _mockUserRepository.Setup(x => x.GetByIdAsync(caregiverId)).ReturnsAsync(UserFixtures.CreateValidUser(caregiverId));
+        _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(UserFixtures.CreateValidUser(cuidadorId));
 
         // Act
-        var result = await _patientService.CreatePatientAsync(request, caregiverId, "Caregiver");
+        var result = await _patientService.CreatePatientAsync(request, cuidadorId, "Cuidador");
 
         // Assert
         result.Should().NotBeNull();
         result.Name.Should().Be(request.Name);
-        result.CaregiverId.Should().Be(caregiverId);
+        result.CuidadorId.Should().Be(cuidadorId);
         
         _mockPatientRepository.Verify(x => x.CreatePatientAsync(It.Is<Patient>(p => 
-            p.CaregiverId == caregiverId &&
+            p.CuidadorId == cuidadorId &&
             p.Name == request.Name &&
             p.Status == true &&
             p.CreatedBy == "self"
@@ -62,33 +62,33 @@ public class PatientServiceTests
     }
 
     [Fact]
-    public async Task CreatePatientAsync_AsAdmin_WithCaregiverId_ShouldCreateForSpecifiedCaregiver()
+    public async Task CreatePatientAsync_AsAdmin_WithCuidadorId_ShouldCreateForSpecifiedCuidador()
     {
         // Arrange
         var adminId = 100;
-        var caregiverId = 1;
-        var request = PatientFixtures.CreateValidPatientRequest(caregiverId);
-        var caregiver = UserFixtures.CreateValidUser(caregiverId);
+        var cuidadorId = 1;
+        var request = PatientFixtures.CreateValidPatientRequest(cuidadorId);
+        var cuidador = UserFixtures.CreateValidUser(cuidadorId);
         
         _mockPatientRepository.Setup(x => x.GetNextPatientIdAsync()).ReturnsAsync(1);
         _mockPatientRepository.Setup(x => x.CreatePatientAsync(It.IsAny<Patient>())).Returns(Task.CompletedTask);
-        _mockUserRepository.Setup(x => x.GetByIdAsync(caregiverId)).ReturnsAsync(caregiver);
+        _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(cuidador);
 
         // Act
         var result = await _patientService.CreatePatientAsync(request, adminId, "Admin");
 
         // Assert
         result.Should().NotBeNull();
-        result.CaregiverId.Should().Be(caregiverId);
+        result.CuidadorId.Should().Be(cuidadorId);
         
         _mockPatientRepository.Verify(x => x.CreatePatientAsync(It.Is<Patient>(p => 
-            p.CaregiverId == caregiverId &&
+            p.CuidadorId == cuidadorId &&
             p.CreatedBy == $"admin_{adminId}"
         )), Times.Once);
     }
 
     [Fact]
-    public async Task CreatePatientAsync_AsAdmin_WithoutCaregiverId_ShouldThrowAppException()
+    public async Task CreatePatientAsync_AsAdmin_WithoutCuidadorId_ShouldThrowAppException()
     {
         // Arrange
         var adminId = 100;
@@ -103,14 +103,14 @@ public class PatientServiceTests
     }
 
     [Fact]
-    public async Task CreatePatientAsync_AsAdmin_WithInvalidCaregiver_ShouldThrowAppException()
+    public async Task CreatePatientAsync_AsAdmin_WithInvalidCuidador_ShouldThrowAppException()
     {
         // Arrange
         var adminId = 100;
-        var invalidCaregiverId = 999;
-        var request = PatientFixtures.CreateValidPatientRequest(invalidCaregiverId);
+        var invalidCuidadorId = 999;
+        var request = PatientFixtures.CreateValidPatientRequest(invalidCuidadorId);
         
-        _mockUserRepository.Setup(x => x.GetByIdAsync(invalidCaregiverId)).ReturnsAsync((User?)null);
+        _mockUserRepository.Setup(x => x.GetByIdAsync(invalidCuidadorId)).ReturnsAsync((User?)null);
 
         // Act
         var act = async () => await _patientService.CreatePatientAsync(request, adminId, "Admin");
@@ -128,7 +128,7 @@ public class PatientServiceTests
         request.Name = "";
 
         // Act
-        var act = async () => await _patientService.CreatePatientAsync(request, 1, "Caregiver");
+        var act = async () => await _patientService.CreatePatientAsync(request, 1, "Cuidador");
 
         // Assert
         await act.Should().ThrowAsync<AppException>()
@@ -143,20 +143,20 @@ public class PatientServiceTests
     public async Task GetPatientByIdAsync_AsOwner_ShouldReturnPatient()
     {
         // Arrange
-        var caregiverId = 1;
-        var patient = PatientFixtures.CreateValidPatient(1, caregiverId);
-        var caregiver = UserFixtures.CreateValidUser(caregiverId);
+        var cuidadorId = 1;
+        var patient = PatientFixtures.CreateValidPatient(1, cuidadorId);
+        var cuidador = UserFixtures.CreateValidUser(cuidadorId);
         
         _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id)).ReturnsAsync(patient);
-        _mockUserRepository.Setup(x => x.GetByIdAsync(caregiverId)).ReturnsAsync(caregiver);
+        _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(cuidador);
 
         // Act
-        var result = await _patientService.GetPatientByIdAsync(patient.Id, caregiverId, "Caregiver");
+        var result = await _patientService.GetPatientByIdAsync(patient.Id, cuidadorId, "Cuidador");
 
         // Assert
         result.Should().NotBeNull();
         result.Id.Should().Be(patient.Id);
-        result.CaregiverName.Should().Be(caregiver.Name);
+        result.CuidadorName.Should().Be(cuidador.Name);
     }
 
     [Fact]
@@ -164,12 +164,12 @@ public class PatientServiceTests
     {
         // Arrange
         var adminId = 100;
-        var caregiverId = 1;
-        var patient = PatientFixtures.CreateValidPatient(1, caregiverId);
-        var caregiver = UserFixtures.CreateValidUser(caregiverId);
+        var cuidadorId = 1;
+        var patient = PatientFixtures.CreateValidPatient(1, cuidadorId);
+        var cuidador = UserFixtures.CreateValidUser(cuidadorId);
         
         _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id)).ReturnsAsync(patient);
-        _mockUserRepository.Setup(x => x.GetByIdAsync(caregiverId)).ReturnsAsync(caregiver);
+        _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(cuidador);
 
         // Act
         var result = await _patientService.GetPatientByIdAsync(patient.Id, adminId, "Admin");
@@ -190,7 +190,7 @@ public class PatientServiceTests
         _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id)).ReturnsAsync(patient);
 
         // Act
-        var act = async () => await _patientService.GetPatientByIdAsync(patient.Id, requestingUserId, "Caregiver");
+        var act = async () => await _patientService.GetPatientByIdAsync(patient.Id, requestingUserId, "Cuidador");
 
         // Assert
         await act.Should().ThrowAsync<AppException>()
@@ -199,25 +199,25 @@ public class PatientServiceTests
 
     #endregion
 
-    #region GetPatientsByCaregiver Tests
+    #region GetPatientsByCuidador Tests
 
     [Fact]
-    public async Task GetPatientsByCaregiverAsync_ShouldReturnAllPatientsForCaregiver()
+    public async Task GetPatientsByCuidadorAsync_ShouldReturnAllPatientsForCuidador()
     {
         // Arrange
-        var caregiverId = 1;
-        var patients = PatientFixtures.CreateMultiplePatients(caregiverId, 3);
-        var caregiver = UserFixtures.CreateValidUser(caregiverId);
+        var cuidadorId = 1;
+        var patients = PatientFixtures.CreateMultiplePatients(cuidadorId, 3);
+        var cuidador = UserFixtures.CreateValidUser(cuidadorId);
         
-        _mockPatientRepository.Setup(x => x.GetByCaregiverIdAsync(caregiverId)).ReturnsAsync(patients);
-        _mockUserRepository.Setup(x => x.GetByIdAsync(caregiverId)).ReturnsAsync(caregiver);
+        _mockPatientRepository.Setup(x => x.GetByCuidadorIdAsync(cuidadorId)).ReturnsAsync(patients);
+        _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(cuidador);
 
         // Act
-        var result = await _patientService.GetPatientsByCaregiverAsync(caregiverId);
+        var result = await _patientService.GetPatientsByCuidadorAsync(cuidadorId);
 
         // Assert
         result.Should().HaveCount(3);
-        result.Should().AllSatisfy(p => p.CaregiverId.Should().Be(caregiverId));
+        result.Should().AllSatisfy(p => p.CuidadorId.Should().Be(cuidadorId));
     }
 
     #endregion
@@ -228,18 +228,18 @@ public class PatientServiceTests
     public async Task UpdatePatientAsync_AsOwner_ShouldUpdatePatient()
     {
         // Arrange
-        var caregiverId = 1;
-        var patient = PatientFixtures.CreateValidPatient(1, caregiverId);
+        var cuidadorId = 1;
+        var patient = PatientFixtures.CreateValidPatient(1, cuidadorId);
         var request = PatientFixtures.CreateValidPatientRequest();
         request.Name = "Nome Atualizado";
-        var caregiver = UserFixtures.CreateValidUser(caregiverId);
+        var cuidador = UserFixtures.CreateValidUser(cuidadorId);
         
         _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id)).ReturnsAsync(patient);
         _mockPatientRepository.Setup(x => x.UpdatePatientAsync(It.IsAny<int>(), It.IsAny<Patient>())).Returns(Task.CompletedTask);
-        _mockUserRepository.Setup(x => x.GetByIdAsync(caregiverId)).ReturnsAsync(caregiver);
+        _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(cuidador);
 
         // Act
-        var result = await _patientService.UpdatePatientAsync(patient.Id, request, caregiverId, "Caregiver");
+        var result = await _patientService.UpdatePatientAsync(patient.Id, request, cuidadorId, "Cuidador");
 
         // Assert
         result.Should().NotBeNull();
@@ -254,14 +254,14 @@ public class PatientServiceTests
     public async Task DeletePatientAsync_AsOwner_ShouldDeletePatient()
     {
         // Arrange
-        var caregiverId = 1;
-        var patient = PatientFixtures.CreateValidPatient(1, caregiverId);
+        var cuidadorId = 1;
+        var patient = PatientFixtures.CreateValidPatient(1, cuidadorId);
         
         _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id)).ReturnsAsync(patient);
         _mockPatientRepository.Setup(x => x.DeletePatientAsync(patient.Id)).Returns(Task.CompletedTask);
 
         // Act
-        await _patientService.DeletePatientAsync(patient.Id, caregiverId, "Caregiver");
+        await _patientService.DeletePatientAsync(patient.Id, cuidadorId, "Cuidador");
 
         // Assert
         _mockPatientRepository.Verify(x => x.DeletePatientAsync(patient.Id), Times.Once);

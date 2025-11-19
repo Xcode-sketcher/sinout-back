@@ -29,8 +29,8 @@ public class User
     [BsonElement("status")] // Se está disponível
     public bool Status { get; set; } // Prato ativo ou não
     
-    [BsonElement("cargo")] // Tipo de perfil: Admin ou Caregiver (ver UserRole enum)
-    public string? Role { get; set; } // Admin, Caregiver (ver UserRole enum)
+    [BsonElement("cargo")] // Tipo de perfil: Admin ou Cuidador (ver UserRole enum)
+    public string? Role { get; set; } // Admin, Cuidador (ver UserRole enum)
     
     [BsonElement("password_hash")]
     public string? PasswordHash { get; set; } // Receita secreta (senha criptografada)

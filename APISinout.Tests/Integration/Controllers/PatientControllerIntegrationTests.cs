@@ -21,26 +21,26 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
         _client = factory.CreateClient();
     }
 
-    private async Task<(string token, int userId)> GetCaregiverTokenAndId()
+    private async Task<(string token, int userId)> GetCuidadorTokenAndId()
     {
-        var caregiverEmail = $"caregiver{Guid.NewGuid()}@test.com";
-        var caregiverPassword = "Caregiver@123";
+        var cuidadorEmail = $"cuidador{Guid.NewGuid()}@test.com";
+        var cuidadorPassword = "Cuidador@123";
         
         var registerRequest = new RegisterRequest
         {
-            Name = "Caregiver User",
-            Email = caregiverEmail,
-            Password = caregiverPassword,
+            Name = "Cuidador User",
+            Email = cuidadorEmail,
+            Password = cuidadorPassword,
             Phone = "+55 11 99999-1002",
-            PatientName = "Caregiver Patient"
+            PatientName = "Cuidador Patient"
         };
 
         await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
 
         var loginRequest = new LoginRequest
         {
-            Email = caregiverEmail,
-            Password = caregiverPassword
+            Email = cuidadorEmail,
+            Password = cuidadorPassword
         };
 
         var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
@@ -49,16 +49,16 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
     }
 
     [Fact]
-    public async Task CreatePatient_AsCaregiver_ShouldReturn201Created()
+    public async Task CreatePatient_AsCuidador_ShouldReturn201Created()
     {
         // Arrange
-        var (token, userId) = await GetCaregiverTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var request = new PatientRequest
         {
             Name = "New Patient",
-            CaregiverId = userId
+            CuidadorId = userId
         };
 
         // Act
@@ -69,7 +69,7 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
         var patient = await response.Content.ReadFromJsonAsync<PatientResponse>();
         patient.Should().NotBeNull();
         patient!.Name.Should().Be("New Patient");
-        patient.CaregiverId.Should().Be(userId);
+        patient.CuidadorId.Should().Be(userId);
     }
 
     // Teste de admin removido
@@ -81,7 +81,7 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
         var request = new PatientRequest
         {
             Name = "Unauthorized Patient",
-            CaregiverId = 1
+            CuidadorId = 1
         };
 
         // Act
@@ -92,17 +92,17 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
     }
 
     [Fact]
-    public async Task GetPatients_AsCaregiver_ShouldReturnOnlyOwnPatients()
+    public async Task GetPatients_AsCuidador_ShouldReturnOnlyOwnPatients()
     {
         // Arrange
-        var (token, userId) = await GetCaregiverTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        // Create a patient for this caregiver
+        // Create a patient for this cuidador
         var createRequest = new PatientRequest
         {
             Name = "Own Patient",
-            CaregiverId = userId
+            CuidadorId = userId
         };
         await _client.PostAsJsonAsync("/api/patients", createRequest);
 
@@ -113,7 +113,7 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var patients = await response.Content.ReadFromJsonAsync<List<PatientResponse>>();
         patients.Should().NotBeNull();
-        patients.Should().AllSatisfy(p => p.CaregiverId.Should().Be(userId));
+        patients.Should().AllSatisfy(p => p.CuidadorId.Should().Be(userId));
     }
 
     // Teste de admin removido
@@ -132,14 +132,14 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetPatientById_AsOwner_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCaregiverTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Create a patient
         var createRequest = new PatientRequest
         {
             Name = "Patient To Get",
-            CaregiverId = userId
+            CuidadorId = userId
         };
         var createResponse = await _client.PostAsJsonAsync("/api/patients", createRequest);
         var createdPatient = await createResponse.Content.ReadFromJsonAsync<PatientResponse>();
@@ -158,20 +158,20 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetPatientById_AsNonOwner_ShouldReturn404NotFound()
     {
         // Arrange
-        var (token1, userId1) = await GetCaregiverTokenAndId();
-        var (token2, _) = await GetCaregiverTokenAndId();
+        var (token1, userId1) = await GetCuidadorTokenAndId();
+        var (token2, _) = await GetCuidadorTokenAndId();
         
-        // Caregiver 1 creates a patient
+        // Cuidador 1 creates a patient
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token1);
         var createRequest = new PatientRequest
         {
             Name = "Private Patient",
-            CaregiverId = userId1
+            CuidadorId = userId1
         };
         var createResponse = await _client.PostAsJsonAsync("/api/patients", createRequest);
         var createdPatient = await createResponse.Content.ReadFromJsonAsync<PatientResponse>();
 
-        // Caregiver 2 tries to access it
+        // Cuidador 2 tries to access it
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token2);
 
         // Act
@@ -184,14 +184,14 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
     // Teste de admin removido
 
     [Fact]
-    public async Task GetPatientsByCaregiver_AsCaregiver_ShouldReturn403Forbidden()
+    public async Task GetPatientsByCuidador_AsCuidador_ShouldReturn403Forbidden()
     {
         // Arrange
-        var (token, _) = await GetCaregiverTokenAndId();
+        var (token, _) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act
-        var response = await _client.GetAsync("/api/patients/caregiver/1");
+        var response = await _client.GetAsync("/api/patients/cuidador/1");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
@@ -201,14 +201,14 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task UpdatePatient_AsOwner_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCaregiverTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Create a patient
         var createRequest = new PatientRequest
         {
             Name = "Patient To Update",
-            CaregiverId = userId
+            CuidadorId = userId
         };
         var createResponse = await _client.PostAsJsonAsync("/api/patients", createRequest);
         var createdPatient = await createResponse.Content.ReadFromJsonAsync<PatientResponse>();
@@ -217,7 +217,7 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
         var updateRequest = new PatientRequest
         {
             Name = "Updated Patient Name",
-            CaregiverId = userId
+            CuidadorId = userId
         };
 
         // Act
@@ -234,25 +234,25 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task UpdatePatient_AsNonOwner_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token1, userId1) = await GetCaregiverTokenAndId();
-        var (token2, userId2) = await GetCaregiverTokenAndId();
+        var (token1, userId1) = await GetCuidadorTokenAndId();
+        var (token2, userId2) = await GetCuidadorTokenAndId();
         
-        // Caregiver 1 creates a patient
+        // Cuidador 1 creates a patient
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token1);
         var createRequest = new PatientRequest
         {
             Name = "Patient To Update",
-            CaregiverId = userId1
+            CuidadorId = userId1
         };
         var createResponse = await _client.PostAsJsonAsync("/api/patients", createRequest);
         var createdPatient = await createResponse.Content.ReadFromJsonAsync<PatientResponse>();
 
-        // Caregiver 2 tries to update it
+        // Cuidador 2 tries to update it
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token2);
         var updateRequest = new PatientRequest
         {
             Name = "Hacked Name",
-            CaregiverId = userId2
+            CuidadorId = userId2
         };
 
         // Act
@@ -266,14 +266,14 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task DeletePatient_AsOwner_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCaregiverTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Create a patient
         var createRequest = new PatientRequest
         {
             Name = "Patient To Delete",
-            CaregiverId = userId
+            CuidadorId = userId
         };
         var createResponse = await _client.PostAsJsonAsync("/api/patients", createRequest);
         var createdPatient = await createResponse.Content.ReadFromJsonAsync<PatientResponse>();
@@ -289,20 +289,20 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task DeletePatient_AsNonOwner_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token1, userId1) = await GetCaregiverTokenAndId();
-        var (token2, _) = await GetCaregiverTokenAndId();
+        var (token1, userId1) = await GetCuidadorTokenAndId();
+        var (token2, _) = await GetCuidadorTokenAndId();
         
-        // Caregiver 1 creates a patient
+        // Cuidador 1 creates a patient
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token1);
         var createRequest = new PatientRequest
         {
             Name = "Patient To Delete",
-            CaregiverId = userId1
+            CuidadorId = userId1
         };
         var createResponse = await _client.PostAsJsonAsync("/api/patients", createRequest);
         var createdPatient = await createResponse.Content.ReadFromJsonAsync<PatientResponse>();
 
-        // Caregiver 2 tries to delete it
+        // Cuidador 2 tries to delete it
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token2);
 
         // Act

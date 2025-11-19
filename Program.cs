@@ -12,11 +12,11 @@ using MongoDB.Driver;
 using BCrypt.Net;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using Microsoft.AspNetCore.Authentication.JwtBearer; // O "Seguran�a" - como um cadeado na porta da cozinha
+using Microsoft.AspNetCore.Authentication.JwtBearer; // O "Segurança" - como um cadeado na porta da cozinha
 using Microsoft.IdentityModel.Tokens;               // Ferramenta do Token - a chave do cadeado
-using System.Text;                                  // Ferramenta de codifica��o - misturar os sabores
-using System.IdentityModel.Tokens.Jwt;              // O "Crach�" (Token) - o crachá do funcionário
-using System.Security.Claims;                       // As "Informa��es" no crach� - nome e cargo
+using System.Text;                                  // Ferramenta de codificação - misturar os sabores
+using System.IdentityModel.Tokens.Jwt;              // O "Crachá" (Token) - o crachá do funcionário
+using System.Security.Claims;                       // As "Informações" no crachá - nome e cargo
 using Microsoft.AspNetCore.Authorization;           // Para trancar rotas - portas trancadas da cozinha
 using APISinout.Data;
 using APISinout.Services;
@@ -26,8 +26,9 @@ using FluentValidation;
 using Scalar.AspNetCore;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
-// --- 2. A CHAVE SECRETA (A GRANDE CORRE��O) ---
+// --- 2. A CHAVE SECRETA (A GRANDE CORREÇÃO) ---
 // Esta é a "receita secreta" da família! Guardamos ela aqui no topo,
 // pois tanto o "Setup" quanto a "Rota de Login" precisam dela.
 // É como a fórmula secreta do molho especial que só o chef sabe.
@@ -131,14 +132,59 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-//Limite básio de taxa de pedidos
-builder.Services.AddRateLimiter(options => {
-    options.AddFixedWindowLimiter("limite-auth", opt =>
+
+// Limite de taxa de pedidos (Rate Limiting)
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // 1. Limite para Autenticação (Login/Register) - Por IP
+    options.AddPolicy("limite-auth", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: partition => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 100,
+                QueueLimit = 0,
+                Window = TimeSpan.FromSeconds(10)
+            }));
+
+    // 2. Limite Geral da API - Por IP (ou Usuário se autenticado)
+    options.AddPolicy("limite-api", context =>
     {
-        opt.AutoReplenishment = true;
-        opt.PermitLimit = 5;
-        opt.QueueLimit = 2;
-        opt.Window = TimeSpan.FromSeconds(10);
+        // Se usuário estiver autenticado, usa o ID, senão usa o IP
+        var partitionKey = context.User.Identity?.IsAuthenticated == true
+            ? context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            : context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: partitionKey!,
+            factory: partition => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 60, // 60 requisições por minuto
+                QueueLimit = 2,
+                Window = TimeSpan.FromMinutes(1)
+            });
+    });
+
+    // 3. Limite para Detecção de Emoções (CuidadorEmotion) - Por Usuário
+    options.AddPolicy("limite-emotion", context =>
+    {
+        var partitionKey = context.User.Identity?.IsAuthenticated == true
+            ? context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            : context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: partitionKey!,
+            factory: partition => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 30, // 30 requisições por minuto (1 a cada 2s em média)
+                QueueLimit = 0,
+                Window = TimeSpan.FromMinutes(1)
+            });
     });
 });
 

@@ -54,8 +54,8 @@ public static class AuthorizationHelper
         return GetCurrentUserRole(user) == UserRole.Admin.ToString();
     }
 
-    public static bool IsCaregiver(ClaimsPrincipal user)
+    public static bool IsCuidador(ClaimsPrincipal user)
     {
-        return GetCurrentUserRole(user) == UserRole.Caregiver.ToString();
+        return GetCurrentUserRole(user) == UserRole.Cuidador.ToString();
     }
 }

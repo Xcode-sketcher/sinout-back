@@ -46,11 +46,11 @@ public class AuthService : IAuthService
             throw new AppException("Email já cadastrado");
 
         // Determinar Role (apenas Admin pode criar outros Admins)
-        var role = string.IsNullOrEmpty(request.Role) ? UserRole.Caregiver.ToString() : request.Role;
-        if (role != UserRole.Admin.ToString() && role != UserRole.Caregiver.ToString())
-            throw new AppException($"Role inválido. Valores permitidos: {UserRole.Admin}, {UserRole.Caregiver}");
+        var role = string.IsNullOrEmpty(request.Role) ? UserRole.Cuidador.ToString() : request.Role;
+        if (role != UserRole.Admin.ToString() && role != UserRole.Cuidador.ToString())
+            throw new AppException($"Role inválido. Valores permitidos: {UserRole.Admin}, {UserRole.Cuidador}");
 
-        // Por segurança, registro público só pode criar Caregiver
+        // Por segurança, registro público só pode criar Cuidador
         // Para criar Admin, deve ser através de endpoint protegido
         if (role == UserRole.Admin.ToString())
             throw new AppException("Não é possível auto-registrar como Admin");
@@ -142,7 +142,7 @@ public class AuthService : IAuthService
         // Garantir que o usuário tenha uma Role definida (igual ao original)
         if (string.IsNullOrEmpty(user.Role))
         {
-            user.Role = UserRole.Caregiver.ToString();
+            user.Role = UserRole.Cuidador.ToString();
         }
 
         // Atualizar último login (igual ao original)
