@@ -21,6 +21,7 @@
 // ============================================================
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using APISinout.Models;
 using APISinout.Services;
@@ -31,6 +32,7 @@ namespace APISinout.Controllers;
 [ApiController]
 [Route("api/history")]
 [Authorize]  // 🔐 Todas as rotas precisam de autenticação
+[EnableRateLimiting("limite-api")] // Limite geral para o controller
 public class HistoryController : ControllerBase
 {
     // 📖 INVENTÁRIO: O livro de registros
@@ -46,7 +48,7 @@ public class HistoryController : ControllerBase
     // 📜 MISSÃO 1: VER HISTÓRICO DE UM USUÁRIO ESPECÍFICO
     // ============================================================
     // Analogia RPG: Ler o diário de um personagem específico!
-    // Admin pode ler qualquer diário, mas Caregiver só pode ler o próprio.
+    // Admin pode ler qualquer diário, mas Cuidador só pode ler o próprio.
     //
     // Parâmetros:
     // - userId: ID do usuário cujo histórico queremos ver
@@ -263,18 +265,19 @@ public class HistoryController : ControllerBase
     // 5. Salva tudo no banco
     // 6. Retorna a mensagem (se houver) para exibir na tela
     // ============================================================
-    [HttpPost("caregiver-emotion")]  // Rota: POST /api/history/caregiver-emotion
-    public async Task<IActionResult> SaveCaregiverEmotion([FromBody] CaregiverEmotionRequest? request)
+    [HttpPost("cuidador-emotion")]  // Rota: POST /api/history/cuidador-emotion
+    [EnableRateLimiting("limite-emotion")] // Limite específico para detecção de emoções
+    public async Task<IActionResult> SaveCuidadorEmotion([FromBody] CuidadorEmotionRequest? request)
     {
         try
         {
             // 🔍 Logs detalhados (para debug)
-            Console.WriteLine($"[DEBUG CONTROLLER] SaveCaregiverEmotion recebido:");
+            Console.WriteLine($"[DEBUG CONTROLLER] SaveCuidadorEmotion recebido:");
             Console.WriteLine($"  Request é null? {request == null}");
             
             if (request != null)
             {
-                Console.WriteLine($"  CaregiverId: {request.CaregiverId}");
+                Console.WriteLine($"  CuidadorId: {request.CuidadorId}");
                 Console.WriteLine($"  PatientName: {request.PatientName}");
                 Console.WriteLine($"  DominantEmotion: {request.DominantEmotion}");
                 Console.WriteLine($"  EmotionsDetected: {request.EmotionsDetected?.Count ?? 0} emoções");
@@ -282,7 +285,7 @@ public class HistoryController : ControllerBase
             }
 
             // ❌ VALIDAÇÃO 1: Request válido?
-            if (request == null || request.CaregiverId == 0)
+            if (request == null || request.CuidadorId == 0)
             {
                 Console.WriteLine($"[DEBUG CONTROLLER] ❌ Request inválido!");
                 return BadRequest(new { sucesso = false, message = "Request vazio ou formato inválido - verifique o JSON" });
@@ -294,9 +297,9 @@ public class HistoryController : ControllerBase
 
             // 🔒 VALIDAÇÃO 2: O cuidador está tentando salvar emoção para si mesmo?
             // (Impedir que alguém salve emoções em nome de outro)
-            if (request.CaregiverId != userId && userRole != "Admin")
+            if (request.CuidadorId != userId && userRole != "Admin")
             {
-                Console.WriteLine($"[DEBUG] Acesso negado: CaregiverId={request.CaregiverId}, userId={userId}, role={userRole}");
+                Console.WriteLine($"[DEBUG] Acesso negado: CuidadorId={request.CuidadorId}, userId={userId}, role={userRole}");
                 return Forbid();  // ❌ Não autorizado!
             }
 
@@ -351,7 +354,7 @@ public class HistoryController : ControllerBase
             { 
                 sucesso = true,
                 message = "Emoção registrada com sucesso",
-                caregiverId = request.CaregiverId,
+                cuidadorId = request.CuidadorId,
                 dominantEmotion = request.DominantEmotion,
                 suggestedMessage = triggeredMessage,  // ⭐ PALAVRA A SER EXIBIDA!
                 timestamp = historyRecord.Timestamp
@@ -376,7 +379,7 @@ public class HistoryController : ControllerBase
 //
 // Exemplo de JSON:
 // {
-//   "caregiverId": 123,
+//   "cuidadorId": 123,
 //   "patientName": "João Silva",
 //   "emotionsDetected": {
 //     "happy": 85.5,
@@ -388,9 +391,9 @@ public class HistoryController : ControllerBase
 //   "timestamp": "2024-11-12T14:30:00Z"
 // }
 // ============================================================
-public class CaregiverEmotionRequest
+public class CuidadorEmotionRequest
 {
-    public int CaregiverId { get; set; }                        // ID do cuidador
+    public int CuidadorId { get; set; }                        // ID do cuidador
     public string? PatientName { get; set; }                    // Nome do paciente
     public Dictionary<string, double>? EmotionsDetected { get; set; }  // Todas as emoções com %
     public string? DominantEmotion { get; set; }                // Emoção dominante

@@ -9,7 +9,7 @@ namespace APISinout.Data;
 public interface IPatientRepository
 {
     Task<Patient?> GetByIdAsync(int id);
-    Task<List<Patient>> GetByCaregiverIdAsync(int caregiverId);
+    Task<List<Patient>> GetByCuidadorIdAsync(int cuidadorId);
     Task<List<Patient>> GetAllAsync();
     Task CreatePatientAsync(Patient patient);
     Task UpdatePatientAsync(int id, Patient patient);
@@ -34,9 +34,9 @@ public class PatientRepository : IPatientRepository
         return await _patients.Find(p => p.Id == id).FirstOrDefaultAsync();
     }
 
-    public async Task<List<Patient>> GetByCaregiverIdAsync(int caregiverId)
+    public async Task<List<Patient>> GetByCuidadorIdAsync(int cuidadorId)
     {
-        return await _patients.Find(p => p.CaregiverId == caregiverId && p.Status).ToListAsync();
+        return await _patients.Find(p => p.CuidadorId == cuidadorId && p.Status).ToListAsync();
     }
 
     public async Task<List<Patient>> GetAllAsync()
@@ -54,7 +54,7 @@ public class PatientRepository : IPatientRepository
         var filter = Builders<Patient>.Filter.Eq(p => p.Id, id);
         var update = Builders<Patient>.Update
             .Set(p => p.Name, patient.Name)
-            .Set(p => p.CaregiverId, patient.CaregiverId)
+            .Set(p => p.CuidadorId, patient.CuidadorId)
             .Set(p => p.Status, patient.Status)
             .Set(p => p.AdditionalInfo, patient.AdditionalInfo)
             .Set(p => p.ProfilePhoto, patient.ProfilePhoto);

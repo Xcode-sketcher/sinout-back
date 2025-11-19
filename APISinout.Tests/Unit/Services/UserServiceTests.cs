@@ -33,7 +33,7 @@ public class UserServiceTests
         var users = new List<User>
         {
             new User { UserId = 1, Name = "User 1", Email = "user1@example.com", Role = "Admin" },
-            new User { UserId = 2, Name = "User 2", Email = "user2@example.com", Role = "Caregiver" }
+            new User { UserId = 2, Name = "User 2", Email = "user2@example.com", Role = "Cuidador" }
         };
         _userRepositoryMock.Setup(x => x.GetAllAsync()).ReturnsAsync(users);
 
@@ -72,7 +72,7 @@ public class UserServiceTests
             UserId = 1,
             Name = "Test User",
             Email = "test@example.com",
-            Role = "Caregiver"
+            Role = "Cuidador"
         };
         _userRepositoryMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(user);
 
@@ -113,7 +113,7 @@ public class UserServiceTests
             UserId = 1,
             Name = "Test User",
             Email = "test@example.com",
-            Role = "Caregiver"
+            Role = "Cuidador"
         };
         _userRepositoryMock.Setup(x => x.GetByEmailAsync("test@example.com")).ReturnsAsync(user);
 
@@ -152,7 +152,7 @@ public class UserServiceTests
             Name = "New User",
             Email = "new@example.com",
             Password = "Password123",
-            Role = "Caregiver"
+            Role = "Cuidador"
         };
         _userRepositoryMock.Setup(x => x.GetNextUserIdAsync()).ReturnsAsync(5);
         _userRepositoryMock.Setup(x => x.CreateUserAsync(It.IsAny<User>())).Returns(Task.CompletedTask);
@@ -164,7 +164,7 @@ public class UserServiceTests
         result.Should().NotBeNull();
         result.Name.Should().Be("New User");
         result.Email.Should().Be("new@example.com");
-        result.Role.Should().Be("Caregiver");
+        result.Role.Should().Be("Cuidador");
         result.UserId.Should().Be(5);
         result.Status.Should().BeTrue();
         result.CreatedBy.Should().Be("admin");
@@ -201,7 +201,7 @@ public class UserServiceTests
             Name = "New User",
             Email = "new@example.com",
             Password = "PlainPassword123",
-            Role = "Caregiver"
+            Role = "Cuidador"
         };
         _userRepositoryMock.Setup(x => x.GetNextUserIdAsync()).ReturnsAsync(1);
         _userRepositoryMock.Setup(x => x.CreateUserAsync(It.IsAny<User>())).Returns(Task.CompletedTask);
@@ -229,7 +229,7 @@ public class UserServiceTests
             Name = "Old Name",
             Email = "old@example.com",
             Status = true,
-            Role = "Caregiver"
+            Role = "Cuidador"
         };
         var updateRequest = new UpdateUserRequest
         {
@@ -263,7 +263,7 @@ public class UserServiceTests
             Name = "Original Name",
             Email = "original@example.com",
             Status = true,
-            Role = "Caregiver"
+            Role = "Cuidador"
         };
         var updateRequest = new UpdateUserRequest
         {
@@ -281,7 +281,7 @@ public class UserServiceTests
             u.Name == "Updated Name" &&
             u.Email == "original@example.com" &&
             u.Status == true &&
-            u.Role == "Caregiver"
+            u.Role == "Cuidador"
         )), Times.Once);
     }
 
@@ -349,8 +349,8 @@ public class UserServiceTests
         var user = new User
         {
             UserId = 1,
-            Name = "Caregiver",
-            Email = "caregiver@example.com",
+            Name = "Cuidador",
+            Email = "cuidador@example.com",
             PatientName = "Old Patient"
         };
         _userRepositoryMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(user);

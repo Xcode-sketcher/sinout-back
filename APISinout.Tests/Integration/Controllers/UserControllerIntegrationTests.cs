@@ -21,26 +21,26 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
         _client = factory.CreateClient();
     }
 
-    private async Task<string> GetCaregiverToken()
+    private async Task<string> GetCuidadorToken()
     {
-        var caregiverEmail = $"caregiver{Guid.NewGuid()}@test.com";
-        var caregiverPassword = "Caregiver@123";
+        var cuidadorEmail = $"cuidador{Guid.NewGuid()}@test.com";
+        var cuidadorPassword = "Cuidador@123";
         
         var registerRequest = new RegisterRequest
         {
-            Name = "Caregiver User",
-            Email = caregiverEmail,
-            Password = caregiverPassword,
+            Name = "Cuidador User",
+            Email = cuidadorEmail,
+            Password = cuidadorPassword,
             Phone = "+55 11 99999-0002",
-            PatientName = "Caregiver Patient"
+            PatientName = "Cuidador Patient"
         };
 
         await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
 
         var loginRequest = new LoginRequest
         {
-            Email = caregiverEmail,
-            Password = caregiverPassword
+            Email = cuidadorEmail,
+            Password = cuidadorPassword
         };
 
         var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
@@ -51,10 +51,10 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
     // Teste de admin removido
 
     [Fact]
-    public async Task GetAll_AsCaregiver_ShouldReturn403Forbidden()
+    public async Task GetAll_AsCuidador_ShouldReturn403Forbidden()
     {
         // Arrange
-        var token = await GetCaregiverToken();
+        var token = await GetCuidadorToken();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act
@@ -78,7 +78,7 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
     public async Task GetCurrentUser_WithValidToken_ShouldReturn200WithUserData()
     {
         // Arrange
-        var token = await GetCaregiverToken();
+        var token = await GetCuidadorToken();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act
@@ -104,10 +104,10 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
     // Teste de admin removido
 
     [Fact]
-    public async Task CreateUser_AsCaregiver_ShouldReturn403Forbidden()
+    public async Task CreateUser_AsCuidador_ShouldReturn403Forbidden()
     {
         // Arrange
-        var token = await GetCaregiverToken();
+        var token = await GetCuidadorToken();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var request = new CreateUserRequest
@@ -115,7 +115,7 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
             Name = "New User",
             Email = $"newuser{Guid.NewGuid()}@test.com",
             Password = "NewUser@123",
-            Role = "Caregiver"
+            Role = "Cuidador"
         };
 
         // Act
@@ -129,7 +129,7 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
     public async Task UpdatePatientName_WithValidData_ShouldReturn200OK()
     {
         // Arrange
-        var token = await GetCaregiverToken();
+        var token = await GetCuidadorToken();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var request = new UpdatePatientNameRequest
@@ -165,14 +165,14 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
     // Teste de admin removido
 
     [Fact]
-    public async Task GetCaregivers_AsCaregiver_ShouldReturn403Forbidden()
+    public async Task GetCuidadores_AsCuidador_ShouldReturn403Forbidden()
     {
         // Arrange
-        var token = await GetCaregiverToken();
+        var token = await GetCuidadorToken();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act
-        var response = await _client.GetAsync("/api/users/caregivers");
+        var response = await _client.GetAsync("/api/users/cuidadores");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);

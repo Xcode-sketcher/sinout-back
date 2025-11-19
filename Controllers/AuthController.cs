@@ -270,7 +270,7 @@ public class AuthController : ControllerBase
                 userId = user.UserId,          // ID numérico do jogador
                 name = user.Name,              // Nome do personagem
                 email = user.Email,            // Email de contato
-                role = user.Role,              // Classe/Cargo (Admin ou Caregiver)
+                role = user.Role,              // Classe/Cargo (Admin ou Cuidador)
                 patientName = user.PatientName, // Nome do paciente vinculado
                 phone = user.Phone             // Telefone de contato
             });

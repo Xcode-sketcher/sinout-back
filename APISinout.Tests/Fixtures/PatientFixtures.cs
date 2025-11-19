@@ -4,13 +4,13 @@ namespace APISinout.Tests.Fixtures;
 
 public static class PatientFixtures
 {
-    public static Patient CreateValidPatient(int id = 1, int caregiverId = 1)
+    public static Patient CreateValidPatient(int id = 1, int cuidadorId = 1)
     {
         return new Patient
         {
             Id = id,
             Name = "Maria Silva",
-            CaregiverId = caregiverId,
+            CuidadorId = cuidadorId,
             DataCadastro = DateTime.UtcNow,
             Status = true,
             AdditionalInfo = "Paciente com ELA",
@@ -19,23 +19,23 @@ public static class PatientFixtures
         };
     }
 
-    public static PatientRequest CreateValidPatientRequest(int? caregiverId = null)
+    public static PatientRequest CreateValidPatientRequest(int? cuidadorId = null)
     {
         return new PatientRequest
         {
             Name = "Maria Silva",
-            CaregiverId = caregiverId,
+            CuidadorId = cuidadorId,
             AdditionalInfo = "Paciente com ELA",
             ProfilePhoto = null
         };
     }
 
-    public static List<Patient> CreateMultiplePatients(int caregiverId, int count = 3)
+    public static List<Patient> CreateMultiplePatients(int cuidadorId, int count = 3)
     {
         var patients = new List<Patient>();
         for (int i = 1; i <= count; i++)
         {
-            var patient = CreateValidPatient(i, caregiverId);
+            var patient = CreateValidPatient(i, cuidadorId);
             patient.Name = $"Paciente {i}";
             patients.Add(patient);
         }

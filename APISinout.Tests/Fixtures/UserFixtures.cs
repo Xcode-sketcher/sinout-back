@@ -4,7 +4,7 @@ namespace APISinout.Tests.Fixtures;
 
 public static class UserFixtures
 {
-    public static User CreateValidUser(int userId = 1, string role = "Caregiver")
+    public static User CreateValidUser(int userId = 1, string role = "Cuidador")
     {
         return new User
         {
@@ -44,7 +44,7 @@ public static class UserFixtures
             Password = "Test@123",
             Phone = "+55 11 99999-9999",
             PatientName = "Maria Silva",
-            Role = "Caregiver"
+            Role = "Cuidador"
         };
     }
 

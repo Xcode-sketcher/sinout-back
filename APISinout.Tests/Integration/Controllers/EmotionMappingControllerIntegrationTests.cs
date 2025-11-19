@@ -21,26 +21,26 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         _client = factory.CreateClient();
     }
 
-    private async Task<(string token, int userId)> GetCaregiverTokenAndId()
+    private async Task<(string token, int userId)> GetCuidadorTokenAndId()
     {
-        var caregiverEmail = $"caregiver{Guid.NewGuid()}@test.com";
-        var caregiverPassword = "Caregiver@123";
+        var cuidadorEmail = $"cuidador{Guid.NewGuid()}@test.com";
+        var cuidadorPassword = "Cuidador@123";
         
         var registerRequest = new RegisterRequest
         {
-            Name = "Caregiver User",
-            Email = caregiverEmail,
-            Password = caregiverPassword,
+            Name = "Cuidador User",
+            Email = cuidadorEmail,
+            Password = cuidadorPassword,
             Phone = "+55 11 99999-3002",
-            PatientName = "Caregiver Patient"
+            PatientName = "Cuidador Patient"
         };
 
         await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
 
         var loginRequest = new LoginRequest
         {
-            Email = caregiverEmail,
-            Password = caregiverPassword
+            Email = cuidadorEmail,
+            Password = cuidadorPassword
         };
 
         var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
@@ -52,7 +52,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task CreateMapping_WithValidData_ShouldReturn201Created()
     {
         // Arrange
-        var (token, userId) = await GetCaregiverTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var request = new EmotionMappingRequest
@@ -80,7 +80,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task CreateMapping_WithoutUserId_ShouldUseCurrentUser()
     {
         // Arrange
-        var (token, _) = await GetCaregiverTokenAndId();
+        var (token, _) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var request = new EmotionMappingRequest
@@ -126,7 +126,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task CreateMapping_ExceedingLimit_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token, userId) = await GetCaregiverTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Create first mapping
@@ -175,7 +175,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task GetMyMappings_WithValidToken_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCaregiverTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Create a mapping first
@@ -214,7 +214,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task GetMappingsByUser_AsOwner_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCaregiverTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Create a mapping first
@@ -244,8 +244,8 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task GetMappingsByUser_AsNonOwner_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token1, _) = await GetCaregiverTokenAndId();
-        var (_, userId2) = await GetCaregiverTokenAndId();
+        var (token1, _) = await GetCuidadorTokenAndId();
+        var (_, userId2) = await GetCuidadorTokenAndId();
         
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token1);
 
@@ -260,7 +260,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task UpdateMapping_AsOwner_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCaregiverTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Create a mapping
@@ -301,10 +301,10 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task UpdateMapping_AsNonOwner_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token1, userId1) = await GetCaregiverTokenAndId();
-        var (token2, _) = await GetCaregiverTokenAndId();
+        var (token1, userId1) = await GetCuidadorTokenAndId();
+        var (token2, _) = await GetCuidadorTokenAndId();
         
-        // Caregiver 1 creates a mapping
+        // Cuidador 1 creates a mapping
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token1);
         var createRequest = new EmotionMappingRequest
         {
@@ -320,7 +320,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         var createdMapping = await createResponse.Content.ReadFromJsonAsync<EmotionMappingResponse>();
         createdMapping.Should().NotBeNull();
 
-        // Caregiver 2 tries to update it
+        // Cuidador 2 tries to update it
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token2);
         var updateRequest = new EmotionMappingRequest
         {
@@ -343,7 +343,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task DeleteMapping_AsOwner_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCaregiverTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Create a mapping
@@ -372,10 +372,10 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task DeleteMapping_AsNonOwner_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token1, userId1) = await GetCaregiverTokenAndId();
-        var (token2, _) = await GetCaregiverTokenAndId();
+        var (token1, userId1) = await GetCuidadorTokenAndId();
+        var (token2, _) = await GetCuidadorTokenAndId();
         
-        // Caregiver 1 creates a mapping
+        // Cuidador 1 creates a mapping
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token1);
         var createRequest = new EmotionMappingRequest
         {
@@ -391,7 +391,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         var createdMapping = await createResponse.Content.ReadFromJsonAsync<EmotionMappingResponse>();
         createdMapping.Should().NotBeNull();
 
-        // Caregiver 2 tries to delete it
+        // Cuidador 2 tries to delete it
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token2);
 
         // Act
@@ -407,7 +407,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task CreateMapping_WithInvalidPriority_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token, userId) = await GetCaregiverTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var request = new EmotionMappingRequest
@@ -431,7 +431,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task CreateMapping_WithInvalidPercentage_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token, userId) = await GetCaregiverTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var request = new EmotionMappingRequest

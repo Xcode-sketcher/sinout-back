@@ -18,7 +18,7 @@ public class Patient
     public string? Name { get; set; } // Nome do paciente
     
     [BsonElement("id_cuidador")]
-    public int CaregiverId { get; set; } // ID do usuário cuidador responsável
+    public int CuidadorId { get; set; } // ID do usuário cuidador responsável
     
     [BsonElement("data_cadastro")]
     public DateTime DataCadastro { get; set; } // Quando foi cadastrado
@@ -40,7 +40,7 @@ public class Patient
 public class PatientRequest
 {
     public string? Name { get; set; }
-    public int? CaregiverId { get; set; } // Opcional se for self-registration
+    public int? CuidadorId { get; set; } // Opcional se for self-registration
     public string? AdditionalInfo { get; set; }
     public string? ProfilePhoto { get; set; }
 }
@@ -50,8 +50,8 @@ public class PatientResponse
 {
     public int Id { get; set; }
     public string? Name { get; set; }
-    public int CaregiverId { get; set; }
-    public string? CaregiverName { get; set; } // Nome do cuidador
+    public int CuidadorId { get; set; }
+    public string? CuidadorName { get; set; } // Nome do cuidador
     public DateTime DataCadastro { get; set; }
     public bool Status { get; set; }
     public string? AdditionalInfo { get; set; }
@@ -61,12 +61,12 @@ public class PatientResponse
     // Construtor sem parâmetros para desserialização JSON
     public PatientResponse() { }
 
-    public PatientResponse(Patient patient, string? caregiverName = null)
+    public PatientResponse(Patient patient, string? cuidadorName = null)
     {
         Id = patient.Id;
         Name = patient.Name;
-        CaregiverId = patient.CaregiverId;
-        CaregiverName = caregiverName;
+        CuidadorId = patient.CuidadorId;
+        CuidadorName = cuidadorName;
         DataCadastro = patient.DataCadastro;
         Status = patient.Status;
         AdditionalInfo = patient.AdditionalInfo;

@@ -24,9 +24,9 @@ public class UpdateUserRequest
 }
 
 // Receita: Registrar emoção do cuidador (vinda da API de Processamento)
-public class CaregiverEmotionRequest
+public class CuidadorEmotionRequest
 {
-    public int CaregiverId { get; set; } // ID do cuidador (userId)
+    public int CuidadorId { get; set; } // ID do cuidador (userId)
     public string? PatientName { get; set; } // Nome do paciente (campo de texto)
     public DateTime? Timestamp { get; set; } // Quando a emoção foi detectada
     public Dictionary<string, double>? EmotionsDetected { get; set; } // Todas as emoções detectadas

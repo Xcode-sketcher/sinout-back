@@ -60,7 +60,7 @@ public class AuthServiceTests
             u.Name == request.Name &&
             u.Email == request.Email.ToLower().Trim() &&
             u.Status == true &&
-            u.Role == "Caregiver"
+            u.Role == "Cuidador"
         )), Times.Once);
     }
 

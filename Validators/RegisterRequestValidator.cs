@@ -41,8 +41,8 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
 
         // Regra: Role deve ser válido
         RuleFor(x => x.Role)
-            .Must(r => string.IsNullOrEmpty(r) || r == UserRole.Admin.ToString() || r == UserRole.Caregiver.ToString())
-            .WithMessage($"Role inválido. Valores permitidos: {UserRole.Admin}, {UserRole.Caregiver}")
+            .Must(r => string.IsNullOrEmpty(r) || r == UserRole.Admin.ToString() || r == UserRole.Cuidador.ToString())
+            .WithMessage($"Role inválido. Valores permitidos: {UserRole.Admin}, {UserRole.Cuidador}")
             .When(x => !string.IsNullOrEmpty(x.Role));
     }
 }

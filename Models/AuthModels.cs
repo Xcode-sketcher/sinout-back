@@ -13,7 +13,7 @@ public class RegisterRequest
     public string? Password { get; set; } // Senha
     public string? Phone { get; set; } // Telefone (opcional)
     public string? PatientName { get; set; } // Nome do paciente (opcional)
-    public string? Role { get; set; } // Admin ou Caregiver (default: Caregiver)
+    public string? Role { get; set; } // Admin ou Cuidador (default: Cuidador)
 }
 
 // Ingrediente: Pedido de login (como verificar se o ingrediente está bom)
@@ -40,7 +40,7 @@ public class UserResponse
     public string? Email { get; set; } // Email
     public DateTime DataCadastro { get; set; } // Data de cadastro
     public bool Status { get; set; } // Se está ativo
-    public string? Role { get; set; } // Admin ou Caregiver
+    public string? Role { get; set; } // Admin ou Cuidador
     public string? Phone { get; set; } // Telefone
     public DateTime? LastLogin { get; set; } // Último login
 
