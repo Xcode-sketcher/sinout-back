@@ -1,50 +1,78 @@
-// --- MODELOS DE AUTENTICAÇÃO: OS INGREDIENTES BÁSICOS ---
-// Analogia da cozinha: Estes são os "ingredientes básicos" para as receitas de autenticação!
-// Como farinha, ovos e leite são essenciais para fazer um bolo, estes modelos são essenciais
-// para registrar usuários e fazer login.
-
 namespace APISinout.Models;
 
-// Ingrediente: Pedido de registro (como uma lista de compras para o chef)
+// Representa uma solicitação de registro de usuário.
 public class RegisterRequest
 {
-    public string? Name { get; set; } // Nome do usuário
-    public string? Email { get; set; } // Email único
-    public string? Password { get; set; } // Senha
-    public string? Phone { get; set; } // Telefone (opcional)
-    public string? PatientName { get; set; } // Nome do paciente (opcional)
-    public string? Role { get; set; } // Admin ou Cuidador (default: Cuidador)
+    // Nome do usuário.
+    public string? Name { get; set; }
+
+    // Email único do usuário.
+    public string? Email { get; set; }
+
+    // Senha do usuário.
+    public string? Password { get; set; }
+
+    // Telefone do usuário (opcional).
+    public string? Phone { get; set; }
+
+    // Nome do paciente associado (opcional).
+    public string? PatientName { get; set; }
+
+    // Papel do usuário: Admin ou Cuidador (padrão: Cuidador).
+    public string? Role { get; set; }
 }
 
-// Ingrediente: Pedido de login (como verificar se o ingrediente está bom)
+// Representa uma solicitação de login.
 public class LoginRequest
 {
-    public string? Email { get; set; } // Identificar o lote
-    public string? Password { get; set; } // Verificar frescor
+    // Email do usuário para identificação.
+    public string? Email { get; set; }
+
+    // Senha do usuário.
+    public string? Password { get; set; }
 }
 
-// Prato pronto: Resposta de autenticação (como servir o prato completo)
+// Representa a resposta de autenticação.
 public class AuthResponse
 {
-    public UserResponse? User { get; set; } // O prato principal
-    public string? Token { get; set; } // O certificado de qualidade
+    // Dados do usuário autenticado.
+    public UserResponse? User { get; set; }
+
+    // Token de autenticação JWT.
+    public string? Token { get; set; }
 }
 
-// Apresentação do prato: Resposta do usuário (como decorar o prato para servir)
+// Representa a resposta com dados do usuário.
 public class UserResponse
 {
-    // Default constructor to support JSON deserialization
+    // Construtor padrão para desserialização JSON.
     public UserResponse() { }
-    public int UserId { get; set; } // ID numérico do usuário
-    public string? Name { get; set; } // Nome
-    public string? Email { get; set; } // Email
-    public DateTime DataCadastro { get; set; } // Data de cadastro
-    public bool Status { get; set; } // Se está ativo
-    public string? Role { get; set; } // Admin ou Cuidador
-    public string? Phone { get; set; } // Telefone
-    public DateTime? LastLogin { get; set; } // Último login
 
-    // Construtor: Como montar o usuário para apresentação
+    // ID numérico do usuário.
+    public int UserId { get; set; }
+
+    // Nome do usuário.
+    public string? Name { get; set; }
+
+    // Email do usuário.
+    public string? Email { get; set; }
+
+    // Data de cadastro do usuário.
+    public DateTime DataCadastro { get; set; }
+
+    // Indica se o usuário está ativo.
+    public bool Status { get; set; }
+
+    // Papel do usuário: Admin ou Cuidador.
+    public string? Role { get; set; }
+
+    // Telefone do usuário.
+    public string? Phone { get; set; }
+
+    // Data do último login.
+    public DateTime? LastLogin { get; set; }
+
+    // Construtor que inicializa a partir de um objeto User.
     public UserResponse(User user)
     {
         UserId = user.UserId;
@@ -58,8 +86,9 @@ public class UserResponse
     }
 }
 
-// Request para reenviar código de reset (novo endpoint)
+// Representa uma solicitação para reenviar código de reset de senha.
 public class ResendResetCodeRequest
 {
+    // Email do usuário.
     public string Email { get; set; } = string.Empty;
 }

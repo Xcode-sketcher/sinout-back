@@ -1,11 +1,9 @@
-// --- VALIDADOR DE MAPEAMENTO DE EMOÇÕES ---
-// Validações rigorosas para regras de mapeamento
-
 using FluentValidation;
 using APISinout.Models;
 
 namespace APISinout.Validators;
 
+// Validador para requisições de mapeamento de emoções
 public class EmotionMappingRequestValidator : AbstractValidator<EmotionMappingRequest>
 {
     private readonly string[] _validEmotions = { "happy", "sad", "angry", "fear", "surprise", "neutral", "disgust" };

@@ -1,6 +1,3 @@
-// --- SERVIÇO DE REDEFINIÇÃO DE SENHA ---
-// Gerencia solicitação e validação de tokens para reset de senha
-
 using APISinout.Models;
 using APISinout.Data;
 using APISinout.Helpers;
@@ -8,11 +5,29 @@ using System.Security.Cryptography;
 
 namespace APISinout.Services;
 
+/// <summary>
+/// Interface para o serviço de redefinição de senha.
+/// </summary>
 public interface IPasswordResetService
 {
+    /// <summary>
+    /// Solicita a redefinição de senha.
+    /// </summary>
     Task<MessageResponse> RequestPasswordResetAsync(ForgotPasswordRequest request);
+
+    /// <summary>
+    /// Reenvia o código de redefinição.
+    /// </summary>
     Task<MessageResponse> ResendResetCodeAsync(ResendResetCodeRequest request);
+
+    /// <summary>
+    /// Redefine a senha.
+    /// </summary>
     Task<MessageResponse> ResetPasswordAsync(ResetPasswordRequest request);
+
+    /// <summary>
+    /// Altera a senha.
+    /// </summary>
     Task<MessageResponse> ChangePasswordAsync(ChangePasswordRequest request, int userId);
 }
 
@@ -38,6 +53,7 @@ public class PasswordResetService : IPasswordResetService
         _logger = logger;
     }
 
+    // Solicita a redefinição de senha.
     public async Task<MessageResponse> RequestPasswordResetAsync(ForgotPasswordRequest request)
     {
         if (string.IsNullOrEmpty(request.Email))
@@ -100,6 +116,7 @@ public class PasswordResetService : IPasswordResetService
         return new MessageResponse("Se o email existir, você receberá um código para redefinir sua senha");
     }
 
+    // Reenvia o código de redefinição.
     public async Task<MessageResponse> ResendResetCodeAsync(ResendResetCodeRequest request)
     {
         if (string.IsNullOrEmpty(request.Email))
@@ -169,6 +186,7 @@ public class PasswordResetService : IPasswordResetService
         return new MessageResponse("Código reenviado. Verifique seu email.");
     }
 
+    // Redefine a senha.
     public async Task<MessageResponse> ResetPasswordAsync(ResetPasswordRequest request)
     {
         if (string.IsNullOrEmpty(request.Token))
@@ -217,6 +235,7 @@ public class PasswordResetService : IPasswordResetService
         return new MessageResponse("Senha redefinida com sucesso");
     }
 
+    // Altera a senha.
     public async Task<MessageResponse> ChangePasswordAsync(ChangePasswordRequest request, int userId)
     {
         if (string.IsNullOrEmpty(request.CurrentPassword))

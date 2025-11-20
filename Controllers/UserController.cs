@@ -1,19 +1,3 @@
-// ============================================================
-// 👥 CONTROLADOR DE USUÁRIOS - O GERENCIADOR DE PERSONAGENS
-// ============================================================
-// Analogia RPG: Este é o "Livro de Heróis" do jogo!
-// Aqui gerenciamos todos os personagens (usuários) que existem no sistema.
-// Admin é como o "Game Master" - pode criar, editar e remover personagens.
-// Usuários comuns só podem ver seu próprio perfil.
-//
-// Analogia da Cozinha: É o "Cadastro de Funcionários"!
-// Admin é o gerente que contrata/demite, e funcionários normais só veem sua própria ficha.
-//
-// Permissões:
-// - 👑 Admin: Pode fazer TUDO (criar, editar, deletar qualquer usuário)
-// - 👤 Cuidador: Só pode ver o próprio perfil e atualizar nome do paciente
-// ============================================================
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
@@ -23,55 +7,40 @@ using APISinout.Helpers;
 
 namespace APISinout.Controllers;
 
-[Authorize]  // 🔐 Todos os endpoints precisam de autenticação
+[Authorize]
 [EnableRateLimiting("limite-api")]
 [ApiController]
 [Route("api/users")]
 public class UserController : ControllerBase
 {
-    // 📚 INVENTÁRIO: O livro de gerenciamento
     private readonly IUserService _userService;
 
-    // 🏗️ CONSTRUTOR
+    // Construtor que injeta o serviço de usuários.
     public UserController(IUserService userService)
     {
         _userService = userService;
     }
 
-    // ============================================================
-    // 📋 MISSÃO 1: LISTAR TODOS OS USUÁRIOS (APENAS ADMIN)
-    // ============================================================
-    // Analogia RPG: Ver a lista completa de heróis no jogo!
-    // Só o Game Master (Admin) pode ver todos os personagens.
-    // ============================================================
-    [Authorize(Roles = "Admin")]  // 👑 SÓ ADMIN
-    [HttpGet]  // Rota: GET /api/users
+    // Método para listar todos os usuários (apenas admin).
+    [Authorize(Roles = "Admin")]
+    [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        // 📜 Buscar todos os usuários e retornar em formato simplificado
         var users = await _userService.GetAllAsync();
         return Ok(users.Select(u => new UserResponse(u)));
     }
 
-    // ============================================================
-    // ✨ MISSÃO 2: CRIAR NOVO USUÁRIO (APENAS ADMIN)
-    // ============================================================
-    // Analogia RPG: Criar novo personagem no jogo!
-    // Admin pode criar tanto Admin quanto Cuidador.
-    // É como o Game Master adicionando um novo NPC ou jogador.
-    // ============================================================
-    [Authorize(Roles = "Admin")]  // 👑 SÓ ADMIN
-    [HttpPost]  // Rota: POST /api/users
+    // Método para criar novo usuário (apenas admin).
+    [Authorize(Roles = "Admin")]
+    [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateUserRequest request)
     {
         try
         {
-            // 🎫 Quem está criando este usuário?
             var creatorEmail = AuthorizationHelper.GetCurrentUserEmail(User);
             if (creatorEmail == null)
                 return Unauthorized();
 
-            // ✨ Criar o usuário
             var user = await _userService.CreateUserAsync(request, creatorEmail);
             return CreatedAtAction(nameof(GetById), new { id = user.Id }, new UserResponse(user));
         }
@@ -81,13 +50,8 @@ public class UserController : ControllerBase
         }
     }
 
-    // ============================================================
-    // 👤 MISSÃO 3: VER MEU PRÓPRIO PERFIL
-    // ============================================================
-    // Analogia RPG: Abrir a "Ficha do Personagem"!
-    // Qualquer usuário pode ver seu próprio perfil.
-    // ============================================================
-    [HttpGet("me")]  // Rota: GET /api/users/me
+    // Método para obter perfil do usuário logado.
+    [HttpGet("me")]
     public async Task<IActionResult> GetCurrentUser()
     {
         try
@@ -102,14 +66,9 @@ public class UserController : ControllerBase
         }
     }
 
-    // ============================================================
-    // 🔍 MISSÃO 4: VER PERFIL DE USUÁRIO ESPECÍFICO (APENAS ADMIN)
-    // ============================================================
-    // Analogia RPG: Inspecionar ficha de outro personagem!
-    // Só o Game Master pode olhar fichas de outros jogadores.
-    // ============================================================
-    [Authorize(Roles = "Admin")]  // 👑 SÓ ADMIN
-    [HttpGet("{id}")]  // Rota: GET /api/users/123
+    // Método para obter usuário por ID (apenas admin).
+    [Authorize(Roles = "Admin")]
+    [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
         try
@@ -123,14 +82,9 @@ public class UserController : ControllerBase
         }
     }
 
-    // ============================================================
-    // ✏️ MISSÃO 5: ATUALIZAR USUÁRIO (APENAS ADMIN)
-    // ============================================================
-    // Analogia RPG: Editar atributos de um personagem!
-    // Admin pode mudar nome, email, status (ativo/inativo), cargo, etc.
-    // ============================================================
-    [Authorize(Roles = "Admin")]  // 👑 SÓ ADMIN
-    [HttpPut("{id}")]  // Rota: PUT /api/users/123
+    // Método para atualizar usuário (apenas admin).
+    [Authorize(Roles = "Admin")]
+    [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateUserRequest request)
     {
         try
@@ -144,15 +98,9 @@ public class UserController : ControllerBase
         }
     }
 
-    // ============================================================
-    // 🗑️ MISSÃO 6: DELETAR USUÁRIO (APENAS ADMIN) - SOFT DELETE
-    // ============================================================
-    // Analogia RPG: "Desativar" personagem (não apagar completamente)!
-    // É um soft delete - marca como inativo, mas mantém no banco.
-    // Como colocar o personagem "fora de jogo" sem apagar seu histórico.
-    // ============================================================
-    [Authorize(Roles = "Admin")]  // 👑 SÓ ADMIN
-    [HttpDelete("{id}")]  // Rota: DELETE /api/users/123
+    // Método para deletar usuário (apenas admin, soft delete).
+    [Authorize(Roles = "Admin")]
+    [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
         try
@@ -166,26 +114,15 @@ public class UserController : ControllerBase
         }
     }
 
-    // ============================================================
-    // 📝 MISSÃO 7: ATUALIZAR NOME DO PACIENTE (QUALQUER USUÁRIO AUTENTICADO)
-    // ============================================================
-    // Analogia RPG: Dar nome ao "NPC Companheiro"!
-    // Cada Cuidador pode dar/mudar o nome do paciente que está cuidando.
-    // É como personalizar o nome do seu "pet" ou "companheiro" no jogo.
-    //
-    // Diferente das outras rotas, esta é acessível a qualquer usuário autenticado,
-    // não só Admin. Cuidadores podem atualizar o nome do próprio paciente.
-    // ============================================================
-    [HttpPost("update-patient-name")]  // Rota: POST /api/users/update-patient-name
+    // Método para atualizar nome do paciente.
+    [HttpPost("update-patient-name")]
     public async Task<IActionResult> UpdatePatientName([FromBody] UpdatePatientNameRequest request)
     {
         try
         {
-            // 🎫 Quem está atualizando?
             var userId = AuthorizationHelper.GetCurrentUserId(User);
             Console.WriteLine($"[UserController] Atualizando nome do paciente para UserId={userId}, Nome='{request.PatientName}'");
-            
-            // ✏️ Atualizar o nome
+
             await _userService.UpdatePatientNameAsync(userId, request.PatientName);
             return Ok(new { message = "Nome do paciente atualizado com sucesso" });
         }
@@ -196,18 +133,11 @@ public class UserController : ControllerBase
         }
     }
 
-    // ============================================================
-    // 👨‍⚕️ MISSÃO 8: LISTAR TODOS OS CUIDADORES (APENAS ADMIN)
-    // ============================================================
-    // Analogia RPG: Ver lista de todos os "Healers" (Curandeiros)!
-    // Filtra a lista de usuários para mostrar apenas os Cuidadores.
-    // Útil para Admin ver todos os cuidadores cadastrados.
-    // ============================================================
-    [Authorize(Roles = "Admin")]  // 👑 SÓ ADMIN
-    [HttpGet("cuidadores")]  // Rota: GET /api/users/cuidadores
+    // Método para listar todos os cuidadores (apenas admin).
+    [Authorize(Roles = "Admin")]
+    [HttpGet("cuidadores")]
     public async Task<IActionResult> GetAllCuidadores()
     {
-        // 📜 Buscar todos e filtrar apenas Cuidadores
         var users = await _userService.GetAllAsync();
         var cuidadores = users.Where(u => u.Role == UserRole.Cuidador.ToString()).Select(u => new UserResponse(u));
         return Ok(cuidadores);

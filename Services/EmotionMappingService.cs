@@ -1,19 +1,42 @@
-// --- SERVIÇO DE MAPEAMENTO DE EMOÇÕES: REGRAS DE COMUNICAÇÃO ---
-// Gerencia mapeamentos entre emoções e mensagens com limite de 2 por emoção
-
 using APISinout.Models;
 using APISinout.Data;
 using APISinout.Helpers;
 
 namespace APISinout.Services;
 
+/// <summary>
+/// Interface para o serviço de mapeamento de emoções.
+/// </summary>
 public interface IEmotionMappingService
 {
+    /// <summary>
+    /// Cria um novo mapeamento de emoção.
+    /// </summary>
     Task<EmotionMappingResponse> CreateMappingAsync(EmotionMappingRequest request, int currentUserId, string currentUserRole);
+
+    /// <summary>
+    /// Obtém os mapeamentos de emoção de um usuário.
+    /// </summary>
     Task<List<EmotionMappingResponse>> GetMappingsByUserAsync(int userId, int currentUserId, string currentUserRole);
+
+    /// <summary>
+    /// Atualiza um mapeamento de emoção.
+    /// </summary>
     Task<EmotionMappingResponse> UpdateMappingAsync(string id, EmotionMappingRequest request, int currentUserId, string currentUserRole);
+
+    /// <summary>
+    /// Exclui um mapeamento de emoção.
+    /// </summary>
     Task DeleteMappingAsync(string id, int currentUserId, string currentUserRole);
+
+    /// <summary>
+    /// Encontra a mensagem correspondente para uma emoção e percentual.
+    /// </summary>
     Task<string?> FindMatchingMessageAsync(int userId, string emotion, double percentage);
+
+    /// <summary>
+    /// Encontra a regra correspondente (mensagem e ID) para uma emoção e percentual.
+    /// </summary>
     Task<(string? message, string? ruleId)> FindMatchingRuleAsync(int userId, string emotion, double percentage);
 }
 
@@ -34,6 +57,7 @@ public class EmotionMappingService : IEmotionMappingService
         _userRepository = userRepository;
     }
 
+    // Cria um novo mapeamento de emoção.
     public async Task<EmotionMappingResponse> CreateMappingAsync(EmotionMappingRequest request, int currentUserId, string currentUserRole)
     {
         Console.WriteLine($"[DEBUG] Criando mapeamento: Emotion={request.Emotion}, Intensity={request.IntensityLevel}, MinPerc={request.MinPercentage}, Priority={request.Priority}, UserId={request.UserId}, CurrentUserId={currentUserId}");
@@ -98,6 +122,7 @@ public class EmotionMappingService : IEmotionMappingService
         return new EmotionMappingResponse(mapping, user.Name);
     }
 
+    // Obtém os mapeamentos de emoção de um usuário.
     public async Task<List<EmotionMappingResponse>> GetMappingsByUserAsync(int userId, int currentUserId, string currentUserRole)
     {
         // Verificar permissão
@@ -112,6 +137,7 @@ public class EmotionMappingService : IEmotionMappingService
         return mappings.Select(m => new EmotionMappingResponse(m, user.Name)).ToList();
     }
 
+    // Atualiza um mapeamento de emoção.
     public async Task<EmotionMappingResponse> UpdateMappingAsync(string id, EmotionMappingRequest request, int currentUserId, string currentUserRole)
     {
         var mapping = await _mappingRepository.GetByIdAsync(id);
@@ -155,6 +181,9 @@ public class EmotionMappingService : IEmotionMappingService
         return new EmotionMappingResponse(mapping, user?.Name);
     }
 
+    /// <summary>
+    /// Exclui um mapeamento de emoção.
+    /// </summary>
     public async Task DeleteMappingAsync(string id, int currentUserId, string currentUserRole)
     {
         var mapping = await _mappingRepository.GetByIdAsync(id);
@@ -168,14 +197,14 @@ public class EmotionMappingService : IEmotionMappingService
         await _mappingRepository.DeleteMappingAsync(id);
     }
 
-    // Encontrar mensagem correspondente baseado na emoção e percentual
+    // Encontra a mensagem correspondente para uma emoção e percentual.
     public async Task<string?> FindMatchingMessageAsync(int userId, string emotion, double percentage)
     {
         var result = await FindMatchingRuleAsync(userId, emotion, percentage);
         return result.message;
     }
 
-    // Encontrar regra correspondente (mensagem + ID) baseado na emoção e percentual
+    // Encontra a regra correspondente (mensagem e ID) para uma emoção e percentual.
     public async Task<(string? message, string? ruleId)> FindMatchingRuleAsync(int userId, string emotion, double percentage)
     {
         var mappings = await _mappingRepository.GetByUserAndEmotionAsync(userId, emotion.ToLower());

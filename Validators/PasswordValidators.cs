@@ -1,11 +1,9 @@
-// --- VALIDADOR DE REDEFINIÇÃO DE SENHA ---
-// Validações para redefinição e alteração de senha
-
 using FluentValidation;
 using APISinout.Models;
 
 namespace APISinout.Validators;
 
+// Validador para requisições de esquecimento de senha
 public class ForgotPasswordRequestValidator : AbstractValidator<ForgotPasswordRequest>
 {
     public ForgotPasswordRequestValidator()
@@ -16,6 +14,7 @@ public class ForgotPasswordRequestValidator : AbstractValidator<ForgotPasswordRe
     }
 }
 
+// Validador para requisições de redefinição de senha
 public class ResetPasswordRequestValidator : AbstractValidator<ResetPasswordRequest>
 {
     public ResetPasswordRequestValidator()
@@ -37,6 +36,7 @@ public class ResetPasswordRequestValidator : AbstractValidator<ResetPasswordRequ
     }
 }
 
+// Validador para requisições de alteração de senha
 public class ChangePasswordRequestValidator : AbstractValidator<ChangePasswordRequest>
 {
     public ChangePasswordRequestValidator()

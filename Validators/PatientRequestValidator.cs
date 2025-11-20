@@ -1,11 +1,9 @@
-// --- VALIDADOR DE PACIENTE ---
-// Validações rigorosas para criação e atualização de pacientes
-
 using FluentValidation;
 using APISinout.Models;
 
 namespace APISinout.Validators;
 
+// Validador para requisições de paciente
 public class PatientRequestValidator : AbstractValidator<PatientRequest>
 {
     public PatientRequestValidator()

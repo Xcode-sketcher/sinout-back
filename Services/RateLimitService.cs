@@ -1,14 +1,25 @@
-// --- SERVIÇO DE RATE LIMITING ---
-// Previne spam de emails controlando tentativas por email
-
 using System.Collections.Concurrent;
 
 namespace APISinout.Services;
 
+/// <summary>
+/// Interface para o serviço de rate limiting.
+/// </summary>
 public interface IRateLimitService
 {
+    /// <summary>
+    /// Verifica se a chave está rate limited.
+    /// </summary>
     bool IsRateLimited(string key, int maxAttempts = 3, int windowMinutes = 15);
+
+    /// <summary>
+    /// Registra uma tentativa para a chave.
+    /// </summary>
     void RecordAttempt(string key);
+
+    /// <summary>
+    /// Limpa as tentativas para a chave.
+    /// </summary>
     void ClearAttempts(string key);
 }
 
@@ -22,6 +33,7 @@ public class RateLimitService : IRateLimitService
         _logger = logger;
     }
 
+    // Verifica se a chave está rate limited.
     public bool IsRateLimited(string key, int maxAttempts = 3, int windowMinutes = 15)
     {
         var now = DateTime.UtcNow;
@@ -48,6 +60,7 @@ public class RateLimitService : IRateLimitService
         return isLimited;
     }
 
+    // Registra uma tentativa para a chave.
     public void RecordAttempt(string key)
     {
         _attempts.AddOrUpdate(
@@ -62,6 +75,7 @@ public class RateLimitService : IRateLimitService
         _logger.LogInformation($"[RateLimit] Tentativa registrada para: {key}");
     }
 
+    // Limpa as tentativas para a chave.
     public void ClearAttempts(string key)
     {
         _attempts.TryRemove(key, out _);

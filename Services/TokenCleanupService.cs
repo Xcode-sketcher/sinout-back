@@ -1,10 +1,8 @@
-// --- SERVIÇO DE LIMPEZA AUTOMÁTICA DE TOKENS EXPIRADOS ---
-// Background Service que roda a cada hora para limpar tokens antigos do banco
-
 using APISinout.Data;
 
 namespace APISinout.Services;
 
+// Serviço de limpeza automática de tokens expirados.
 public class TokenCleanupService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
@@ -19,6 +17,7 @@ public class TokenCleanupService : BackgroundService
         _logger = logger;
     }
 
+    // Executa a limpeza de tokens expirados periodicamente.
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("[TokenCleanup] Serviço de limpeza de tokens iniciado");
@@ -38,6 +37,7 @@ public class TokenCleanupService : BackgroundService
         }
     }
 
+    // Limpa os tokens expirados do banco de dados.
     private async Task CleanupExpiredTokensAsync()
     {
         using var scope = _serviceProvider.CreateScope();

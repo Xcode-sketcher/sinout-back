@@ -1,9 +1,7 @@
-// --- ENUM DE ROLES DE USUÁRIO: CONSTANTES PARA PERFIS ---
-// Analogia da cozinha: Como os "ingredientes padrão" que sempre usamos!
-// Define os tipos de perfil disponíveis no sistema de forma centralizada.
-
 namespace APISinout.Models;
 
+// Enumeração dos papéis de usuário disponíveis no sistema.
+// Define os tipos de perfil: Admin ou Cuidador.
 public enum UserRole
 {
     Admin,
