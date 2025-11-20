@@ -1,8 +1,3 @@
-// --- CONTEXTO DO MONGODB: O MAPA DO JOGO ---
-// Analogia de jogo: O MongoDbContext é como o "mapa principal" do jogo!
-// Ele define onde estão todas as "regiões" (coleções) e como se conectar ao mundo (banco de dados).
-// Sem o mapa, os jogadores se perdem!
-
 using MongoDB.Driver;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson;
@@ -10,21 +5,21 @@ using APISinout.Models;
 
 namespace APISinout.Data;
 
+// Contexto para acesso ao MongoDB.
+// Gerencia a conexão com o banco de dados e configurações de mapeamento.
 public class MongoDbContext
 {
-    // A "conexão mágica" com o mundo do jogo
     private readonly IMongoDatabase _database;
 
-    // Construtor: Como abrir o mapa e se conectar ao servidor
+    // Construtor que inicializa a conexão com o MongoDB.
     public MongoDbContext(IConfiguration config)
     {
         var client = new MongoClient(config["MongoDb:ConnectionString"]);
         _database = client.GetDatabase(config["MongoDb:DatabaseName"]);
-        
-        // Configurar mapeamentos para compatibilidade
+
         ConfigureMappings();
     }
-    
+
     private void ConfigureMappings()
     {
         // Configurar mapeamento personalizado para User
@@ -32,8 +27,8 @@ public class MongoDbContext
         {
             BsonClassMap.RegisterClassMap<User>(cm =>
             {
-                cm.MapIdProperty(u => u.Id); // _id como ObjectId
-                cm.MapProperty(u => u.UserId).SetElementName("id_usuario"); // ID numérico sequencial
+                cm.MapIdProperty(u => u.Id);
+                cm.MapProperty(u => u.UserId).SetElementName("id_usuario");
                 cm.MapProperty(u => u.Name).SetElementName("nome");
                 cm.MapProperty(u => u.Email).SetElementName("email");
                 cm.MapProperty(u => u.DataCadastro).SetElementName("data_cadastro");
@@ -45,14 +40,13 @@ public class MongoDbContext
                 cm.MapProperty(u => u.Phone).SetElementName("telefone");
                 cm.MapProperty(u => u.UpdatedAt).SetElementName("data_atualizacao");
                 cm.MapProperty(u => u.PatientName).SetElementName("nome_paciente");
-                
-                // Permitir campos extras sem erro
+
                 cm.SetIgnoreExtraElements(true);
             });
         }
     }
 
-    // As "regiões" do mapa: onde ficam os dados do sistema
+    // Coleções do banco de dados.
     public IMongoCollection<User> Users => _database.GetCollection<User>("usuarios");
     public IMongoCollection<Counter> Counters => _database.GetCollection<Counter>("contadores");
     public IMongoCollection<Patient> Patients => _database.GetCollection<Patient>("pacientes");

@@ -1,11 +1,9 @@
-// --- REPOSITÓRIO DE HISTÓRICO ---
-// Gerencia o histórico de análises faciais e emoções detectadas
-
 using MongoDB.Driver;
 using APISinout.Models;
 
 namespace APISinout.Data;
 
+// Interface para operações de repositório de histórico.
 public interface IHistoryRepository
 {
     Task<HistoryRecord?> GetByIdAsync(string id);
@@ -16,26 +14,30 @@ public interface IHistoryRepository
     Task<PatientStatistics> GetUserStatisticsAsync(int userId, int hours = 24);
 }
 
+// Implementação do repositório de histórico usando MongoDB.
 public class HistoryRepository : IHistoryRepository
 {
     private readonly IMongoCollection<HistoryRecord> _history;
 
+    // Construtor que injeta o contexto do MongoDB.
     public HistoryRepository(MongoDbContext context)
     {
         _history = context.HistoryRecords;
     }
 
-    // Construtor para testes unitários
+    // Construtor para testes unitários.
     public HistoryRepository(IMongoCollection<HistoryRecord> historyCollection)
     {
         _history = historyCollection;
     }
 
+    // Obtém registro de histórico por ID.
     public async Task<HistoryRecord?> GetByIdAsync(string id)
     {
         return await _history.Find(h => h.Id == id).FirstOrDefaultAsync();
     }
 
+    // Obtém registros de histórico por ID do usuário.
     public async Task<List<HistoryRecord>> GetByUserIdAsync(int userId, int hours = 24)
     {
         var cutoffTime = DateTime.UtcNow.AddHours(-hours);
@@ -44,6 +46,7 @@ public class HistoryRepository : IHistoryRepository
             .ToListAsync();
     }
 
+    // Obtém registros de histórico por filtro.
     public async Task<List<HistoryRecord>> GetByFilterAsync(HistoryFilter filter)
     {
         var builder = Builders<HistoryRecord>.Filter;
@@ -78,6 +81,7 @@ public class HistoryRepository : IHistoryRepository
             .ToListAsync();
     }
 
+    // Cria um novo registro de histórico.
     public async Task CreateRecordAsync(HistoryRecord record)
     {
         Console.WriteLine($"[DEBUG REPO] Inserindo no MongoDB - UserId: {record.UserId}, Emotion: {record.DominantEmotion}");
@@ -93,12 +97,14 @@ public class HistoryRepository : IHistoryRepository
         }
     }
 
+    // Remove registros antigos de histórico.
     public async Task DeleteOldRecordsAsync(int hours = 24)
     {
         var cutoffTime = DateTime.UtcNow.AddHours(-hours);
         await _history.DeleteManyAsync(h => h.Timestamp < cutoffTime);
     }
 
+    // Obtém estatísticas do usuário.
     public async Task<PatientStatistics> GetUserStatisticsAsync(int userId, int hours = 24)
     {
         var cutoffTime = DateTime.UtcNow.AddHours(-hours);
@@ -160,6 +166,7 @@ public class HistoryRepository : IHistoryRepository
         return stats;
     }
 
+    // Calcula médias de emoções.
     private Dictionary<string, double> CalculateAverageEmotions(List<HistoryRecord> records)
     {
         var emotionSums = new Dictionary<string, List<double>>();
