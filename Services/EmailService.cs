@@ -1,15 +1,16 @@
-// --- SERVIÇO DE EMAIL ---
-// Responsável por enviar emails de redefinição de senha
-
 using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Configuration;
 
 namespace APISinout.Services;
 
+/// <summary>Interface para o serviço de email</summary>
 public interface IEmailService
 {
+    /// <summary>Envia email de redefinição de senha</summary>
     Task SendPasswordResetEmailAsync(string toEmail, string resetCode);
+
+    /// <summary>Envia notificação de senha alterada</summary>
     Task SendPasswordChangedNotificationAsync(string toEmail);
 }
 
@@ -29,7 +30,6 @@ public class EmailService : IEmailService
         _configuration = configuration;
         _logger = logger;
         
-        // Prioridade: Variáveis de Ambiente > appsettings.Development.json > appsettings.json
         _smtpServer = Environment.GetEnvironmentVariable("EMAIL__SMTPSERVER") 
             ?? _configuration["Email:SmtpServer"] ?? "smtp.gmail.com";
         _smtpPort = int.Parse(Environment.GetEnvironmentVariable("EMAIL__SMTPPORT") 
@@ -46,13 +46,13 @@ public class EmailService : IEmailService
             _smtpServer, _smtpPort, string.IsNullOrEmpty(_smtpUsername) ? "NÃO CONFIGURADO" : _smtpUsername);
     }
 
+    // Método para enviar email de redefinição de senha
     public async Task SendPasswordResetEmailAsync(string toEmail, string resetCode)
     {
         try
         {
             _logger.LogInformation("[EmailService] Preparando email de reset para {Email}", toEmail);
 
-            // Validar configurações
             if (string.IsNullOrEmpty(_smtpUsername) || string.IsNullOrEmpty(_smtpPassword))
             {
                 _logger.LogWarning("[EmailService] MODO DEV: Credenciais de email não configuradas");
@@ -75,13 +75,13 @@ public class EmailService : IEmailService
         }
     }
 
+    // Método para enviar notificação de senha alterada
     public async Task SendPasswordChangedNotificationAsync(string toEmail)
     {
         try
         {
             _logger.LogInformation("[EmailService] Enviando notificação de senha alterada para {Email}", toEmail);
 
-            // Validar configurações
             if (string.IsNullOrEmpty(_smtpUsername) || string.IsNullOrEmpty(_smtpPassword))
             {
                 _logger.LogWarning("[EmailService] MODO DEV: Email de notificação não enviado (credenciais não configuradas)");

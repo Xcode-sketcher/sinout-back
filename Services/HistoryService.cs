@@ -1,13 +1,44 @@
-// --- SERVIÇO DE HISTÓRICO E ESTATÍSTICAS ---
-// Gerencia histórico de análises e gera estatísticas para o dashboard
-
 using APISinout.Models;
 using APISinout.Data;
 using APISinout.Helpers;
 
 namespace APISinout.Services;
 
+/// <summary>
+/// Interface para o serviço de histórico.
+/// </summary>
 public interface IHistoryService
+{
+    /// <summary>
+    /// Obtém o histórico de um usuário.
+    /// </summary>
+    Task<List<HistoryRecordResponse>> GetHistoryByUserAsync(int userId, int currentUserId, string currentUserRole, int hours = 24);
+
+    /// <summary>
+    /// Obtém o histórico por filtro.
+    /// </summary>
+    Task<List<HistoryRecordResponse>> GetHistoryByFilterAsync(HistoryFilter filter, int currentUserId, string currentUserRole);
+
+    /// <summary>
+    /// Obtém as estatísticas de um usuário.
+    /// </summary>
+    Task<PatientStatistics> GetUserStatisticsAsync(int userId, int currentUserId, string currentUserRole, int hours = 24);
+
+    /// <summary>
+    /// Limpa o histórico antigo.
+    /// </summary>
+    Task CleanOldHistoryAsync(int hours = 24);
+
+    /// <summary>
+    /// Cria um registro de histórico.
+    /// </summary>
+    Task CreateHistoryRecordAsync(HistoryRecord record);
+}
+
+/// <summary>
+/// Implementação do serviço de histórico.
+/// </summary>
+public class HistoryService : IHistoryService
 {
     Task<List<HistoryRecordResponse>> GetHistoryByUserAsync(int userId, int currentUserId, string currentUserRole, int hours = 24);
     Task<List<HistoryRecordResponse>> GetHistoryByFilterAsync(HistoryFilter filter, int currentUserId, string currentUserRole);
@@ -27,6 +58,9 @@ public class HistoryService : IHistoryService
         _userRepository = userRepository;
     }
 
+    /// <summary>
+    /// Obtém o histórico de um usuário.
+    /// </summary>
     public async Task<List<HistoryRecordResponse>> GetHistoryByUserAsync(int userId, int currentUserId, string currentUserRole, int hours = 24)
     {
         // Verificar permissão
@@ -41,6 +75,9 @@ public class HistoryService : IHistoryService
         return records.Select(r => new HistoryRecordResponse(r, user.Name)).ToList();
     }
 
+    /// <summary>
+    /// Obtém o histórico por filtro.
+    /// </summary>
     public async Task<List<HistoryRecordResponse>> GetHistoryByFilterAsync(HistoryFilter filter, int currentUserId, string currentUserRole)
     {
         // Se não for Admin, só pode ver histórico próprio
@@ -61,6 +98,9 @@ public class HistoryService : IHistoryService
         return responses;
     }
 
+    /// <summary>
+    /// Obtém as estatísticas de um usuário.
+    /// </summary>
     public async Task<PatientStatistics> GetUserStatisticsAsync(int userId, int currentUserId, string currentUserRole, int hours = 24)
     {
         // Verificar permissão
@@ -77,11 +117,17 @@ public class HistoryService : IHistoryService
         return stats;
     }
 
+    /// <summary>
+    /// Limpa o histórico antigo.
+    /// </summary>
     public async Task CleanOldHistoryAsync(int hours = 24)
     {
         await _historyRepository.DeleteOldRecordsAsync(hours);
     }
 
+    /// <summary>
+    /// Cria um registro de histórico.
+    /// </summary>
     public async Task CreateHistoryRecordAsync(HistoryRecord record)
     {
         Console.WriteLine($"[DEBUG SERVICE] CreateHistoryRecordAsync chamado - UserId: {record.UserId}");
