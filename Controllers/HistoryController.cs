@@ -98,6 +98,13 @@ public class HistoryController : ControllerBase
             // 📖 Buscar histórico próprio
             var history = await _historyService.GetHistoryByUserAsync(userId, userId, userRole, hours);
             Console.WriteLine($"[DEBUG] Histórico recuperado: {history.Count} registros");
+            if( history.Count == 0 )
+            {
+                return NotFound("Histórico não encontrado");
+            }
+            if (hours < 24) {
+                return BadRequest("Histórico deve ter pelo menos 24 horas");
+            }
             return Ok(history);
         }
         catch (AppException ex)
@@ -200,6 +207,12 @@ public class HistoryController : ControllerBase
             // 📊 Calcular estatísticas
             var stats = await _historyService.GetUserStatisticsAsync(userId, userId, userRole, hours);
             Console.WriteLine($"[DEBUG] Estatísticas recuperadas");
+            if(stats.TotalAnalyses == 0) {
+                return NotFound("Estatísticas não encontradas");
+            }
+            if(hours < 24) {
+                return BadRequest("Estatísticas devem ter pelo menos 24 horas");
+            }
             return Ok(stats);
         }
         catch (AppException ex)

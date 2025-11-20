@@ -21,7 +21,7 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
         _client = factory.CreateClient();
     }
 
-    private async Task<(string token, int userId)> GetCuidadorTokenAndId()
+    private async Task<(string? token, int userId)> GetCuidadorTokenAndId()
     {
         var cuidadorEmail = $"cuidador{Guid.NewGuid()}@test.com";
         var cuidadorPassword = "Cuidador@123";
@@ -45,15 +45,28 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
 
         var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
         var authResponse = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
-        return (authResponse!.Token, authResponse.User.UserId);
+        authResponse.Should().NotBeNull();
+        authResponse!.User.Should().NotBeNull();
+        return ((authResponse.Token ?? throw new InvalidOperationException("Token not found")), authResponse!.User!.UserId);
     }
 
     [Fact]
     public async Task GetMyHistory_WithValidToken_ShouldReturn200OK()
     {
         // Arrange
-        var (token, _) = await GetCuidadorTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Seed data
+        var request = new
+        {
+            cuidadorId = userId,
+            patientName = "Test Patient",
+            dominantEmotion = "happy",
+            emotionsDetected = new Dictionary<string, double> { { "happy", 0.9 } },
+            timestamp = DateTime.UtcNow
+        };
+        await _client.PostAsJsonAsync("/api/history/cuidador-emotion", request);
 
         // Act
         var response = await _client.GetAsync("/api/history/my-history?hours=24");
@@ -78,8 +91,19 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetMyHistory_WithCustomHours_ShouldReturn200OK()
     {
         // Arrange
-        var (token, _) = await GetCuidadorTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Seed data
+        var request = new
+        {
+            cuidadorId = userId,
+            patientName = "Test Patient",
+            dominantEmotion = "happy",
+            emotionsDetected = new Dictionary<string, double> { { "happy", 0.9 } },
+            timestamp = DateTime.UtcNow
+        };
+        await _client.PostAsJsonAsync("/api/history/cuidador-emotion", request);
 
         // Act
         var response = await _client.GetAsync("/api/history/my-history?hours=48");
@@ -89,6 +113,44 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
         var history = await response.Content.ReadFromJsonAsync<List<HistoryRecord>>();
         history.Should().NotBeNull();
     }
+    [Fact]
+    public async Task GetMyHistory_WithCustomHours_ShouldReturn400BadRequest()
+    {
+        // Arrange
+        var (token, userId) = await GetCuidadorTokenAndId();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Seed data to avoid NotFound
+        var request = new
+        {
+            cuidadorId = userId,
+            patientName = "Test Patient",
+            dominantEmotion = "happy",
+            emotionsDetected = new Dictionary<string, double> { { "happy", 0.9 } },
+            timestamp = DateTime.UtcNow
+        };
+        await _client.PostAsJsonAsync("/api/history/cuidador-emotion", request);
+
+        // Act
+        var response = await _client.GetAsync("/api/history/my-history?hours=12");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task GetMyHistory_WithCustomHours_ShouldReturn404NotFound()
+    {
+        // Arrange
+        var (token, _) = await GetCuidadorTokenAndId();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.GetAsync("/api/history/my-history?hours=24");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
 
     [Fact]
     public async Task GetHistoryByUser_AsOwner_ShouldReturn200OK()
@@ -96,6 +158,17 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
         // Arrange
         var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Seed data
+        var request = new
+        {
+            cuidadorId = userId,
+            patientName = "Test Patient",
+            dominantEmotion = "happy",
+            emotionsDetected = new Dictionary<string, double> { { "happy", 0.9 } },
+            timestamp = DateTime.UtcNow
+        };
+        await _client.PostAsJsonAsync("/api/history/cuidador-emotion", request);
 
         // Act
         var response = await _client.GetAsync($"/api/history/user/{userId}?hours=24");
@@ -128,8 +201,19 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetMyStatistics_WithValidToken_ShouldReturn200OK()
     {
         // Arrange
-        var (token, _) = await GetCuidadorTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Seed data
+        var request = new
+        {
+            cuidadorId = userId,
+            patientName = "Test Patient",
+            dominantEmotion = "happy",
+            emotionsDetected = new Dictionary<string, double> { { "happy", 0.9 } },
+            timestamp = DateTime.UtcNow
+        };
+        await _client.PostAsJsonAsync("/api/history/cuidador-emotion", request);
 
         // Act
         var response = await _client.GetAsync("/api/history/statistics/my-stats?hours=24");
@@ -154,8 +238,19 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetMyStatistics_WithCustomHours_ShouldReturn200OK()
     {
         // Arrange
-        var (token, _) = await GetCuidadorTokenAndId();
+        var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Seed data
+        var request = new
+        {
+            cuidadorId = userId,
+            patientName = "Test Patient",
+            dominantEmotion = "happy",
+            emotionsDetected = new Dictionary<string, double> { { "happy", 0.9 } },
+            timestamp = DateTime.UtcNow
+        };
+        await _client.PostAsJsonAsync("/api/history/cuidador-emotion", request);
 
         // Act
         var response = await _client.GetAsync("/api/history/statistics/my-stats?hours=72");
@@ -165,6 +260,43 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
         var stats = await response.Content.ReadFromJsonAsync<object>();
         stats.Should().NotBeNull();
     }
+    [Fact]
+    public async Task GetMyStatistics_WithCustomHours_ShouldReturn400BadRequest()
+    {
+        // Arrange
+        var (token, userId) = await GetCuidadorTokenAndId();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Seed data to avoid NotFound
+        var request = new
+        {
+            cuidadorId = userId,
+            patientName = "Test Patient",
+            dominantEmotion = "happy",
+            emotionsDetected = new Dictionary<string, double> { { "happy", 0.9 } },
+            timestamp = DateTime.UtcNow
+        };
+        await _client.PostAsJsonAsync("/api/history/cuidador-emotion", request);
+
+        // Act
+        var response = await _client.GetAsync("/api/history/statistics/my-stats?hours=12");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+    [Fact]
+    public async Task GetMyStatistics_WithCustomHours_ShouldReturn404NotFound()
+    {
+        // Arrange
+        var (token, _) = await GetCuidadorTokenAndId();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.GetAsync("/api/history/statistics/my-stats?hours=24");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
 
     [Fact]
     public async Task GetUserStatistics_AsOwner_ShouldReturn200OK()
@@ -172,6 +304,17 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
         // Arrange
         var (token, userId) = await GetCuidadorTokenAndId();
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Seed data
+        var request = new
+        {
+            cuidadorId = userId,
+            patientName = "Test Patient",
+            dominantEmotion = "happy",
+            emotionsDetected = new Dictionary<string, double> { { "happy", 0.9 } },
+            timestamp = DateTime.UtcNow
+        };
+        await _client.PostAsJsonAsync("/api/history/cuidador-emotion", request);
 
         // Act
         var response = await _client.GetAsync($"/api/history/statistics/user/{userId}?hours=24");

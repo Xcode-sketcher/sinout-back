@@ -26,7 +26,7 @@ namespace APISinout.Tests.Unit.Data
         [Fact]
         public async Task CreateRecordAsync_ShouldInsertRecord()
         {
-            // Arrange
+            // Arrange - Configura registro para teste de inserção
             var record = new HistoryRecord { Id = "1", UserId = 1, DominantEmotion = "happy" };
 
             // Act
@@ -39,7 +39,7 @@ namespace APISinout.Tests.Unit.Data
         [Fact]
         public async Task GetByIdAsync_ShouldReturnRecord_WhenRecordExists()
         {
-            // Arrange
+            // Arrange - Configura mock para retornar registro existente
             var record = new HistoryRecord { Id = "1", UserId = 1 };
             var mockCursor = MockCursor(new List<HistoryRecord> { record });
 
@@ -60,7 +60,7 @@ namespace APISinout.Tests.Unit.Data
         [Fact]
         public async Task GetByIdAsync_ShouldReturnNull_WhenRecordDoesNotExist()
         {
-            // Arrange
+            // Arrange - Configura mock para retornar lista vazia
             var mockCursor = MockCursor(new List<HistoryRecord>());
 
             _mockCollection.Setup(c => c.FindAsync(
@@ -79,7 +79,7 @@ namespace APISinout.Tests.Unit.Data
         [Fact]
         public async Task GetByUserIdAsync_ShouldReturnRecords()
         {
-            // Arrange
+            // Arrange - Configura mock com registros para usuário específico
             var records = new List<HistoryRecord> 
             { 
                 new HistoryRecord { Id = "1", UserId = 1, Timestamp = DateTime.UtcNow },
@@ -103,6 +103,8 @@ namespace APISinout.Tests.Unit.Data
         [Fact]
         public async Task DeleteOldRecordsAsync_ShouldDeleteRecords()
         {
+            // Arrange - Configura cenário para exclusão de registros antigos
+
             // Act
             await _repository.DeleteOldRecordsAsync(24);
 
@@ -115,7 +117,7 @@ namespace APISinout.Tests.Unit.Data
         [Fact]
         public async Task GetUserStatisticsAsync_ShouldReturnCorrectStatistics()
         {
-            // Arrange
+            // Arrange - Configura mock com múltiplos registros para cálculo de estatísticas
             var records = new List<HistoryRecord> 
             { 
                 new HistoryRecord 
@@ -169,7 +171,7 @@ namespace APISinout.Tests.Unit.Data
         [Fact]
         public async Task GetByFilterAsync_ShouldReturnFilteredRecords()
         {
-            // Arrange
+            // Arrange - Configura filtro para buscar registros por emoção dominante
             var filter = new HistoryFilter 
             { 
                 PatientId = 1, 
@@ -195,13 +197,13 @@ namespace APISinout.Tests.Unit.Data
 
             // Assert
             Assert.Single(result);
-            Assert.Equal("happy", result[0].DominantEmotion);
+            Assert.Equal("happy", result[0]!.DominantEmotion!);
         }
 
         [Fact]
         public async Task GetByFilterAsync_ShouldApplyMultipleFilters()
         {
-            // Arrange
+            // Arrange - Configura filtro múltiplo com data e mensagem
             var filter = new HistoryFilter 
             { 
                 PatientId = 1, 

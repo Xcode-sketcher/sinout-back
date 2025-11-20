@@ -1,0 +1,15 @@
+  Determinando os projetos a serem restaurados...
+  Todos os projetos estão atualizados para restauração.
+C:\Users\Eduar\Downloads\PROA\sinout-back\Controllers\HistoryController.cs(105,25): error CS1061: ‘List<HistoryRecordResponse>’ não contém uma definição para "hours" e não foi possível encontrar nenhum método de extensão "hours" que aceite um primeiro argumento do tipo ‘List<HistoryRecordResponse>’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?) [C:\Users\Eduar\Downloads\PROA\sinout-back\APISinout.csproj]
+C:\Users\Eduar\Downloads\PROA\sinout-back\Controllers\HistoryController.cs(210,22): error CS1061: ‘PatientStatistics’ não contém uma definição para "Count" e não foi possível encontrar nenhum método de extensão "Count" que aceite um primeiro argumento do tipo ‘PatientStatistics’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?) [C:\Users\Eduar\Downloads\PROA\sinout-back\APISinout.csproj]
+C:\Users\Eduar\Downloads\PROA\sinout-back\Controllers\HistoryController.cs(213,22): error CS1061: ‘PatientStatistics’ não contém uma definição para "hours" e não foi possível encontrar nenhum método de extensão "hours" que aceite um primeiro argumento do tipo ‘PatientStatistics’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?) [C:\Users\Eduar\Downloads\PROA\sinout-back\APISinout.csproj]
+
+FALHA da compilação.
+
+C:\Users\Eduar\Downloads\PROA\sinout-back\Controllers\HistoryController.cs(105,25): error CS1061: ‘List<HistoryRecordResponse>’ não contém uma definição para "hours" e não foi possível encontrar nenhum método de extensão "hours" que aceite um primeiro argumento do tipo ‘List<HistoryRecordResponse>’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?) [C:\Users\Eduar\Downloads\PROA\sinout-back\APISinout.csproj]
+C:\Users\Eduar\Downloads\PROA\sinout-back\Controllers\HistoryController.cs(210,22): error CS1061: ‘PatientStatistics’ não contém uma definição para "Count" e não foi possível encontrar nenhum método de extensão "Count" que aceite um primeiro argumento do tipo ‘PatientStatistics’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?) [C:\Users\Eduar\Downloads\PROA\sinout-back\APISinout.csproj]
+C:\Users\Eduar\Downloads\PROA\sinout-back\Controllers\HistoryController.cs(213,22): error CS1061: ‘PatientStatistics’ não contém uma definição para "hours" e não foi possível encontrar nenhum método de extensão "hours" que aceite um primeiro argumento do tipo ‘PatientStatistics’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?) [C:\Users\Eduar\Downloads\PROA\sinout-back\APISinout.csproj]
+    0 Aviso(s)
+    3 Erro(s)
+
+Tempo Decorrido 00:00:01.59

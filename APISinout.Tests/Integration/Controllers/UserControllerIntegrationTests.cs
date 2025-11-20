@@ -45,7 +45,8 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
 
         var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
         var authResponse = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
-        return authResponse!.Token;
+        authResponse.Should().NotBeNull();
+        return authResponse!.Token ?? throw new InvalidOperationException("Token not found");
     }
 
     // Teste de admin removido

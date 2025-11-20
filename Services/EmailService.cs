@@ -124,7 +124,7 @@ public class EmailService : IEmailService
         await smtpClient.SendMailAsync(mailMessage);
     }
 
-    private string GeneratePasswordResetEmailBody(string resetCode)
+    internal string GeneratePasswordResetEmailBody(string resetCode)
     {
         return $@"
 <!DOCTYPE html>
@@ -209,7 +209,7 @@ public class EmailService : IEmailService
 </html>";
     }
 
-    private string GeneratePasswordChangedEmailBody()
+    internal string GeneratePasswordChangedEmailBody()
     {
         return $@"
 <!DOCTYPE html>

@@ -26,7 +26,7 @@ public class RegisterRequestValidatorTests
     [Fact]
     public async Task Validate_WithValidName_ShouldPass()
     {
-        // Arrange
+        // Arrange - Configura requisição de registro válida
         var request = UserFixtures.CreateValidRegisterRequest();
 
         // Act
@@ -39,7 +39,7 @@ public class RegisterRequestValidatorTests
     [Fact]
     public async Task Validate_WithEmptyName_ShouldFail()
     {
-        // Arrange
+        // Arrange - Configura nome vazio para teste de validação
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Name = "";
 
@@ -54,7 +54,7 @@ public class RegisterRequestValidatorTests
     [Fact]
     public async Task Validate_WithNameTooShort_ShouldFail()
     {
-        // Arrange
+        // Arrange - Configura nome muito curto para teste de validação
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Name = "Jo";
 
@@ -72,7 +72,7 @@ public class RegisterRequestValidatorTests
     [InlineData("José da Silva")]
     public async Task Validate_WithValidNameVariations_ShouldPass(string name)
     {
-        // Arrange
+        // Arrange - Configura variações válidas de nome para teste
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Name = name;
 
@@ -90,7 +90,7 @@ public class RegisterRequestValidatorTests
     [Fact]
     public async Task Validate_WithEmptyEmail_ShouldFail()
     {
-        // Arrange
+        // Arrange - Configura email vazio para teste de validação
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Email = "";
 
@@ -108,7 +108,7 @@ public class RegisterRequestValidatorTests
     [InlineData("@invalid.com")]
     public async Task Validate_WithInvalidEmail_ShouldFail(string email)
     {
-        // Arrange
+        // Arrange - Configura emails inválidos para teste de validação
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Email = email;
 
@@ -126,7 +126,7 @@ public class RegisterRequestValidatorTests
     [InlineData("user+tag@example.co.uk")]
     public async Task Validate_WithValidEmail_ShouldPass(string email)
     {
-        // Arrange
+        // Arrange - Configura emails válidos para teste
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Email = email;
 
@@ -144,7 +144,7 @@ public class RegisterRequestValidatorTests
     [Fact]
     public async Task Validate_WithEmptyPassword_ShouldFail()
     {
-        // Arrange
+        // Arrange - Configura senha vazia para teste de validação
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Password = "";
 
@@ -159,7 +159,7 @@ public class RegisterRequestValidatorTests
     [Fact]
     public async Task Validate_WithPasswordTooShort_ShouldFail()
     {
-        // Arrange
+        // Arrange - Configura senha muito curta para teste de validação
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Password = "Test@1";
 
@@ -177,7 +177,7 @@ public class RegisterRequestValidatorTests
     [InlineData("Secure#Pass99")]
     public async Task Validate_WithStrongPassword_ShouldPass(string password)
     {
-        // Arrange
+        // Arrange - Configura senhas fortes para teste
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Password = password;
 
@@ -198,7 +198,7 @@ public class RegisterRequestValidatorTests
     [InlineData("11999999999")]
     public async Task Validate_WithValidPhone_ShouldPass(string phone)
     {
-        // Arrange
+        // Arrange - Configura telefones válidos para teste
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Phone = phone;
 
@@ -212,7 +212,7 @@ public class RegisterRequestValidatorTests
     [Fact]
     public async Task Validate_WithNullPhone_ShouldPass()
     {
-        // Arrange
+        // Arrange - Configura telefone nulo para teste
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Phone = null;
 

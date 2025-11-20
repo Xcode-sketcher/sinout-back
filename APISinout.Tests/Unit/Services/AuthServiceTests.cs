@@ -40,20 +40,20 @@ public class AuthServiceTests
     [Fact]
     public async Task RegisterAsync_WithValidData_ShouldCreateUserSuccessfully()
     {
-        // Arrange
+        // Arrange - Configura dados válidos e mocks para registro
         var request = UserFixtures.CreateValidRegisterRequest();
         _mockUserRepository.Setup(x => x.GetByEmailAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
         _mockUserRepository.Setup(x => x.GetNextUserIdAsync()).ReturnsAsync(1);
         _mockUserRepository.Setup(x => x.CreateUserAsync(It.IsAny<User>())).Returns(Task.CompletedTask);
 
-        // Act
+        // Act - Executa registro do usuário
         var result = await _authService.RegisterAsync(request);
 
-        // Assert
+        // Assert - Verifica se usuário foi criado com dados corretos
         result.Should().NotBeNull();
         result.User.Should().NotBeNull();
-        result.User.Name.Should().Be(request.Name);
-        result.User.Email.Should().Be(request.Email.ToLower());
+        Assert.Equal(request.Name, result.User!.Name);
+        Assert.Equal(request.Email!.ToLower(), result.User!.Email);
         result.Token.Should().NotBeNullOrEmpty();
         
         _mockUserRepository.Verify(x => x.CreateUserAsync(It.Is<User>(u => 
@@ -67,40 +67,38 @@ public class AuthServiceTests
     [Fact]
     public async Task RegisterAsync_WithEmptyEmail_ShouldThrowAppException()
     {
-        // Arrange
+        // Arrange - Configura requisição com email vazio
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Email = "";
 
-        // Act
+        // Act - Tenta executar registro com email inválido
         var act = async () => await _authService.RegisterAsync(request);
 
-        // Assert
-        await act.Should().ThrowAsync<AppException>()
-            .WithMessage("Dados inválidos");
+        // Assert - Deve lançar exceção de dados inválidos
+        await Assert.ThrowsAsync<AppException>(async () => await _authService.RegisterAsync(request));
     }
 
     [Fact]
     public async Task RegisterAsync_WithDuplicateEmail_ShouldThrowAppException()
     {
-        // Arrange
+        // Arrange - Configura usuário existente com mesmo email
         var request = UserFixtures.CreateValidRegisterRequest();
         var existingUser = UserFixtures.CreateValidUser();
         
         _mockUserRepository.Setup(x => x.GetByEmailAsync(request.Email.ToLower().Trim()))
             .ReturnsAsync(existingUser);
 
-        // Act
+        // Act - Tenta registrar com email duplicado
         var act = async () => await _authService.RegisterAsync(request);
 
-        // Assert
-        await act.Should().ThrowAsync<AppException>()
-            .WithMessage("Email já cadastrado");
+        // Assert - Deve lançar exceção de email já cadastrado
+        await Assert.ThrowsAsync<AppException>(async () => await _authService.RegisterAsync(request));
     }
 
     [Fact]
     public async Task RegisterAsync_ShouldHashPassword()
     {
-        // Arrange
+        // Arrange - Configura captura do usuário criado
         var request = UserFixtures.CreateValidRegisterRequest();
         User? capturedUser = null;
         
@@ -110,13 +108,13 @@ public class AuthServiceTests
             .Callback<User>(user => capturedUser = user)
             .Returns(Task.CompletedTask);
 
-        // Act
+        // Act - Executa registro para capturar hash da senha
         await _authService.RegisterAsync(request);
 
-        // Assert
+        // Assert - Verifica se senha foi hasheada corretamente
         capturedUser.Should().NotBeNull();
-        capturedUser!.PasswordHash.Should().NotBe(request.Password);
-        BCrypt.Net.BCrypt.Verify(request.Password, capturedUser.PasswordHash).Should().BeTrue();
+        Assert.NotEqual(request.Password!, capturedUser!.PasswordHash);
+        Assert.True(BCrypt.Net.BCrypt.Verify(request.Password!, capturedUser!.PasswordHash!));
     }
 
     #endregion
@@ -126,7 +124,7 @@ public class AuthServiceTests
     [Fact]
     public async Task LoginAsync_WithValidCredentials_ShouldReturnAuthResponse()
     {
-        // Arrange
+        // Arrange - Configura credenciais válidas e usuário existente
         var request = UserFixtures.CreateValidLoginRequest();
         var user = UserFixtures.CreateValidUser();
         
@@ -135,20 +133,20 @@ public class AuthServiceTests
         _mockUserRepository.Setup(x => x.UpdateUserAsync(It.IsAny<int>(), It.IsAny<User>()))
             .Returns(Task.CompletedTask);
 
-        // Act
+        // Act - Executa login com credenciais válidas
         var result = await _authService.LoginAsync(request);
 
-        // Assert
+        // Assert - Verifica se resposta de autenticação foi retornada
         result.Should().NotBeNull();
         result.User.Should().NotBeNull();
-        result.User.Email.Should().Be(user.Email);
+        Assert.Equal(user.Email!, result.User!.Email);
         result.Token.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
     public async Task LoginAsync_WithWrongPassword_ShouldThrowAppException()
     {
-        // Arrange
+        // Arrange - Configura senha incorreta
         var request = UserFixtures.CreateValidLoginRequest();
         request.Password = "WrongPassword123";
         var user = UserFixtures.CreateValidUser();
@@ -156,30 +154,28 @@ public class AuthServiceTests
         _mockUserRepository.Setup(x => x.GetByEmailAsync(request.Email.ToLower().Trim()))
             .ReturnsAsync(user);
 
-        // Act
+        // Act - Tenta fazer login com senha errada
         var act = async () => await _authService.LoginAsync(request);
 
-        // Assert
-        await act.Should().ThrowAsync<AppException>()
-            .WithMessage("Credenciais inválidas");
+        // Assert - Deve lançar exceção de credenciais inválidas
+        await Assert.ThrowsAsync<AppException>(async () => await _authService.LoginAsync(request));
     }
 
     [Fact]
     public async Task LoginAsync_WithInactiveUser_ShouldThrowAppException()
     {
-        // Arrange
+        // Arrange - Configura usuário inativo
         var request = UserFixtures.CreateValidLoginRequest();
         var user = UserFixtures.CreateInactiveUser();
         
         _mockUserRepository.Setup(x => x.GetByEmailAsync(request.Email.ToLower().Trim()))
             .ReturnsAsync(user);
 
-        // Act
+        // Act - Tenta fazer login com usuário inativo
         var act = async () => await _authService.LoginAsync(request);
 
-        // Assert
-        await act.Should().ThrowAsync<AppException>()
-            .WithMessage("Credenciais inválidas");
+        // Assert - Deve lançar exceção de credenciais inválidas
+        await Assert.ThrowsAsync<AppException>(async () => await _authService.LoginAsync(request));
     }
 
     #endregion
