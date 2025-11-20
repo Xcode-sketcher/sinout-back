@@ -135,9 +135,9 @@ public class EmailServiceTests
         // Configura credenciais vazias na configuração
         mockConfig.Setup(x => x["Email:SmtpServer"]).Returns("smtp.gmail.com");
         mockConfig.Setup(x => x["Email:SmtpPort"]).Returns("587");
-        mockConfig.Setup(x => x["Email:Username"]).Returns((string)null);
-        mockConfig.Setup(x => x["Email:Password"]).Returns((string)null);
-        mockConfig.Setup(x => x["Email:FromEmail"]).Returns((string)null);
+        mockConfig.Setup(x => x["Email:Username"]).Returns((string?)null);
+        mockConfig.Setup(x => x["Email:Password"]).Returns((string?)null);
+        mockConfig.Setup(x => x["Email:FromEmail"]).Returns((string?)null);
         mockConfig.Setup(x => x["Email:FromName"]).Returns("Test App");
 
         var service = new EmailService(mockConfig.Object, mockLogger.Object);
@@ -213,9 +213,9 @@ public class EmailServiceTests
         // Configura credenciais vazias - sobrescreve todas as configurações de email
         mockConfig.Setup(x => x["Email:SmtpServer"]).Returns("smtp.gmail.com");
         mockConfig.Setup(x => x["Email:SmtpPort"]).Returns("587");
-        mockConfig.Setup(x => x["Email:Username"]).Returns((string)null);
-        mockConfig.Setup(x => x["Email:Password"]).Returns((string)null);
-        mockConfig.Setup(x => x["Email:FromEmail"]).Returns((string)null);
+        mockConfig.Setup(x => x["Email:Username"]).Returns((string?)null);
+        mockConfig.Setup(x => x["Email:Password"]).Returns((string?)null);
+        mockConfig.Setup(x => x["Email:FromEmail"]).Returns((string?)null);
         mockConfig.Setup(x => x["Email:FromName"]).Returns("Test App");
 
         // Act - Cria serviço com configurações vazias
