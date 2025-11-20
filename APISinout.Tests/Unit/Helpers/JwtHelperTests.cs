@@ -25,7 +25,7 @@ public class JwtHelperTests
     {
         var inMemorySettings = new Dictionary<string, string>
         {
-            {"Jwt:Key", "SuaChaveSecretaSuperSeguraParaJWT2024!MinimoDe32Caracteres"},
+            {"Jwt:Key", "TestJwtKeyForUnitTestingPurposesOnlyNotForProductionUse123456789"},
             {"Jwt:Issuer", "SinoutAPI"},
             {"Jwt:Audience", "SinoutClient"},
             {"Jwt:AccessTokenExpirationMinutes", "60"}
