@@ -21,7 +21,7 @@ public static class AuthorizationHelper
         
         if (userIdClaim == null)
         {
-            throw new AppException("Usuário não autenticado");
+            throw new AppException("Usuário não encontrado");
         }
         
         if (!int.TryParse(userIdClaim.Value, out int userId))
