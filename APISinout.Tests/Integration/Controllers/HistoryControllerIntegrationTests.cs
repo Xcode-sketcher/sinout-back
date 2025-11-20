@@ -89,6 +89,19 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
         var history = await response.Content.ReadFromJsonAsync<List<HistoryRecord>>();
         history.Should().NotBeNull();
     }
+    [Fact]
+    public async Task GetMyHistory_WithCustomHours_ShouldReturn400BadRequest()
+    {
+        // Arrange
+        var (token, _) = await GetCuidadorTokenAndId();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.GetAsync("/api/history/my-history?hours=12");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
 
     [Fact]
     public async Task GetHistoryByUser_AsOwner_ShouldReturn200OK()
@@ -164,6 +177,19 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var stats = await response.Content.ReadFromJsonAsync<object>();
         stats.Should().NotBeNull();
+    }
+    [Fact]
+    public async Task GetMyStatistics_WithCustomHours_ShouldReturn400BadRequest()
+    {
+        // Arrange
+        var (token, _) = await GetCuidadorTokenAndId();
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var response = await _client.GetAsync("/api/history/statistics/my-stats?hours=12");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
