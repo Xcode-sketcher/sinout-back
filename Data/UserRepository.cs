@@ -29,6 +29,13 @@ public class UserRepository : IUserRepository
         _counters = context.Counters;
     }
 
+    // Construtor para testes - permite injeção direta das coleções.
+    public UserRepository(IMongoCollection<User> usersCollection, IMongoCollection<Counter> countersCollection)
+    {
+        _users = usersCollection;
+        _counters = countersCollection;
+    }
+
     // Obtém usuário por ID numérico.
     public async Task<User?> GetByIdAsync(int userId)
     {
