@@ -28,6 +28,12 @@ public class EmotionMappingRepository : IEmotionMappingRepository
         _mappings = context.EmotionMappings;
     }
 
+    // Construtor para testes - permite injeção direta da coleção.
+    public EmotionMappingRepository(IMongoCollection<EmotionMapping> mappingsCollection)
+    {
+        _mappings = mappingsCollection;
+    }
+
     // Obtém mapeamento por ID.
     public async Task<EmotionMapping?> GetByIdAsync(string id)
     {

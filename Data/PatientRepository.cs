@@ -29,6 +29,13 @@ public class PatientRepository : IPatientRepository
         _counters = context.Counters;
     }
 
+    // Construtor para testes (injeta coleções diretamente).
+    public PatientRepository(IMongoCollection<Patient> patientsCollection, IMongoCollection<Counter> countersCollection)
+    {
+        _patients = patientsCollection;
+        _counters = countersCollection;
+    }
+
     // Obtém paciente por ID.
     public async Task<Patient?> GetByIdAsync(int id)
     {

@@ -27,7 +27,7 @@ public class AuthServiceTests
         _mockUserRepository = new Mock<IUserRepository>();
         _mockConfiguration = new Mock<IConfiguration>();
 
-        _mockConfiguration.Setup(x => x["Jwt:Key"]).Returns("SuaChaveSecretaSuperSeguraParaJWT2024!MinimoDe32Caracteres");
+        _mockConfiguration.Setup(x => x["Jwt:Key"]).Returns("TestJwtKeyForUnitTestingPurposesOnlyNotForProductionUse123456789");
         _mockConfiguration.Setup(x => x["Jwt:Issuer"]).Returns("SinoutAPI");
         _mockConfiguration.Setup(x => x["Jwt:Audience"]).Returns("SinoutClient");
         _mockConfiguration.Setup(x => x["Jwt:AccessTokenExpirationMinutes"]).Returns("60");
