@@ -281,17 +281,18 @@ public class InMemoryHistoryRepository : IHistoryRepository
         return Task.CompletedTask;
     }
 
-    public Task DeleteOldRecordsAsync(int hours = 24)
+    public Task DeleteOldRecordsAsync(int hours)
     {
         var cutoffTime = DateTime.UtcNow.AddHours(-hours);
         var keysToRemove = _history.Values
             .Where(h => h.Timestamp < cutoffTime)
             .Select(h => h.Id)
+            .Where(id => id != null)
             .ToList();
 
         foreach (var key in keysToRemove)
         {
-            _history.TryRemove(key, out _);
+            _history.TryRemove(key!, out _);
         }
         return Task.CompletedTask;
     }
@@ -421,11 +422,12 @@ public class InMemoryPasswordResetRepository : IPasswordResetRepository
         var keysToRemove = _tokens.Values
             .Where(t => t.ExpiresAt < DateTime.UtcNow || t.Used)
             .Select(t => t.Id)
+            .Where(id => id != null)
             .ToList();
 
         foreach (var key in keysToRemove)
         {
-            _tokens.TryRemove(key, out _);
+            _tokens.TryRemove(key!, out _);
         }
         return Task.CompletedTask;
     }
