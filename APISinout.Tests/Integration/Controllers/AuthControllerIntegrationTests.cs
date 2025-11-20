@@ -217,11 +217,12 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
         loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var loginResult = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
+        loginResult.Should().NotBeNull();
         var loginToken = loginResult!.Token;
 
         // Assert
         registrationToken.Should().NotBeNullOrEmpty();
         loginToken.Should().NotBeNullOrEmpty();
-        loginResult.User.Email.Should().Be(email.ToLower());
+        loginResult.User!.Email.Should().Be(email.ToLower());
     }
 }

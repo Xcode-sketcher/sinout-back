@@ -21,7 +21,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         _client = factory.CreateClient();
     }
 
-    private async Task<(string token, int userId)> GetCuidadorTokenAndId()
+    private async Task<(string? token, int userId)> GetCuidadorTokenAndId()
     {
         var cuidadorEmail = $"cuidador{Guid.NewGuid()}@test.com";
         var cuidadorPassword = "Cuidador@123";
@@ -45,7 +45,9 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
 
         var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
         var authResponse = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
-        return (authResponse!.Token, authResponse.User.UserId);
+        authResponse.Should().NotBeNull();
+        authResponse!.User.Should().NotBeNull();
+        return ((authResponse.Token ?? throw new InvalidOperationException("Token not found")), authResponse!.User!.UserId);
     }
 
     [Fact]
@@ -72,7 +74,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var mapping = await response.Content.ReadFromJsonAsync<EmotionMappingResponse>();
         mapping.Should().NotBeNull();
-        mapping!.Emotion.Should().Be("happy");
+        (mapping?.Emotion ?? throw new InvalidOperationException("Emotion not found")).Should().Be("happy");
         mapping.Message.Should().Be("Quero água");
     }
 
@@ -288,13 +290,13 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         };
 
         // Act
-        var response = await _client.PutAsJsonAsync($"/api/emotion-mappings/{createdMapping!.Id}", updateRequest);
+        var response = await _client.PutAsJsonAsync($"/api/emotion-mappings/{createdMapping?.Id ?? throw new InvalidOperationException("Id not found")}", updateRequest);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var updated = await response.Content.ReadFromJsonAsync<EmotionMappingResponse>();
         updated.Should().NotBeNull();
-        updated!.Message.Should().Be("Realmente não gosto");
+        (updated?.Message ?? throw new InvalidOperationException("Message not found")).Should().Be("Realmente não gosto");
     }
 
     [Fact]
@@ -333,7 +335,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         };
 
         // Act
-        var response = await _client.PutAsJsonAsync($"/api/emotion-mappings/{createdMapping!.Id}", updateRequest);
+        var response = await _client.PutAsJsonAsync($"/api/emotion-mappings/{createdMapping?.Id ?? throw new InvalidOperationException("Id not found")}", updateRequest);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -362,7 +364,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         createdMapping.Should().NotBeNull();
 
         // Act
-        var response = await _client.DeleteAsync($"/api/emotion-mappings/{createdMapping!.Id}");
+        var response = await _client.DeleteAsync($"/api/emotion-mappings/{createdMapping?.Id ?? throw new InvalidOperationException("Id not found")}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -395,7 +397,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token2);
 
         // Act
-        var response = await _client.DeleteAsync($"/api/emotion-mappings/{createdMapping!.Id}");
+        var response = await _client.DeleteAsync($"/api/emotion-mappings/{createdMapping?.Id ?? throw new InvalidOperationException("Id not found")}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);

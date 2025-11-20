@@ -21,7 +21,7 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
         _client = factory.CreateClient();
     }
 
-    private async Task<(string token, int userId)> GetCuidadorTokenAndId()
+    private async Task<(string? token, int userId)> GetCuidadorTokenAndId()
     {
         var cuidadorEmail = $"cuidador{Guid.NewGuid()}@test.com";
         var cuidadorPassword = "Cuidador@123";
@@ -45,7 +45,9 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
 
         var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
         var authResponse = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
-        return (authResponse!.Token, authResponse.User.UserId);
+        authResponse.Should().NotBeNull();
+        authResponse!.User.Should().NotBeNull();
+        return ((authResponse.Token ?? throw new InvalidOperationException("Token not found")), authResponse!.User!.UserId);
     }
 
     [Fact]
