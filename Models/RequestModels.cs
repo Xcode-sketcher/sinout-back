@@ -1,40 +1,60 @@
-// --- MODELOS DE PEDIDOS: AS RECEITAS ESTRUTURADAS ---
-// Continuando na cozinha!
-// Estes são os "formulários de pedido" que os clientes preenchem.
-// Como uma receita estruturada: "quero um bolo com estes ingredientes específicos".
-
 namespace APISinout.Models;
 
-// Receita: Criar um novo usuário (como encomendar um prato personalizado)
+// Representa uma solicitação para criar um novo usuário.
 public class CreateUserRequest
 {
-    public string? Name { get; set; } // Nome do prato
-    public string? Email { get; set; } // Ingrediente principal
-    public string? Password { get; set; } // Tempero secreto
-    public string? Role { get; set; } // Tipo de prato (opcional)
+    // Nome do usuário.
+    public string? Name { get; set; }
+
+    // Email do usuário.
+    public string? Email { get; set; }
+
+    // Senha do usuário.
+    public string? Password { get; set; }
+
+    // Papel do usuário (opcional).
+    public string? Role { get; set; }
 }
 
-// Receita: Atualizar um usuário existente (como modificar uma receita)
+// Representa uma solicitação para atualizar um usuário existente.
 public class UpdateUserRequest
 {
-    public string? Name { get; set; } // Mudar o nome
-    public string? Email { get; set; } // Trocar ingrediente
-    public bool? Status { get; set; } // Ativar/desativar (como congelar/descongelar)
-    public string? Role { get; set; } // Mudar tipo de prato
+    // Nome do usuário.
+    public string? Name { get; set; }
+
+    // Email do usuário.
+    public string? Email { get; set; }
+
+    // Status do usuário (ativo/inativo).
+    public bool? Status { get; set; }
+
+    // Papel do usuário.
+    public string? Role { get; set; }
 }
 
-// Receita: Registrar emoção do cuidador (vinda da API de Processamento)
+// Representa uma solicitação de registro de emoção do cuidador.
+// Vinda da API de processamento.
 public class CuidadorEmotionRequest
 {
-    public int CuidadorId { get; set; } // ID do cuidador (userId)
-    public string? PatientName { get; set; } // Nome do paciente (campo de texto)
-    public DateTime? Timestamp { get; set; } // Quando a emoção foi detectada
-    public Dictionary<string, double>? EmotionsDetected { get; set; } // Todas as emoções detectadas
-    public string? DominantEmotion { get; set; } // Emoção dominante
+    // ID do cuidador (userId).
+    public int CuidadorId { get; set; }
+
+    // Nome do paciente (campo de texto).
+    public string? PatientName { get; set; }
+
+    // Quando a emoção foi detectada.
+    public DateTime? Timestamp { get; set; }
+
+    // Todas as emoções detectadas com percentuais.
+    public Dictionary<string, double>? EmotionsDetected { get; set; }
+
+    // Emoção dominante.
+    public string? DominantEmotion { get; set; }
 }
 
-// Receita: Atualizar nome do paciente
+// Representa uma solicitação para atualizar o nome do paciente.
 public class UpdatePatientNameRequest
 {
-    public string PatientName { get; set; } = string.Empty; // Nome do paciente
+    // Nome do paciente.
+    public string PatientName { get; set; } = string.Empty;
 }

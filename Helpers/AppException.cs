@@ -1,12 +1,9 @@
-// --- EXCEÇÃO PERSONALIZADA: O SINO DE ALARME ---
-// Analogia simples: Como um "sino de alarme" na cozinha!
-// Quando algo dá errado (ingrediente estragado, fogão apagado),
-// tocamos o sino para alertar todo mundo sobre o problema.
-
 namespace APISinout.Helpers;
 
+// Exceção personalizada para a aplicação.
+// Usada para lançar erros específicos do domínio.
 public class AppException : Exception
 {
-    // Construtor: Como configurar o alarme com a mensagem
+    // Construtor que inicializa a exceção com uma mensagem.
     public AppException(string message) : base(message) { }
 }

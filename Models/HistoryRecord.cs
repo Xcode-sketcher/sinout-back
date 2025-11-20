@@ -1,67 +1,100 @@
-// --- MODELO DE HISTÓRICO: O DIÁRIO DE EMOÇÕES ---
-// Este modelo armazena o histórico de análises faciais por paciente.
-// Mantém registro das emoções detectadas e palavras disparadas nas últimas 24 horas,
-// permitindo ao cuidador acompanhar padrões e estatísticas.
-
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace APISinout.Models;
 
+// Representa um registro de histórico de análise facial.
+// Armazena dados de emoções detectadas e mensagens disparadas para um paciente.
 public class HistoryRecord
 {
+    // ID único do registro no MongoDB.
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
     public string? Id { get; set; }
-    
+
+    // ID do usuário cuidador.
     [BsonElement("id_usuario")]
-    public int UserId { get; set; } // ID do cuidador
-    
+    public int UserId { get; set; }
+
+    // Nome do paciente.
     [BsonElement("nome_paciente")]
-    public string? PatientName { get; set; } // Nome do paciente
-    
+    public string? PatientName { get; set; }
+
+    // Timestamp da análise.
     [BsonElement("timestamp")]
-    public DateTime Timestamp { get; set; } // Quando a análise ocorreu
-    
+    public DateTime Timestamp { get; set; }
+
+    // Dicionário com todas as emoções detectadas e seus percentuais.
     [BsonElement("emocoes_detectadas")]
-    public Dictionary<string, double>? EmotionsDetected { get; set; } // Todas as emoções com %
-    
+    public Dictionary<string, double>? EmotionsDetected { get; set; }
+
+    // Emoção dominante detectada.
     [BsonElement("emocao_dominante")]
-    public string? DominantEmotion { get; set; } // A emoção principal
-    
+    public string? DominantEmotion { get; set; }
+
+    // Percentual da emoção dominante.
     [BsonElement("percentual_dominante")]
     public double DominantPercentage { get; set; }
-    
-    [BsonElement("mensagem_disparada")]
-    public string? MessageTriggered { get; set; } // Palavra exibida (se houver)
-    
-    [BsonElement("regra_acionada_id")]
-    public string? TriggeredRuleId { get; set; } // ID do EmotionMapping que foi acionado
-}
 
-// Modelo para criar registro de histórico
-public class HistoryRecordRequest
-{
-    public int PatientId { get; set; }
-    public Dictionary<string, double>? EmotionsDetected { get; set; }
-    public string? DominantEmotion { get; set; }
-    public double DominantPercentage { get; set; }
+    // Mensagem disparada, se houver.
+    [BsonElement("mensagem_disparada")]
     public string? MessageTriggered { get; set; }
+
+    // ID da regra de mapeamento que foi acionada.
+    [BsonElement("regra_acionada_id")]
     public string? TriggeredRuleId { get; set; }
 }
 
-// Modelo de resposta do histórico
-public class HistoryRecordResponse
+// Representa uma solicitação para criar um registro de histórico.
+public class HistoryRecordRequest
 {
-    public string? Id { get; set; }
+    // ID do paciente.
     public int PatientId { get; set; }
-    public string? PatientName { get; set; }
-    public DateTime Timestamp { get; set; }
+
+    // Emoções detectadas com percentuais.
     public Dictionary<string, double>? EmotionsDetected { get; set; }
+
+    // Emoção dominante.
     public string? DominantEmotion { get; set; }
+
+    // Percentual da emoção dominante.
     public double DominantPercentage { get; set; }
+
+    // Mensagem disparada.
     public string? MessageTriggered { get; set; }
 
+    // ID da regra acionada.
+    public string? TriggeredRuleId { get; set; }
+}
+
+// Representa a resposta com dados de um registro de histórico.
+public class HistoryRecordResponse
+{
+    // ID único do registro.
+    public string? Id { get; set; }
+
+    // ID do paciente.
+    public int PatientId { get; set; }
+
+    // Nome do paciente.
+    public string? PatientName { get; set; }
+
+    // Timestamp da análise.
+    public DateTime Timestamp { get; set; }
+
+    // Emoções detectadas.
+    public Dictionary<string, double>? EmotionsDetected { get; set; }
+
+    // Emoção dominante.
+    public string? DominantEmotion { get; set; }
+
+    // Percentual da emoção dominante.
+    public double DominantPercentage { get; set; }
+
+    // Mensagem disparada.
+    public string? MessageTriggered { get; set; }
+
+    // Construtor que inicializa a partir de um objeto HistoryRecord.
     public HistoryRecordResponse(HistoryRecord record, string? userName = null)
     {
         Id = record.Id;
@@ -75,37 +108,74 @@ public class HistoryRecordResponse
     }
 }
 
-// Modelo para estatísticas do dashboard
+// Representa estatísticas de um paciente para o dashboard.
 public class PatientStatistics
 {
+    // ID do paciente.
     public int PatientId { get; set; }
+
+    // Nome do paciente.
     public string? PatientName { get; set; }
-    public DateTime StartPeriod { get; set; } // Início do período (últimas 24h)
-    public DateTime EndPeriod { get; set; } // Fim do período (agora)
-    public int TotalAnalyses { get; set; } // Total de análises no período
-    public Dictionary<string, int>? EmotionFrequency { get; set; } // Frequência de cada emoção
-    public Dictionary<string, int>? MessageFrequency { get; set; } // Frequência de cada palavra
-    public string? MostFrequentEmotion { get; set; } // Emoção mais comum
-    public string? MostFrequentMessage { get; set; } // Mensagem mais disparada
-    public List<EmotionTrend>? EmotionTrends { get; set; } // Tendências horárias
+
+    // Início do período analisado (últimas 24 horas).
+    public DateTime StartPeriod { get; set; }
+
+    // Fim do período analisado (agora).
+    public DateTime EndPeriod { get; set; }
+
+    // Total de análises no período.
+    public int TotalAnalyses { get; set; }
+
+    // Frequência de cada emoção detectada.
+    public Dictionary<string, int>? EmotionFrequency { get; set; }
+
+    // Frequência de cada mensagem disparada.
+    public Dictionary<string, int>? MessageFrequency { get; set; }
+
+    // Emoção mais frequente.
+    public string? MostFrequentEmotion { get; set; }
+
+    // Mensagem mais disparada.
+    public string? MostFrequentMessage { get; set; }
+
+    // Tendências horárias das emoções.
+    public List<EmotionTrend>? EmotionTrends { get; set; }
 }
 
-// Tendência de emoção por período
+// Representa a tendência de emoções por hora.
 public class EmotionTrend
 {
-    public string? Hour { get; set; } // Hora do dia (ex: "14:00")
-    public Dictionary<string, double>? AverageEmotions { get; set; } // Média % de cada emoção
-    public int AnalysisCount { get; set; } // Quantas análises nesta hora
+    // Hora do dia (ex: "14:00").
+    public string? Hour { get; set; }
+
+    // Média dos percentuais de cada emoção na hora.
+    public Dictionary<string, double>? AverageEmotions { get; set; }
+
+    // Número de análises nesta hora.
+    public int AnalysisCount { get; set; }
 }
 
-// Filtros para consulta de histórico
+// Representa filtros para consulta de histórico.
 public class HistoryFilter
 {
+    // ID do paciente (opcional).
     public int? PatientId { get; set; }
+
+    // Data de início (opcional).
     public DateTime? StartDate { get; set; }
+
+    // Data de fim (opcional).
     public DateTime? EndDate { get; set; }
+
+    // Emoção dominante (opcional).
     public string? DominantEmotion { get; set; }
-    public bool? HasMessage { get; set; } // Se disparou mensagem
+
+    // Indica se deve filtrar apenas registros com mensagem (opcional).
+    public bool? HasMessage { get; set; }
+
+    // Número da página (padrão: 1).
     public int PageNumber { get; set; } = 1;
+
+    // Tamanho da página (padrão: 50).
     public int PageSize { get; set; } = 50;
 }

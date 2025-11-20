@@ -1,63 +1,72 @@
-// --- MODELO DE USUÁRIO: O PRATO PRINCIPAL ---
-// Analogia da cozinha: O User é como o "prato principal" do restaurante!
-// É a entidade central que representa um usuário completo, com todos os ingredientes
-// necessários para servi-lo corretamente aos clientes.
-
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace APISinout.Models;
 
+// Representa um usuário no sistema.
+// Entidade central que representa um usuário completo.
 public class User
 {
-    [BsonId] // ID principal do MongoDB (ObjectId)
+    // ID principal no MongoDB (ObjectId).
+    [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
-    public string? Id { get; set; } // MongoDB ObjectId (_id)
-    
-    [BsonElement("id_usuario")] // ID sequencial numérico
-    public int UserId { get; set; } // ID numérico para facilidade de uso (1, 2, 3...)
-    
-    [BsonElement("nome")] // Rótulo no freezer
-    public string? Name { get; set; } // Nome do prato
-    
-    [BsonElement("email")] // Outro rótulo
-    public string? Email { get; set; } // Ingrediente identificador
-    
-    [BsonElement("data_cadastro")] // Data de validade
-    public DateTime DataCadastro { get; set; } // Quando foi preparado
-    
-    [BsonElement("status")] // Se está disponível
-    public bool Status { get; set; } // Prato ativo ou não
-    
-    [BsonElement("cargo")] // Tipo de perfil: Admin ou Cuidador (ver UserRole enum)
-    public string? Role { get; set; } // Admin, Cuidador (ver UserRole enum)
-    
+    public string? Id { get; set; }
+
+    // ID numérico sequencial para facilidade de uso.
+    [BsonElement("id_usuario")]
+    public int UserId { get; set; }
+
+    // Nome do usuário.
+    [BsonElement("nome")]
+    public string? Name { get; set; }
+
+    // Email do usuário.
+    [BsonElement("email")]
+    public string? Email { get; set; }
+
+    // Data de cadastro do usuário.
+    [BsonElement("data_cadastro")]
+    public DateTime DataCadastro { get; set; }
+
+    // Indica se o usuário está ativo.
+    [BsonElement("status")]
+    public bool Status { get; set; }
+
+    // Papel do usuário: Admin ou Cuidador.
+    [BsonElement("cargo")]
+    public string? Role { get; set; }
+
+    // Hash da senha criptografada.
     [BsonElement("password_hash")]
-    public string? PasswordHash { get; set; } // Receita secreta (senha criptografada)
-    
+    public string? PasswordHash { get; set; }
+
+    // Quem criou o usuário.
     [BsonElement("criado_por")]
-    public string? CreatedBy { get; set; } // Quem criou o usuário
-    
+    public string? CreatedBy { get; set; }
+
+    // Data do último acesso.
     [BsonElement("ultimo_acesso")]
-    public DateTime? LastLogin { get; set; } // Último acesso
-    
+    public DateTime? LastLogin { get; set; }
+
+    // Telefone de contato.
     [BsonElement("telefone")]
-    public string? Phone { get; set; } // Telefone de contato
-    
+    public string? Phone { get; set; }
+
+    // Data da última atualização.
     [BsonElement("data_atualizacao")]
-    public DateTime? UpdatedAt { get; set; } // Data da última atualização
+    public DateTime? UpdatedAt { get; set; }
 
-    
+    // Nome do paciente associado (1:1 cuidador-paciente).
     [BsonElement("nome_paciente")]
-    public string? PatientName { get; set; } // Nome do paciente (1:1 cuidador-paciente)
+    public string? PatientName { get; set; }
 
-    // --- NOVOS CAMPOS PARA LIMITADOR DE LOGIN ---
-
-    [BsonElement("failed_login_attempts")] // Rótulo no freezer
-    [BsonDefaultValue(0)] // Garante que o prato começa com 0
+    // Número de tentativas de login falhadas.
+    [BsonElement("failed_login_attempts")]
+    [BsonDefaultValue(0)]
     public int FailedLoginAttempts { get; set; }
 
-    [BsonElement("lockout_end_date")] // Data de "saída do castigo"
-    [BsonIgnoreIfNull] // Não guardar no freezer se estiver vazio
-    public DateTime? LockoutEndDate { get; set; } // O '?' significa que pode estar vazio
+    // Data de fim do bloqueio por tentativas excessivas.
+    [BsonElement("lockout_end_date")]
+    [BsonIgnoreIfNull]
+    public DateTime? LockoutEndDate { get; set; }
 }

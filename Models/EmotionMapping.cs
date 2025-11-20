@@ -1,76 +1,116 @@
-// --- MODELO DE MAPEAMENTO DE EMOÇÕES: AS REGRAS DE COMUNICAÇÃO ---
-// Este modelo define as "regras" que traduzem emoções em palavras/mensagens.
-// Cada paciente pode ter até 2 palavras configuradas por emoção primária detectada.
-// Quando a emoção detectada atingir um percentual mínimo, a palavra correspondente é exibida.
-
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace APISinout.Models;
 
+// Representa o mapeamento de emoções para mensagens.
+// Define regras que traduzem emoções detectadas em palavras ou mensagens.
 public class EmotionMapping
 {
+    // ID único do mapeamento no MongoDB.
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
-    public string? Id { get; set; } // ID único do mapeamento (MongoDB ObjectId)
-    
+    public string? Id { get; set; }
+
+    // ID do usuário cuidador ao qual este mapeamento pertence.
     [BsonElement("id_usuario")]
-    public int UserId { get; set; } // Cuidador ao qual este mapeamento pertence
-    
+    public int UserId { get; set; }
+
+    // Emoção primária detectada (ex: happy, sad, angry, fear, surprise, neutral).
     [BsonElement("emocao")]
-    public string? Emotion { get; set; } // happy, sad, angry, fear, surprise, neutral
-    
+    public string? Emotion { get; set; }
+
+    // Nível de intensidade da emoção ("high" >= 70%, "moderate" >= 40%).
     [BsonElement("nivel_intensidade")]
-    public string? IntensityLevel { get; set; } // "high" (>= 70%), "moderate" (>= 40%)
-    
+    public string? IntensityLevel { get; set; }
+
+    // Percentual mínimo para disparar a mensagem (ex: 80.0).
     [BsonElement("percentual_minimo")]
-    public double MinPercentage { get; set; } // Percentual mínimo para disparar (ex: 80.0)
-    
+    public double MinPercentage { get; set; }
+
+    // Palavra ou frase a ser exibida quando a regra for acionada.
     [BsonElement("mensagem")]
-    public string? Message { get; set; } // A palavra/frase a ser exibida
-    
+    public string? Message { get; set; }
+
+    // Prioridade da mensagem (1 ou 2) para ordenar as mensagens por emoção.
     [BsonElement("prioridade")]
-    public int Priority { get; set; } // 1 ou 2 (para ordenar as 2 palavras por emoção)
-    
+    public int Priority { get; set; }
+
+    // Indica se esta regra está ativa.
     [BsonElement("ativo")]
-    public bool Active { get; set; } // Se esta regra está ativa
-    
+    public bool Active { get; set; }
+
+    // Data de criação do mapeamento.
     [BsonElement("data_criacao")]
     public DateTime CreatedAt { get; set; }
-    
+
+    // Data da última atualização do mapeamento.
     [BsonElement("data_atualizacao")]
     public DateTime? UpdatedAt { get; set; }
 }
 
-// Modelo para criar/atualizar mapeamento
+// Representa uma solicitação para criar ou atualizar um mapeamento de emoção.
 public class EmotionMappingRequest
 {
+    // ID do usuário cuidador.
     public int UserId { get; set; }
-    public string? Emotion { get; set; } // happy, sad, angry, fear, surprise, neutral
-    public string? IntensityLevel { get; set; } // high, moderate
+
+    // Emoção primária (ex: happy, sad, angry, fear, surprise, neutral).
+    public string? Emotion { get; set; }
+
+    // Nível de intensidade (high, moderate).
+    public string? IntensityLevel { get; set; }
+
+    // Percentual mínimo para disparar.
     public double MinPercentage { get; set; }
+
+    // Mensagem a ser exibida.
     public string? Message { get; set; }
-    public int Priority { get; set; } // 1 ou 2
+
+    // Prioridade da mensagem (1 ou 2).
+    public int Priority { get; set; }
 }
 
-// Modelo de resposta
+// Representa a resposta com dados de um mapeamento de emoção.
 public class EmotionMappingResponse
 {
+    // ID único do mapeamento.
     public string? Id { get; set; }
+
+    // ID do usuário cuidador.
     public int UserId { get; set; }
+
+    // Nome do usuário cuidador.
     public string? UserName { get; set; }
+
+    // Emoção primária.
     public string? Emotion { get; set; }
+
+    // Nível de intensidade.
     public string? IntensityLevel { get; set; }
+
+    // Percentual mínimo.
     public double MinPercentage { get; set; }
+
+    // Mensagem associada.
     public string? Message { get; set; }
+
+    // Prioridade da mensagem.
     public int Priority { get; set; }
+
+    // Indica se está ativo.
     public bool Active { get; set; }
+
+    // Data de criação.
     public DateTime CreatedAt { get; set; }
+
+    // Data da última atualização.
     public DateTime? UpdatedAt { get; set; }
 
-    // Construtor sem parâmetros para desserialização JSON
+    // Construtor padrão para desserialização JSON.
     public EmotionMappingResponse() { }
 
+    // Construtor que inicializa a partir de um objeto EmotionMapping.
     public EmotionMappingResponse(EmotionMapping mapping, string? userName = null)
     {
         Id = mapping.Id;
@@ -87,21 +127,37 @@ public class EmotionMappingResponse
     }
 }
 
-// Modelo para análise em tempo real (vindo da API Python DeepFace)
+// Representa uma solicitação de análise de emoção em tempo real.
 public class EmotionAnalysisRequest
 {
+    // ID do paciente.
     public int PatientId { get; set; }
-    public Dictionary<string, double>? Emotions { get; set; } // Ex: {"happy": 85.5, "sad": 10.2, ...}
-    public string? DominantEmotion { get; set; } // Emoção dominante detectada
+
+    // Dicionário com as emoções detectadas e seus percentuais (ex: {"happy": 85.5, "sad": 10.2}).
+    public Dictionary<string, double>? Emotions { get; set; }
+
+    // Emoção dominante detectada.
+    public string? DominantEmotion { get; set; }
 }
 
-// Resposta da análise (palavra a ser exibida)
+// Representa a resposta de uma análise de emoção.
 public class EmotionAnalysisResponse
 {
+    // ID do paciente.
     public int PatientId { get; set; }
+
+    // Emoção dominante.
     public string? DominantEmotion { get; set; }
+
+    // Percentual da emoção dominante.
     public double Percentage { get; set; }
-    public string? Message { get; set; } // Palavra/frase a ser exibida ou null se não houver
+
+    // Mensagem disparada ou null se não houver.
+    public string? Message { get; set; }
+
+    // Indica se uma mensagem foi disparada.
     public bool MessageTriggered { get; set; }
+
+    // Timestamp da análise.
     public DateTime Timestamp { get; set; }
 }
