@@ -29,7 +29,7 @@ public class UserServiceTests
     [Fact]
     public async Task GetAllAsync_ReturnsAllUsers()
     {
-        // Arrange
+        // Arrange - Configura lista de usuários para retorno
         var users = new List<User>
         {
             new User { UserId = 1, Name = "User 1", Email = "user1@example.com", Role = "Admin" },
@@ -37,10 +37,10 @@ public class UserServiceTests
         };
         _userRepositoryMock.Setup(x => x.GetAllAsync()).ReturnsAsync(users);
 
-        // Act
+        // Act - Executa busca de todos os usuários
         var result = await _service.GetAllAsync();
 
-        // Assert
+        // Assert - Verifica se todos os usuários foram retornados
         result.Should().HaveCount(2);
         result.Should().BeEquivalentTo(users);
         _userRepositoryMock.Verify(x => x.GetAllAsync(), Times.Once);
@@ -49,13 +49,13 @@ public class UserServiceTests
     [Fact]
     public async Task GetAllAsync_EmptyList_ReturnsEmptyCollection()
     {
-        // Arrange
+        // Arrange - Configura retorno de lista vazia
         _userRepositoryMock.Setup(x => x.GetAllAsync()).ReturnsAsync(new List<User>());
 
-        // Act
+        // Act - Executa busca quando não há usuários
         var result = await _service.GetAllAsync();
 
-        // Assert
+        // Assert - Verifica se coleção vazia foi retornada
         result.Should().BeEmpty();
     }
 
@@ -66,7 +66,7 @@ public class UserServiceTests
     [Fact]
     public async Task GetByIdAsync_ExistingUser_ReturnsUser()
     {
-        // Arrange
+        // Arrange - Configura usuário existente para retorno
         var user = new User
         {
             UserId = 1,
@@ -76,10 +76,10 @@ public class UserServiceTests
         };
         _userRepositoryMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(user);
 
-        // Act
+        // Act - Executa busca por ID existente
         var result = await _service.GetByIdAsync(1);
 
-        // Assert
+        // Assert - Verifica se usuário correto foi retornado
         result.Should().NotBeNull();
         result.UserId.Should().Be(1);
         result.Name.Should().Be("Test User");
@@ -89,13 +89,13 @@ public class UserServiceTests
     [Fact]
     public async Task GetByIdAsync_NonExistingUser_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura retorno nulo para usuário inexistente
         _userRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((User?)null);
 
-        // Act
+        // Act - Tenta buscar usuário que não existe
         Func<Task> action = async () => await _service.GetByIdAsync(999);
 
-        // Assert
+        // Assert - Deve lançar exceção de usuário não encontrado
         await action.Should().ThrowAsync<Exception>()
             .WithMessage("User not found");
     }
@@ -107,7 +107,7 @@ public class UserServiceTests
     [Fact]
     public async Task GetByEmailAsync_ExistingEmail_ReturnsUser()
     {
-        // Arrange
+        // Arrange - Configura usuário existente para retorno por email
         var user = new User
         {
             UserId = 1,
@@ -117,10 +117,10 @@ public class UserServiceTests
         };
         _userRepositoryMock.Setup(x => x.GetByEmailAsync("test@example.com")).ReturnsAsync(user);
 
-        // Act
+        // Act - Executa busca por email existente
         var result = await _service.GetByEmailAsync("test@example.com");
 
-        // Assert
+        // Assert - Verifica se usuário correto foi retornado
         result.Should().NotBeNull();
         result.Email.Should().Be("test@example.com");
     }
@@ -128,13 +128,13 @@ public class UserServiceTests
     [Fact]
     public async Task GetByEmailAsync_NonExistingEmail_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura retorno nulo para email inexistente
         _userRepositoryMock.Setup(x => x.GetByEmailAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
 
-        // Act
+        // Act - Tenta buscar usuário por email que não existe
         Func<Task> action = async () => await _service.GetByEmailAsync("nonexistent@example.com");
 
-        // Assert
+        // Assert - Deve lançar exceção de usuário não encontrado
         await action.Should().ThrowAsync<Exception>()
             .WithMessage("User not found");
     }
@@ -146,7 +146,7 @@ public class UserServiceTests
     [Fact]
     public async Task CreateUserAsync_ValidRequest_CreatesUser()
     {
-        // Arrange
+        // Arrange - Configura requisição válida para criação de usuário
         var request = new CreateUserRequest
         {
             Name = "New User",
@@ -157,10 +157,10 @@ public class UserServiceTests
         _userRepositoryMock.Setup(x => x.GetNextUserIdAsync()).ReturnsAsync(5);
         _userRepositoryMock.Setup(x => x.CreateUserAsync(It.IsAny<User>())).Returns(Task.CompletedTask);
 
-        // Act
+        // Act - Executa criação do usuário
         var result = await _service.CreateUserAsync(request, "admin");
 
-        // Assert
+        // Assert - Verifica se usuário foi criado com dados corretos
         result.Should().NotBeNull();
         result.Name.Should().Be("New User");
         result.Email.Should().Be("new@example.com");
@@ -222,7 +222,7 @@ public class UserServiceTests
     [Fact]
     public async Task UpdateUserAsync_ValidRequest_UpdatesUser()
     {
-        // Arrange
+        // Arrange - Configura usuário existente e dados para atualização
         var existingUser = new User
         {
             UserId = 1,
@@ -241,10 +241,10 @@ public class UserServiceTests
         _userRepositoryMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(existingUser);
         _userRepositoryMock.Setup(x => x.UpdateUserAsync(1, It.IsAny<User>())).Returns(Task.CompletedTask);
 
-        // Act
+        // Act - Executa atualização completa do usuário
         await _service.UpdateUserAsync(1, updateRequest);
 
-        // Assert
+        // Assert - Verifica se todos os campos foram atualizados
         _userRepositoryMock.Verify(x => x.UpdateUserAsync(1, It.Is<User>(u =>
             u.Name == "New Name" &&
             u.Email == "new@example.com" &&
@@ -307,7 +307,7 @@ public class UserServiceTests
     [Fact]
     public async Task DeleteUserAsync_ExistingUser_DeletesUser()
     {
-        // Arrange
+        // Arrange - Configura usuário existente para exclusão
         var user = new User
         {
             UserId = 1,
@@ -317,10 +317,10 @@ public class UserServiceTests
         _userRepositoryMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(user);
         _userRepositoryMock.Setup(x => x.DeleteUserAsync(1)).Returns(Task.CompletedTask);
 
-        // Act
+        // Act - Executa exclusão do usuário
         await _service.DeleteUserAsync(1);
 
-        // Assert
+        // Assert - Verifica se método de exclusão foi chamado
         _userRepositoryMock.Verify(x => x.DeleteUserAsync(1), Times.Once);
     }
 
