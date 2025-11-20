@@ -23,6 +23,10 @@ TestResults/
 *.coverage
 coverage/**
 
+# Coverage reports
+coveragereport/
+coverage-reports/
+
 # Logs
 *.log
 
