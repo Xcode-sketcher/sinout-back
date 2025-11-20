@@ -41,7 +41,7 @@ packages/
 *.vsix
 *.testing
 
-# dotnet user-secrets (dev only, sensitive)
+# dotnet user-secrets 
 secrets.json
 
 # CI / build system
@@ -51,11 +51,9 @@ secrets.json
 # Node/npm (if any)
 node_modules/
 
-# Ignore dotenv files if exists
 .env
 .env.local
 .env.*.local
-# Ignore development appsettings with secrets
 appsettings.Development.json
-# Ignore production appsettings with secrets
+
 appsettings.json

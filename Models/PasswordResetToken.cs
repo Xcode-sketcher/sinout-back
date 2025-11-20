@@ -26,7 +26,7 @@ public class PasswordResetToken
     public DateTime CreatedAt { get; set; }
     
     [BsonElement("data_expiracao")]
-    public DateTime ExpiresAt { get; set; } // Expira em 1 hora
+    public DateTime ExpiresAt { get; set; } // Expira em 30 minutos
     
     [BsonElement("utilizado")]
     public bool Used { get; set; } // Se já foi utilizado

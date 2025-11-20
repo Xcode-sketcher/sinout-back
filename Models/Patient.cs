@@ -40,7 +40,7 @@ public class Patient
 public class PatientRequest
 {
     public string? Name { get; set; }
-    public int? CuidadorId { get; set; } // Opcional se for self-registration
+    public int? CuidadorId { get; set; } // Opcional se for cadastro
     public string? AdditionalInfo { get; set; }
     public string? ProfilePhoto { get; set; }
 }
