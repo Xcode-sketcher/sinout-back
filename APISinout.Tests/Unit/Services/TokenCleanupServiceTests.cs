@@ -43,6 +43,8 @@ public class TokenCleanupServiceTests
     [Fact]
     public void TokenCleanupService_Constructor_InitializesCorrectly()
     {
+        // Arrange - Configura o serviço para teste de inicialização
+
         // Act
         var service = new TokenCleanupService(_serviceProviderMock.Object, _loggerMock.Object);
 
@@ -53,7 +55,7 @@ public class TokenCleanupServiceTests
     [Fact]
     public async Task ExecuteAsync_StartsService_LogsInformation()
     {
-        // Arrange
+        // Arrange - Configura serviço e token de cancelamento para teste de inicialização
         var service = new TokenCleanupService(_serviceProviderMock.Object, _loggerMock.Object);
         var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromMilliseconds(100)); // Cancela após 100ms
@@ -86,7 +88,7 @@ public class TokenCleanupServiceTests
     [Fact]
     public async Task CleanupExpiredTokensAsync_CallsRepository_OncePerCycle()
     {
-        // Arrange
+        // Arrange - Configura serviço e token de cancelamento para teste de chamada ao repositório
         var service = new TokenCleanupService(_serviceProviderMock.Object, _loggerMock.Object);
         var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromMilliseconds(200)); // Cancela após 200ms
@@ -111,7 +113,7 @@ public class TokenCleanupServiceTests
     [Fact]
     public async Task CleanupExpiredTokensAsync_LogsStart_BeforeCleanup()
     {
-        // Arrange
+        // Arrange - Configura serviço para teste de log de início da limpeza
         var service = new TokenCleanupService(_serviceProviderMock.Object, _loggerMock.Object);
         var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromMilliseconds(100));
@@ -143,7 +145,7 @@ public class TokenCleanupServiceTests
     [Fact]
     public async Task CleanupExpiredTokensAsync_LogsCompletion_AfterCleanup()
     {
-        // Arrange
+        // Arrange - Configura serviço para teste de log de conclusão da limpeza
         var service = new TokenCleanupService(_serviceProviderMock.Object, _loggerMock.Object);
         var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromMilliseconds(100));
