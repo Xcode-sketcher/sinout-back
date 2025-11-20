@@ -1,23 +1,14 @@
-// --- RECEITA DA API SINOUT: A COZINHA DIGITAL ---
-// Imagine que nossa API é como uma cozinha de restaurante!
-// Aqui no Program.cs, estamos preparando todos os "ingredientes" e "utensílios" necessários
-// antes de abrir as portas para os clientes (usuários).
-// Vamos organizar tudo como um chef organizando sua cozinha antes do expediente!
-
-// --- 1. A LISTA DE COMPRAS (IMPORTS / USINGS) ---
-// Estes são os "ingredientes especiais" que vamos usar na receita.
-// Como um chef que compra temperos de diferentes lojas, aqui importamos bibliotecas de vários lugares.
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using BCrypt.Net;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using Microsoft.AspNetCore.Authentication.JwtBearer; // O "Segurança" - como um cadeado na porta da cozinha
-using Microsoft.IdentityModel.Tokens;               // Ferramenta do Token - a chave do cadeado
-using System.Text;                                  // Ferramenta de codificação - misturar os sabores
-using System.IdentityModel.Tokens.Jwt;              // O "Crachá" (Token) - o crachá do funcionário
-using System.Security.Claims;                       // As "Informações" no crachá - nome e cargo
-using Microsoft.AspNetCore.Authorization;           // Para trancar rotas - portas trancadas da cozinha
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using APISinout.Data;
 using APISinout.Services;
 using APISinout.Validators;
@@ -28,29 +19,23 @@ using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 
-// --- 2. A CHAVE SECRETA (A GRANDE CORREÇÃO) ---
-// Esta é a "receita secreta" da família! Guardamos ela aqui no topo,
-// pois tanto o "Setup" quanto a "Rota de Login" precisam dela.
-// É como a fórmula secreta do molho especial que só o chef sabe.
 var builder = WebApplication.CreateBuilder(args);
 
-// --- 3. ORGANIZANDO A COZINHA (SERVIÇOS) ---
-// Agora vamos "montar" nossa cozinha: adicionar os utensílios e ingredientes básicos.
-// Como um chef organizando panelas, facas e ingredientes na bancada.
+// Configuração dos serviços
 
 builder.Services.AddControllers();
 
-// Configuração do MongoDB - O "freezer" onde guardamos os ingredientes frescos
+// Contexto do MongoDB
 builder.Services.AddSingleton<MongoDbContext>();
 
-// Repositórios - Acesso aos dados
+// Repositórios
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPatientRepository, PatientRepository>();
 builder.Services.AddScoped<IEmotionMappingRepository, EmotionMappingRepository>();
 builder.Services.AddScoped<IHistoryRepository, HistoryRepository>();
 builder.Services.AddScoped<IPasswordResetRepository, PasswordResetRepository>();
 
-// Serviços de Negócio - Lógica da aplicação
+// Serviços de negócio
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPatientService, PatientService>();
@@ -59,15 +44,15 @@ builder.Services.AddScoped<IHistoryService, HistoryService>();
 builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
-// Serviços de Infraestrutura
+// Serviços de infraestrutura
 builder.Services.AddSingleton<IRateLimitService, RateLimitService>();
 builder.Services.AddHostedService<TokenCleanupService>();
 
-// Validação - O "inspetor de qualidade" que checa se os ingredientes estão bons
+// Validação
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
 builder.Services.AddFluentValidationAutoValidation();
 
-// Autenticação JWT - O sistema de crachás para entrar na cozinha
+// Autenticação JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -84,14 +69,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Autorização - As "regras da casa" sobre quem pode entrar onde
+// Autorização
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => 
         policy.RequireRole("Admin"));
 });
 
-// CORS - Permitir chamadas do frontend
+// Configuração CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -102,12 +87,11 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Documentação da API - O "cardápio" que mostramos aos clientes
+// Documentação da API
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "API Sinout", Version = "v1" });
     
-    // Configuração para JWT - Como explicar no cardápio que precisa de crachá
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
@@ -133,12 +117,12 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Limite de taxa de pedidos (Rate Limiting)
+// Limitação de taxa
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-    // 1. Limite para Autenticação (Login/Register) - Por IP
+    // Limite para autenticação por IP
     options.AddPolicy("limite-auth", context =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
@@ -150,10 +134,9 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromSeconds(10)
             }));
 
-    // 2. Limite Geral da API - Por IP (ou Usuário se autenticado)
+    // Limite geral da API por IP ou usuário
     options.AddPolicy("limite-api", context =>
     {
-        // Se usuário estiver autenticado, usa o ID, senão usa o IP
         var partitionKey = context.User.Identity?.IsAuthenticated == true
             ? context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
             : context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
@@ -163,13 +146,13 @@ builder.Services.AddRateLimiter(options =>
             factory: partition => new FixedWindowRateLimiterOptions
             {
                 AutoReplenishment = true,
-                PermitLimit = 60, // 60 requisições por minuto
+                PermitLimit = 60,
                 QueueLimit = 2,
                 Window = TimeSpan.FromMinutes(1)
             });
     });
 
-    // 3. Limite para Detecção de Emoções (CuidadorEmotion) - Por Usuário
+    // Limite para detecção de emoções por usuário
     options.AddPolicy("limite-emotion", context =>
     {
         var partitionKey = context.User.Identity?.IsAuthenticated == true
@@ -181,39 +164,35 @@ builder.Services.AddRateLimiter(options =>
             factory: partition => new FixedWindowRateLimiterOptions
             {
                 AutoReplenishment = true,
-                PermitLimit = 30, // 30 requisições por minuto (1 a cada 2s em média)
+                PermitLimit = 30,
                 QueueLimit = 0,
                 Window = TimeSpan.FromMinutes(1)
             });
     });
 });
 
-// --- 4. ABRINDO A COZINHA (CONFIGURANDO O APP) ---
+// Construção da aplicação
 var app = builder.Build();
 
-// --- 5. PREPARANDO O AMBIENTE DE TRABALHO ---
-// Como um chef verificando se tudo está limpo e organizado antes de abrir
-// Configure the HTTP request pipeline.
+// Configuração do pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage(); // O "primeiro socorros" para problemas durante o desenvolvimento
-    app.UseSwagger(); // Publicar o cardápio
-    app.UseSwaggerUI(); // Mostrar o cardápio em uma página bonita
-    app.MapScalarApiReference(options => options.WithOpenApiRoutePattern("/swagger/v1/swagger.json")); // Cardápio interativo
+    app.UseDeveloperExceptionPage();
+    app.UseSwagger();
+    app.UseSwaggerUI();
+    app.MapScalarApiReference(options => options.WithOpenApiRoutePattern("/swagger/v1/swagger.json"));
 }
 
-app.UseHttpsRedirection(); // Como redirecionar clientes para a entrada segura
+app.UseHttpsRedirection();
 
-app.UseCors("AllowAll"); // Permitir CORS
+app.UseCors("AllowAll");
 
-app.UseAuthentication(); // Verificar os crachás na porta
-app.UseAuthorization(); // Decidir quem entra onde
-app.UseCors("AllowAll"); // Usar a política de CORS definida
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseRateLimiter();
-app.MapControllers(); // Abrir as portas da cozinha para os pedidos!
+app.MapControllers();
 
+app.Run();
 
-app.Run(); // Ligar as luzes e abrir as portas - a cozinha está funcionando!
-
-// Tornar a classe Program acessível para testes de integração
+// Classe Program acessível para testes de integração
 public partial class Program { }
