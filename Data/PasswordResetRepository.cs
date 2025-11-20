@@ -24,6 +24,12 @@ public class PasswordResetRepository : IPasswordResetRepository
         _tokens = context.PasswordResetTokens;
     }
 
+    // Construtor para testes - permite injeção direta da coleção.
+    public PasswordResetRepository(IMongoCollection<PasswordResetToken> tokensCollection)
+    {
+        _tokens = tokensCollection;
+    }
+
     // Obtém token de reset por token.
     public async Task<PasswordResetToken?> GetByTokenAsync(string token)
     {
