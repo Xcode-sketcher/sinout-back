@@ -51,7 +51,7 @@ public class PasswordResetServiceTests
     [Fact]
     public async Task RequestPasswordResetAsync_WithValidEmail_ShouldCreateTokenAndSendEmail()
     {
-        // Arrange
+        // Arrange - Configura usuário válido e mocks para solicitação de reset de senha
         var request = PasswordResetFixtures.CreateForgotPasswordRequest();
         var user = UserFixtures.CreateValidUser();
         
@@ -73,7 +73,7 @@ public class PasswordResetServiceTests
     [Fact]
     public async Task RequestPasswordResetAsync_WithEmptyEmail_ShouldThrowException()
     {
-        // Arrange
+        // Arrange - Configura requisição com email vazio
         var request = new ForgotPasswordRequest { Email = "" };
 
         // Act
@@ -87,7 +87,7 @@ public class PasswordResetServiceTests
     [Fact]
     public async Task RequestPasswordResetAsync_WithNonExistentEmail_ShouldReturnSuccessWithoutSendingEmail()
     {
-        // Arrange
+        // Arrange - Configura email inexistente no sistema
         var request = PasswordResetFixtures.CreateForgotPasswordRequest("nonexistent@test.com");
         
         _mockUserRepository.Setup(x => x.GetByEmailAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
@@ -104,7 +104,7 @@ public class PasswordResetServiceTests
     [Fact]
     public async Task RequestPasswordResetAsync_WithInactiveUser_ShouldThrowException()
     {
-        // Arrange
+        // Arrange - Configura usuário inativo para teste
         var request = PasswordResetFixtures.CreateForgotPasswordRequest();
         var user = UserFixtures.CreateInactiveUser();
         
@@ -122,7 +122,7 @@ public class PasswordResetServiceTests
     [Fact]
     public async Task RequestPasswordResetAsync_WhenRateLimited_ShouldThrowException()
     {
-        // Arrange
+        // Arrange - Configura rate limiting ativo para o email
         var request = PasswordResetFixtures.CreateForgotPasswordRequest();
         
         _mockRateLimitService.Setup(x => x.IsRateLimited(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>())).Returns(true);
@@ -138,7 +138,7 @@ public class PasswordResetServiceTests
     [Fact]
     public async Task RequestPasswordResetAsync_ShouldGenerateNumericCodeWith6Digits()
     {
-        // Arrange
+        // Arrange - Configura mocks para capturar token gerado
         var request = PasswordResetFixtures.CreateForgotPasswordRequest();
         var user = UserFixtures.CreateValidUser();
         PasswordResetToken? capturedToken = null;
@@ -165,7 +165,7 @@ public class PasswordResetServiceTests
     [Fact]
     public async Task ResetPasswordAsync_WithValidToken_ShouldResetPassword()
     {
-        // Arrange
+        // Arrange - Configura token válido e usuário para reset de senha
         var request = PasswordResetFixtures.CreateResetPasswordRequest();
         var token = PasswordResetFixtures.CreateValidToken();
         var user = UserFixtures.CreateValidUser();
@@ -188,7 +188,7 @@ public class PasswordResetServiceTests
     [Fact]
     public async Task ResetPasswordAsync_WithInvalidToken_ShouldThrowException()
     {
-        // Arrange
+        // Arrange - Configura token inválido para teste
         var request = PasswordResetFixtures.CreateResetPasswordRequest("invalid-token");
         
         _mockResetRepository.Setup(x => x.GetByTokenAsync(It.IsAny<string>())).ReturnsAsync((PasswordResetToken?)null);
@@ -204,7 +204,7 @@ public class PasswordResetServiceTests
     [Fact]
     public async Task ResetPasswordAsync_WithMismatchedPasswords_ShouldThrowException()
     {
-        // Arrange
+        // Arrange - Configura senhas não coincidentes
         var request = PasswordResetFixtures.CreateResetPasswordRequest();
         request.ConfirmPassword = "DifferentPassword123";
 
@@ -219,7 +219,7 @@ public class PasswordResetServiceTests
     [Fact]
     public async Task ResetPasswordAsync_WithWeakPassword_ShouldThrowException()
     {
-        // Arrange
+        // Arrange - Configura senha fraca para teste de validação
         var request = PasswordResetFixtures.CreateResetPasswordRequest();
         request.NewPassword = "123";
         request.ConfirmPassword = "123";
@@ -235,7 +235,7 @@ public class PasswordResetServiceTests
     [Fact]
     public async Task ResetPasswordAsync_ShouldSendPasswordChangedNotification()
     {
-        // Arrange
+        // Arrange - Configura mocks para testar envio de notificação de mudança de senha
         var request = PasswordResetFixtures.CreateResetPasswordRequest();
         var token = PasswordResetFixtures.CreateValidToken();
         var user = UserFixtures.CreateValidUser();
@@ -260,7 +260,7 @@ public class PasswordResetServiceTests
     [Fact]
     public async Task ChangePasswordAsync_WithValidData_ShouldChangePassword()
     {
-        // Arrange
+        // Arrange - Configura dados válidos para mudança de senha
         var request = PasswordResetFixtures.CreateChangePasswordRequest();
         var user = UserFixtures.CreateValidUser();
         var userId = user.UserId;
@@ -280,7 +280,7 @@ public class PasswordResetServiceTests
     [Fact]
     public async Task ChangePasswordAsync_WithWrongCurrentPassword_ShouldThrowException()
     {
-        // Arrange
+        // Arrange - Configura senha atual incorreta para teste
         var request = PasswordResetFixtures.CreateChangePasswordRequest();
         request.CurrentPassword = "WrongPassword123";
         var user = UserFixtures.CreateValidUser();
@@ -298,7 +298,7 @@ public class PasswordResetServiceTests
     [Fact]
     public async Task ChangePasswordAsync_WithMismatchedNewPasswords_ShouldThrowException()
     {
-        // Arrange
+        // Arrange - Configura senhas novas não coincidentes
         var request = PasswordResetFixtures.CreateChangePasswordRequest();
         request.ConfirmPassword = "DifferentPassword123";
 
@@ -313,7 +313,7 @@ public class PasswordResetServiceTests
     [Fact]
     public async Task ChangePasswordAsync_ShouldSendNotificationEmail()
     {
-        // Arrange
+        // Arrange - Configura mocks para testar envio de notificação de mudança de senha
         var request = PasswordResetFixtures.CreateChangePasswordRequest();
         var user = UserFixtures.CreateValidUser();
         
@@ -335,7 +335,7 @@ public class PasswordResetServiceTests
     [Fact]
     public async Task ResendResetCodeAsync_WithValidEmail_ShouldCreateNewToken()
     {
-        // Arrange
+        // Arrange - Configura email válido para reenvio de código
         var request = new ResendResetCodeRequest { Email = "test@test.com" };
         var user = UserFixtures.CreateValidUser();
         
@@ -356,7 +356,7 @@ public class PasswordResetServiceTests
     [Fact]
     public async Task ResendResetCodeAsync_TooSoon_ShouldThrowException()
     {
-        // Arrange
+        // Arrange - Configura token recente para testar limite de tempo
         var request = new ResendResetCodeRequest { Email = "test@test.com" };
         var user = UserFixtures.CreateValidUser();
         var recentToken = PasswordResetFixtures.CreateValidToken();
