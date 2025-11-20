@@ -35,18 +35,6 @@ public interface IHistoryService
     Task CreateHistoryRecordAsync(HistoryRecord record);
 }
 
-/// <summary>
-/// Implementação do serviço de histórico.
-/// </summary>
-public class HistoryService : IHistoryService
-{
-    Task<List<HistoryRecordResponse>> GetHistoryByUserAsync(int userId, int currentUserId, string currentUserRole, int hours = 24);
-    Task<List<HistoryRecordResponse>> GetHistoryByFilterAsync(HistoryFilter filter, int currentUserId, string currentUserRole);
-    Task<PatientStatistics> GetUserStatisticsAsync(int userId, int currentUserId, string currentUserRole, int hours = 24);
-    Task CleanOldHistoryAsync(int hours = 24);
-    Task CreateHistoryRecordAsync(HistoryRecord record);
-}
-
 public class HistoryService : IHistoryService
 {
     private readonly IHistoryRepository _historyRepository;
@@ -58,9 +46,7 @@ public class HistoryService : IHistoryService
         _userRepository = userRepository;
     }
 
-    /// <summary>
-    /// Obtém o histórico de um usuário.
-    /// </summary>
+    // Obtém o histórico de um usuário.
     public async Task<List<HistoryRecordResponse>> GetHistoryByUserAsync(int userId, int currentUserId, string currentUserRole, int hours = 24)
     {
         // Verificar permissão
@@ -75,9 +61,7 @@ public class HistoryService : IHistoryService
         return records.Select(r => new HistoryRecordResponse(r, user.Name)).ToList();
     }
 
-    /// <summary>
-    /// Obtém o histórico por filtro.
-    /// </summary>
+    // Obtém o histórico por filtro.
     public async Task<List<HistoryRecordResponse>> GetHistoryByFilterAsync(HistoryFilter filter, int currentUserId, string currentUserRole)
     {
         // Se não for Admin, só pode ver histórico próprio
@@ -98,9 +82,7 @@ public class HistoryService : IHistoryService
         return responses;
     }
 
-    /// <summary>
-    /// Obtém as estatísticas de um usuário.
-    /// </summary>
+    // Obtém as estatísticas de um usuário.
     public async Task<PatientStatistics> GetUserStatisticsAsync(int userId, int currentUserId, string currentUserRole, int hours = 24)
     {
         // Verificar permissão
@@ -125,9 +107,7 @@ public class HistoryService : IHistoryService
         await _historyRepository.DeleteOldRecordsAsync(hours);
     }
 
-    /// <summary>
-    /// Cria um registro de histórico.
-    /// </summary>
+    // Cria um registro de histórico.
     public async Task CreateHistoryRecordAsync(HistoryRecord record)
     {
         Console.WriteLine($"[DEBUG SERVICE] CreateHistoryRecordAsync chamado - UserId: {record.UserId}");

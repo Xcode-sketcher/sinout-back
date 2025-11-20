@@ -40,19 +40,6 @@ public interface IPatientService
     Task DeletePatientAsync(int id, int currentUserId, string currentUserRole);
 }
 
-/// <summary>
-/// Implementação do serviço de pacientes.
-/// </summary>
-public class PatientService : IPatientService
-{
-    Task<PatientResponse> CreatePatientAsync(PatientRequest request, int currentUserId, string currentUserRole);
-    Task<PatientResponse> GetPatientByIdAsync(int id, int currentUserId, string currentUserRole);
-    Task<List<PatientResponse>> GetPatientsByCuidadorAsync(int cuidadorId);
-    Task<List<PatientResponse>> GetAllPatientsAsync(); // Apenas Admin
-    Task<PatientResponse> UpdatePatientAsync(int id, PatientRequest request, int currentUserId, string currentUserRole);
-    Task DeletePatientAsync(int id, int currentUserId, string currentUserRole);
-}
-
 public class PatientService : IPatientService
 {
     private readonly IPatientRepository _patientRepository;
@@ -64,9 +51,7 @@ public class PatientService : IPatientService
         _userRepository = userRepository;
     }
 
-    /// <summary>
-    /// Cria um novo paciente.
-    /// </summary>
+    // Cria um novo paciente.
     public async Task<PatientResponse> CreatePatientAsync(PatientRequest request, int currentUserId, string currentUserRole)
     {
         if (string.IsNullOrEmpty(request.Name))
@@ -118,9 +103,7 @@ public class PatientService : IPatientService
         return new PatientResponse(patient, cuidadorUser?.Name);
     }
 
-    /// <summary>
-    /// Obtém um paciente por ID.
-    /// </summary>
+    // Obtém um paciente por ID.
     public async Task<PatientResponse> GetPatientByIdAsync(int id, int currentUserId, string currentUserRole)
     {
         var patient = await _patientRepository.GetByIdAsync(id);
@@ -135,9 +118,7 @@ public class PatientService : IPatientService
         return new PatientResponse(patient, cuidador?.Name);
     }
 
-    /// <summary>
-    /// Obtém os pacientes de um cuidador.
-    /// </summary>
+    // Obtém os pacientes de um cuidador.
     public async Task<List<PatientResponse>> GetPatientsByCuidadorAsync(int cuidadorId)
     {
         var patients = await _patientRepository.GetByCuidadorIdAsync(cuidadorId);
@@ -146,9 +127,7 @@ public class PatientService : IPatientService
         return patients.Select(p => new PatientResponse(p, cuidador?.Name)).ToList();
     }
 
-    /// <summary>
-    /// Obtém todos os pacientes (apenas Admin).
-    /// </summary>
+    // Obtém todos os pacientes (apenas Admin).
     public async Task<List<PatientResponse>> GetAllPatientsAsync()
     {
         var patients = await _patientRepository.GetAllAsync();
@@ -163,9 +142,7 @@ public class PatientService : IPatientService
         return responses;
     }
 
-    /// <summary>
-    /// Atualiza um paciente.
-    /// </summary>
+    // Atualiza um paciente.
     public async Task<PatientResponse> UpdatePatientAsync(int id, PatientRequest request, int currentUserId, string currentUserRole)
     {
         var patient = await _patientRepository.GetByIdAsync(id);
@@ -201,9 +178,7 @@ public class PatientService : IPatientService
         return new PatientResponse(patient, cuidador?.Name);
     }
 
-    /// <summary>
-    /// Exclui um paciente.
-    /// </summary>
+    // Exclui um paciente.
     public async Task DeletePatientAsync(int id, int currentUserId, string currentUserRole)
     {
         var patient = await _patientRepository.GetByIdAsync(id);

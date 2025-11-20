@@ -23,16 +23,6 @@ public interface IRateLimitService
     void ClearAttempts(string key);
 }
 
-/// <summary>
-/// Implementação do serviço de rate limiting.
-/// </summary>
-public class RateLimitService : IRateLimitService
-{
-    bool IsRateLimited(string key, int maxAttempts = 3, int windowMinutes = 15);
-    void RecordAttempt(string key);
-    void ClearAttempts(string key);
-}
-
 public class RateLimitService : IRateLimitService
 {
     private readonly ConcurrentDictionary<string, List<DateTime>> _attempts = new();
@@ -43,9 +33,7 @@ public class RateLimitService : IRateLimitService
         _logger = logger;
     }
 
-    /// <summary>
-    /// Verifica se a chave está rate limited.
-    /// </summary>
+    // Verifica se a chave está rate limited.
     public bool IsRateLimited(string key, int maxAttempts = 3, int windowMinutes = 15)
     {
         var now = DateTime.UtcNow;
@@ -72,9 +60,7 @@ public class RateLimitService : IRateLimitService
         return isLimited;
     }
 
-    /// <summary>
-    /// Registra uma tentativa para a chave.
-    /// </summary>
+    // Registra uma tentativa para a chave.
     public void RecordAttempt(string key)
     {
         _attempts.AddOrUpdate(
@@ -89,9 +75,7 @@ public class RateLimitService : IRateLimitService
         _logger.LogInformation($"[RateLimit] Tentativa registrada para: {key}");
     }
 
-    /// <summary>
-    /// Limpa as tentativas para a chave.
-    /// </summary>
+    // Limpa as tentativas para a chave.
     public void ClearAttempts(string key)
     {
         _attempts.TryRemove(key, out _);
