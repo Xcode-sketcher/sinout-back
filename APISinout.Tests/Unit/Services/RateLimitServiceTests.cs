@@ -26,7 +26,7 @@ public class RateLimitServiceTests
     [Fact]
     public void IsRateLimited_NoAttempts_ReturnsFalse()
     {
-        // Arrange
+        // Arrange - Configura chave sem tentativas anteriores
         var key = "test@example.com";
 
         // Act
@@ -39,7 +39,7 @@ public class RateLimitServiceTests
     [Fact]
     public void IsRateLimited_BelowLimit_ReturnsFalse()
     {
-        // Arrange
+        // Arrange - Registra tentativas abaixo do limite
         var key = "test@example.com";
         _service.RecordAttempt(key);
         _service.RecordAttempt(key);
@@ -54,7 +54,7 @@ public class RateLimitServiceTests
     [Fact]
     public void IsRateLimited_AtLimit_ReturnsTrue()
     {
-        // Arrange
+        // Arrange - Registra tentativas exatamente no limite
         var key = "test@example.com";
         _service.RecordAttempt(key);
         _service.RecordAttempt(key);
@@ -70,7 +70,7 @@ public class RateLimitServiceTests
     [Fact]
     public void IsRateLimited_AboveLimit_ReturnsTrue()
     {
-        // Arrange
+        // Arrange - Registra tentativas acima do limite
         var key = "test@example.com";
         for (int i = 0; i < 5; i++)
         {
@@ -87,7 +87,7 @@ public class RateLimitServiceTests
     [Fact]
     public void RecordAttempt_AddsAttemptToKey()
     {
-        // Arrange
+        // Arrange - Configura chave para registrar tentativa
         var key = "test@example.com";
 
         // Act
@@ -101,7 +101,7 @@ public class RateLimitServiceTests
     [Fact]
     public void RecordAttempt_MultipleKeys_TracksIndependently()
     {
-        // Arrange
+        // Arrange - Configura múltiplas chaves para rastreamento independente
         var key1 = "user1@example.com";
         var key2 = "user2@example.com";
 
@@ -119,7 +119,7 @@ public class RateLimitServiceTests
     [Fact]
     public void ClearAttempts_RemovesAttemptsForKey()
     {
-        // Arrange
+        // Arrange - Registra tentativas e depois limpa
         var key = "test@example.com";
         _service.RecordAttempt(key);
         _service.RecordAttempt(key);
@@ -136,7 +136,7 @@ public class RateLimitServiceTests
     [Fact]
     public void ClearAttempts_NonExistentKey_DoesNotThrow()
     {
-        // Arrange
+        // Arrange - Configura chave inexistente
         var key = "nonexistent@example.com";
 
         // Act & Assert
@@ -147,7 +147,7 @@ public class RateLimitServiceTests
     [Fact]
     public void IsRateLimited_DifferentLimits_AppliesCorrectly()
     {
-        // Arrange
+        // Arrange - Registra tentativas para testar diferentes limites
         var key = "test@example.com";
         _service.RecordAttempt(key);
         _service.RecordAttempt(key);
@@ -162,7 +162,7 @@ public class RateLimitServiceTests
     [Fact]
     public void IsRateLimited_LogsWarning_WhenLimitExceeded()
     {
-        // Arrange
+        // Arrange - Registra tentativas até exceder o limite
         var key = "test@example.com";
         _service.RecordAttempt(key);
         _service.RecordAttempt(key);
@@ -185,7 +185,7 @@ public class RateLimitServiceTests
     [Fact]
     public void RecordAttempt_LogsInformation()
     {
-        // Arrange
+        // Arrange - Configura chave para registrar tentativa com log
         var key = "test@example.com";
 
         // Act
@@ -205,7 +205,7 @@ public class RateLimitServiceTests
     [Fact]
     public void ClearAttempts_LogsInformation()
     {
-        // Arrange
+        // Arrange - Registra tentativa antes de limpar
         var key = "test@example.com";
         _service.RecordAttempt(key);
 
@@ -224,9 +224,9 @@ public class RateLimitServiceTests
     }
 
     [Fact]
-    public void IsRateLimited_ConcurrentAccess_HandlesCorrectly()
+    public async Task IsRateLimited_ConcurrentAccess_HandlesCorrectly()
     {
-        // Arrange
+        // Arrange - Configura chave para teste de acesso concorrente
         var key = "test@example.com";
         var tasks = new List<Task>();
 
@@ -235,7 +235,7 @@ public class RateLimitServiceTests
         {
             tasks.Add(Task.Run(() => _service.RecordAttempt(key)));
         }
-        Task.WaitAll(tasks.ToArray());
+        await Task.WhenAll(tasks);
 
         // Assert
         var isLimited = _service.IsRateLimited(key, maxAttempts: 5, windowMinutes: 15);
