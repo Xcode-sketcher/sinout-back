@@ -89,11 +89,6 @@ public class HistoryController : ControllerBase
     {
         try
         {
-            // 🔍 Logs de debug (como anotações do desenvolvedor)
-            Console.WriteLine($"[DEBUG] GetMyHistory chamado, hours={hours}");
-            Console.WriteLine($"[DEBUG] User.Identity.IsAuthenticated = {User.Identity?.IsAuthenticated}");
-            Console.WriteLine($"[DEBUG] Claims: {string.Join(", ", User.Claims.Select(c => $"{c.Type}={c.Value}"))}");
-            
             // 🎫 Extrair identidade do token
             var userId = AuthorizationHelper.GetCurrentUserId(User);
             var userRole = AuthorizationHelper.GetCurrentUserRole(User);
@@ -209,12 +204,10 @@ public class HistoryController : ControllerBase
         }
         catch (AppException ex)
         {
-            Console.WriteLine($"[DEBUG] ❌ AppException em GetMyStatistics: {ex.Message}");
             return BadRequest(new { message = ex.Message });
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[DEBUG] ❌ Exception em GetMyStatistics: {ex.Message}");
             return StatusCode(500, new { message = "Erro interno", error = ex.Message });
         }
     }
@@ -271,10 +264,6 @@ public class HistoryController : ControllerBase
     {
         try
         {
-            // 🔍 Logs detalhados (para debug)
-            Console.WriteLine($"[DEBUG CONTROLLER] SaveCuidadorEmotion recebido:");
-            Console.WriteLine($"  Request é null? {request == null}");
-            
             if (request != null)
             {
                 Console.WriteLine($"  CuidadorId: {request.CuidadorId}");
@@ -287,7 +276,6 @@ public class HistoryController : ControllerBase
             // ❌ VALIDAÇÃO 1: Request válido?
             if (request == null || request.CuidadorId == 0)
             {
-                Console.WriteLine($"[DEBUG CONTROLLER] ❌ Request inválido!");
                 return BadRequest(new { sucesso = false, message = "Request vazio ou formato inválido - verifique o JSON" });
             }
 
@@ -299,7 +287,6 @@ public class HistoryController : ControllerBase
             // (Impedir que alguém salve emoções em nome de outro)
             if (request.CuidadorId != userId && userRole != "Admin")
             {
-                Console.WriteLine($"[DEBUG] Acesso negado: CuidadorId={request.CuidadorId}, userId={userId}, role={userRole}");
                 return Forbid();  // ❌ Não autorizado!
             }
 
@@ -313,7 +300,6 @@ public class HistoryController : ControllerBase
             {
                 // Pegar o percentual da emoção dominante
                 var percentage = request.EmotionsDetected.GetValueOrDefault(request.DominantEmotion, 0);
-                Console.WriteLine($"[DEBUG] Buscando regra para: Emotion={request.DominantEmotion}, Percentage={percentage}");
                 
                 if (emotionMappingService != null)
                 {
@@ -325,7 +311,6 @@ public class HistoryController : ControllerBase
                     );
                     triggeredMessage = ruleResult.message;
                     triggeredRuleId = ruleResult.ruleId;
-                    Console.WriteLine($"[DEBUG] Regra encontrada: Message={triggeredMessage ?? "NENHUMA"}, RuleId={triggeredRuleId ?? "null"}");
                 }
             }
 
@@ -344,9 +329,7 @@ public class HistoryController : ControllerBase
             };
 
             // 💾 FASE 3: SALVAR NO BANCO DE DADOS
-            Console.WriteLine($"[DEBUG] Salvando histórico: UserId={historyRecord.UserId}, PatientName={historyRecord.PatientName}");
             await _historyService.CreateHistoryRecordAsync(historyRecord);
-            Console.WriteLine($"[DEBUG] Histórico salvo com sucesso!");
 
             // ✅ FASE 4: RETORNAR RESPOSTA
             // Retorna a mensagem para o frontend exibir na tela (se houver)

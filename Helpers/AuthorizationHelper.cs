@@ -21,10 +21,7 @@ public static class AuthorizationHelper
         
         if (userIdClaim == null)
         {
-            // Debug: mostrar todos os claims disponíveis
-            var allClaims = string.Join(", ", user.Claims.Select(c => $"{c.Type}={c.Value}"));
-            Console.WriteLine($"[DEBUG AUTH] Claims disponíveis: {allClaims}");
-            throw new AppException("Usuário não autenticado - claim userId não encontrado");
+            throw new AppException("Usuário não encontrado");
         }
         
         if (!int.TryParse(userIdClaim.Value, out int userId))

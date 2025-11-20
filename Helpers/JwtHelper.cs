@@ -23,9 +23,7 @@ public static class JwtHelper
         if (string.IsNullOrEmpty(user.Role))
             throw new ArgumentException("Role do usuário não pode ser null ou vazio");
 
-        // Debug: verificar valores
-        Console.WriteLine($"Gerando token para usuário: UserId={user.UserId}, Email={user.Email}, Role={user.Role}");
-        
+
         // Os "ingredientes" do feitiço: informações do usuário
         var claims = new List<Claim>
         {
@@ -36,15 +34,8 @@ public static class JwtHelper
             new Claim(ClaimTypes.Role, user.Role) // Cargo/poder do jogador
         };
 
-        // Also include simple "email" and "role" claims for simpler access by consumers/tests
         claims.Add(new Claim("email", user.Email));
         claims.Add(new Claim("role", user.Role));
-
-        // Debug: mostrar claims
-        foreach (var claim in claims)
-        {
-            Console.WriteLine($"Claim: {claim.Type} = {claim.Value}");
-        }
 
         // A "varinha mágica": chave secreta para assinar
         var key = new SymmetricSecurityKey(
