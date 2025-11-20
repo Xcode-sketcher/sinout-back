@@ -68,7 +68,7 @@ public class AuthorizationHelperTests
         // Act & Assert
         var action = () => AuthorizationHelper.GetCurrentUserId(claimsPrincipal);
         action.Should().Throw<AppException>()
-            .WithMessage("*userId não encontrado*");
+            .WithMessage("*Usuário não encontrado*");
     }
 
     [Fact]
