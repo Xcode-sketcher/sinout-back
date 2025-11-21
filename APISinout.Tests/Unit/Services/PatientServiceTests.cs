@@ -135,6 +135,20 @@ public class PatientServiceTests
             .WithMessage("Nome do paciente é obrigatório");
     }
 
+    [Fact]
+    public async Task CreatePatientAsync_InvalidRole_ShouldThrowAppException()
+    {
+        // Arrange
+        var request = PatientFixtures.CreateValidPatientRequest();
+        
+        // Act
+        var act = async () => await _patientService.CreatePatientAsync(request, 1, "User");
+
+        // Assert
+        await act.Should().ThrowAsync<AppException>()
+            .WithMessage($"Apenas {UserRole.Admin} e {UserRole.Cuidador} podem cadastrar pacientes");
+    }
+
     #endregion
 
     #region GetPatientById Tests
@@ -197,6 +211,21 @@ public class PatientServiceTests
             .WithMessage("Acesso negado");
     }
 
+    [Fact]
+    public async Task GetPatientByIdAsync_NotFound_ShouldThrowAppException()
+    {
+        // Arrange
+        var id = 999;
+        _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync((Patient?)null);
+
+        // Act
+        var act = async () => await _patientService.GetPatientByIdAsync(id, 1, "Cuidador");
+
+        // Assert
+        await act.Should().ThrowAsync<AppException>()
+            .WithMessage("Paciente não encontrado");
+    }
+
     #endregion
 
     #region GetPatientsByCuidador Tests
@@ -246,6 +275,109 @@ public class PatientServiceTests
         result.Name.Should().Be("Nome Atualizado");
     }
 
+    [Fact]
+    public async Task UpdatePatientAsync_NotFound_ShouldThrowAppException()
+    {
+        // Arrange
+        var id = 999;
+        var request = PatientFixtures.CreateValidPatientRequest();
+        _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync((Patient?)null);
+
+        // Act
+        var act = async () => await _patientService.UpdatePatientAsync(id, request, 1, "Cuidador");
+
+        // Assert
+        await act.Should().ThrowAsync<AppException>()
+            .WithMessage("Paciente não encontrado");
+    }
+
+    [Fact]
+    public async Task UpdatePatientAsync_AccessDenied_ShouldThrowAppException()
+    {
+        // Arrange
+        var id = 1;
+        var patient = PatientFixtures.CreateValidPatient(id, 1);
+        var request = PatientFixtures.CreateValidPatientRequest();
+        
+        _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(patient);
+
+        // Act
+        var act = async () => await _patientService.UpdatePatientAsync(id, request, 2, "Cuidador");
+
+        // Assert
+        await act.Should().ThrowAsync<AppException>()
+            .WithMessage("Acesso negado");
+    }
+
+    [Fact]
+    public async Task UpdatePatientAsync_UpdateAllFields_ShouldUpdatePatient()
+    {
+        // Arrange
+        var id = 1;
+        var cuidadorId = 1;
+        var patient = PatientFixtures.CreateValidPatient(id, cuidadorId);
+        var request = new PatientRequest 
+        { 
+            Name = "New Name", 
+            AdditionalInfo = "New Info", 
+            ProfilePhoto = "new_photo.jpg" 
+        };
+        var cuidador = UserFixtures.CreateValidUser(cuidadorId);
+        
+        _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(patient);
+        _mockPatientRepository.Setup(x => x.UpdatePatientAsync(id, It.IsAny<Patient>())).Returns(Task.CompletedTask);
+        _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(cuidador);
+
+        // Act
+        var result = await _patientService.UpdatePatientAsync(id, request, cuidadorId, "Cuidador");
+
+        // Assert
+        result.Name.Should().Be("New Name");
+        result.AdditionalInfo.Should().Be("New Info");
+        result.ProfilePhoto.Should().Be("new_photo.jpg");
+    }
+
+    [Fact]
+    public async Task UpdatePatientAsync_AdminChangeCuidador_Success()
+    {
+        // Arrange
+        var id = 1;
+        var oldCuidadorId = 1;
+        var newCuidadorId = 2;
+        var patient = PatientFixtures.CreateValidPatient(id, oldCuidadorId);
+        var request = new PatientRequest { CuidadorId = newCuidadorId };
+        var newCuidador = UserFixtures.CreateValidUser(newCuidadorId);
+        
+        _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(patient);
+        _mockPatientRepository.Setup(x => x.UpdatePatientAsync(id, It.IsAny<Patient>())).Returns(Task.CompletedTask);
+        _mockUserRepository.Setup(x => x.GetByIdAsync(newCuidadorId)).ReturnsAsync(newCuidador);
+
+        // Act
+        var result = await _patientService.UpdatePatientAsync(id, request, 100, "Admin");
+
+        // Assert
+        result.CuidadorId.Should().Be(newCuidadorId);
+    }
+
+    [Fact]
+    public async Task UpdatePatientAsync_AdminChangeCuidador_InvalidCuidador_ThrowsException()
+    {
+        // Arrange
+        var id = 1;
+        var patient = PatientFixtures.CreateValidPatient(id, 1);
+        var request = new PatientRequest { CuidadorId = 999 };
+        
+        _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(patient);
+        _mockUserRepository.Setup(x => x.GetByIdAsync(999)).ReturnsAsync((User?)null);
+
+        // Act
+        var act = async () => await _patientService.UpdatePatientAsync(id, request, 100, "Admin");
+
+        // Assert
+        await act.Should().ThrowAsync<AppException>()
+            .WithMessage("Cuidador inválido");
+    }
+
     #endregion
 
     #region DeletePatient Tests
@@ -265,6 +397,38 @@ public class PatientServiceTests
 
         // Assert
         _mockPatientRepository.Verify(x => x.DeletePatientAsync(patient.Id), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeletePatientAsync_NotFound_ShouldThrowAppException()
+    {
+        // Arrange
+        var id = 999;
+        _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync((Patient?)null);
+
+        // Act
+        var act = async () => await _patientService.DeletePatientAsync(id, 1, "Cuidador");
+
+        // Assert
+        await act.Should().ThrowAsync<AppException>()
+            .WithMessage("Paciente não encontrado");
+    }
+
+    [Fact]
+    public async Task DeletePatientAsync_AccessDenied_ShouldThrowAppException()
+    {
+        // Arrange
+        var id = 1;
+        var patient = PatientFixtures.CreateValidPatient(id, 1);
+        
+        _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(patient);
+
+        // Act
+        var act = async () => await _patientService.DeletePatientAsync(id, 2, "Cuidador");
+
+        // Assert
+        await act.Should().ThrowAsync<AppException>()
+            .WithMessage("Acesso negado");
     }
 
     [Fact]

@@ -158,6 +158,34 @@ public class PasswordResetServiceTests
         capturedToken!.Token.Should().MatchRegex("^[0-9]{6}$");
     }
 
+    [Fact]
+    public async Task RequestPasswordResetAsync_WhenEmailSendingFails_ShouldReturnDevMessage()
+    {
+        // Arrange
+        var request = PasswordResetFixtures.CreateForgotPasswordRequest();
+        var user = UserFixtures.CreateValidUser();
+        
+        _mockUserRepository.Setup(x => x.GetByEmailAsync(It.IsAny<string>())).ReturnsAsync(user);
+        _mockRateLimitService.Setup(x => x.IsRateLimited(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>())).Returns(false);
+        _mockResetRepository.Setup(x => x.CreateTokenAsync(It.IsAny<PasswordResetToken>())).Returns(Task.CompletedTask);
+        _mockEmailService.Setup(x => x.SendPasswordResetEmailAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ThrowsAsync(new Exception("Email server error"));
+
+        // Act
+        var result = await _passwordResetService.RequestPasswordResetAsync(request);
+
+        // Assert
+        result.Message.Should().Contain("Código de redefinição (DEV)");
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Erro ao enviar email")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
     #endregion
 
     #region ResetPassword Tests
@@ -253,6 +281,36 @@ public class PasswordResetServiceTests
         _mockEmailService.Verify(x => x.SendPasswordChangedNotificationAsync(user.Email!), Times.Once);
     }
 
+    [Fact]
+    public async Task ResetPasswordAsync_WhenNotificationFails_ShouldNotThrow()
+    {
+        // Arrange
+        var request = PasswordResetFixtures.CreateResetPasswordRequest();
+        var token = PasswordResetFixtures.CreateValidToken();
+        var user = UserFixtures.CreateValidUser();
+        
+        _mockResetRepository.Setup(x => x.GetByTokenAsync(request.Token)).ReturnsAsync(token);
+        _mockUserRepository.Setup(x => x.GetByIdAsync(token.UserId)).ReturnsAsync(user);
+        _mockUserRepository.Setup(x => x.UpdateUserAsync(It.IsAny<int>(), It.IsAny<User>())).Returns(Task.CompletedTask);
+        _mockResetRepository.Setup(x => x.MarkAsUsedAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
+        _mockEmailService.Setup(x => x.SendPasswordChangedNotificationAsync(It.IsAny<string>()))
+            .ThrowsAsync(new Exception("Email server error"));
+
+        // Act
+        var result = await _passwordResetService.ResetPasswordAsync(request);
+
+        // Assert
+        result.Message.Should().Be("Senha redefinida com sucesso");
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Erro ao enviar notificação")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
     #endregion
 
     #region ChangePassword Tests
@@ -328,6 +386,33 @@ public class PasswordResetServiceTests
         _mockEmailService.Verify(x => x.SendPasswordChangedNotificationAsync(user.Email!), Times.Once);
     }
 
+    [Fact]
+    public async Task ChangePasswordAsync_WhenNotificationFails_ShouldNotThrow()
+    {
+        // Arrange
+        var request = PasswordResetFixtures.CreateChangePasswordRequest();
+        var user = UserFixtures.CreateValidUser();
+        
+        _mockUserRepository.Setup(x => x.GetByIdAsync(user.UserId)).ReturnsAsync(user);
+        _mockUserRepository.Setup(x => x.UpdateUserAsync(It.IsAny<int>(), It.IsAny<User>())).Returns(Task.CompletedTask);
+        _mockEmailService.Setup(x => x.SendPasswordChangedNotificationAsync(It.IsAny<string>()))
+            .ThrowsAsync(new Exception("Email server error"));
+
+        // Act
+        var result = await _passwordResetService.ChangePasswordAsync(request, user.UserId);
+
+        // Assert
+        result.Message.Should().Be("Senha alterada com sucesso");
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Erro ao enviar notificação")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
     #endregion
 
     #region ResendResetCode Tests
@@ -372,6 +457,35 @@ public class PasswordResetServiceTests
         // Assert
         await act.Should().ThrowAsync<AppException>()
             .WithMessage("*Aguarde*");
+    }
+
+    [Fact]
+    public async Task ResendResetCodeAsync_WhenEmailSendingFails_ShouldReturnDevMessage()
+    {
+        // Arrange
+        var request = new ResendResetCodeRequest { Email = "test@test.com" };
+        var user = UserFixtures.CreateValidUser();
+        
+        _mockUserRepository.Setup(x => x.GetByEmailAsync(It.IsAny<string>())).ReturnsAsync(user);
+        _mockRateLimitService.Setup(x => x.IsRateLimited(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>())).Returns(false);
+        _mockResetRepository.Setup(x => x.GetActiveTokenByUserIdAsync(user.UserId)).ReturnsAsync((PasswordResetToken?)null);
+        _mockResetRepository.Setup(x => x.CreateTokenAsync(It.IsAny<PasswordResetToken>())).Returns(Task.CompletedTask);
+        _mockEmailService.Setup(x => x.SendPasswordResetEmailAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ThrowsAsync(new Exception("Email server error"));
+
+        // Act
+        var result = await _passwordResetService.ResendResetCodeAsync(request);
+
+        // Assert
+        result.Message.Should().Contain("Código de redefinição (DEV)");
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Erro ao reenviar email")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     #endregion

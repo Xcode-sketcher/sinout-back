@@ -174,4 +174,37 @@ public class TokenCleanupServiceTests
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.AtMost(1));
     }
+    [Fact]
+    public async Task ExecuteAsync_WhenRepositoryThrows_ShouldLogAndRetry()
+    {
+        // Arrange
+        var service = new TokenCleanupService(_serviceProviderMock.Object, _loggerMock.Object);
+        var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromMilliseconds(200)); // Run for a short time
+
+        _repositoryMock.Setup(x => x.DeleteExpiredTokensAsync())
+            .ThrowsAsync(new Exception("Database error"));
+
+        // Act
+        try
+        {
+            await service.StartAsync(cts.Token);
+            await Task.Delay(100);
+            await service.StopAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected
+        }
+
+        // Assert
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Erro ao limpar tokens")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.AtLeastOnce);
+    }
 }

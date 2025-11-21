@@ -18,12 +18,12 @@ Esta API do Sinout permite a ligação entre os sistemas de reconhecimento facia
 
 ## 🧪Testes e QA
 O projeto possui uma suíte de testes (unitários + integrações) e cobertura de código automatizada.
-Última análise local (20/11/2025 20:00:37):
+Última análise local (21/11/2025 15:08:18):
 
-- Cobertura de linhas: **86.4%** (1900 / 2199)
-- Cobertura de branches: **71.6%** (321 / 448)
+- Cobertura de linhas: **91.7%** (1900 / 2199)
+- Cobertura de branches: **81.4%** (321 / 448)
 
-Meta de qualidade: atingir **>80%** de cobertura por linhas e branches.
+Meta de qualidade: atingida✅ **>80%** de cobertura por linhas e branches.
 
 
 
