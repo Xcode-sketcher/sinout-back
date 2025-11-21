@@ -44,8 +44,10 @@ O projeto adota o padrão **Monolito modular / Clean-style (layered)**, o que ga
 
 - Simplicidade de deploy e debug
 - Fácil compartilhamento de modelos, DTOs e utilitários entre camadas
+- Rapidez de desenvolvimento
+- Menos abstrações e fácil integração com Frameworks
 - Menor overhead operacional comparado com micro serviços
-- Fácil migração para **Clean Architecture** se necessesário
+- Simplicidade na migração para **Outras Arquiteturas** se necessesário
 
 A estrutura segue:
 
