@@ -1,8 +1,4 @@
-// ============================================================
-// 🧹 TESTES DO TOKENCLEANUPSERVICE - LIMPEZA AUTOMÁTICA
-// ============================================================
-// Valida o serviço de limpeza automática de tokens expirados,
-// testando execução em background e tratamento de erros.
+// Tests for TokenCleanupService.
 
 using Xunit;
 using FluentAssertions;
@@ -45,10 +41,10 @@ public class TokenCleanupServiceTests
     {
         // Arrange - Configura o serviço para teste de inicialização
 
-        // Act
+        // Act - Instancia o serviço
         var service = new TokenCleanupService(_serviceProviderMock.Object, _loggerMock.Object);
 
-        // Assert
+        // Assert - Verifica se o serviço foi criado corretamente
         service.Should().NotBeNull();
     }
 
@@ -62,7 +58,7 @@ public class TokenCleanupServiceTests
 
         _repositoryMock.Setup(x => x.DeleteExpiredTokensAsync()).Returns(Task.CompletedTask);
 
-        // Act
+        // Act - Inicia e para o serviço
         try
         {
             await service.StartAsync(cts.Token);
@@ -74,7 +70,7 @@ public class TokenCleanupServiceTests
             // Esperado quando o token é cancelado
         }
 
-        // Assert
+        // Assert - Verifica se o log de início foi registrado
         _loggerMock.Verify(
             x => x.Log(
                 LogLevel.Information,
@@ -95,7 +91,7 @@ public class TokenCleanupServiceTests
 
         _repositoryMock.Setup(x => x.DeleteExpiredTokensAsync()).Returns(Task.CompletedTask);
 
-        // Act
+        // Act - Executa o serviço por um curto período
         try
         {
             await service.StartAsync(cts.Token);
@@ -107,9 +103,10 @@ public class TokenCleanupServiceTests
             // Esperado
         }
 
-        // Assert - pode ter executado 0 ou 1 vez dependendo do timing
+        // Assert - Verifica se o repositório foi chamado (pode ter executado 0 ou 1 vez dependendo do timing)
         _repositoryMock.Verify(x => x.DeleteExpiredTokensAsync(), Times.AtMost(1));
     }
+
     [Fact]
     public async Task CleanupExpiredTokensAsync_LogsStart_BeforeCleanup()
     {
@@ -120,7 +117,7 @@ public class TokenCleanupServiceTests
 
         _repositoryMock.Setup(x => x.DeleteExpiredTokensAsync()).Returns(Task.CompletedTask);
 
-        // Act
+        // Act - Executa o serviço
         try
         {
             await service.StartAsync(cts.Token);
@@ -132,7 +129,7 @@ public class TokenCleanupServiceTests
             // Esperado
         }
 
-        // Assert
+        // Assert - Verifica se o log de início da limpeza foi registrado
         _loggerMock.Verify(
             x => x.Log(
                 LogLevel.Information,
@@ -142,6 +139,7 @@ public class TokenCleanupServiceTests
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.AtMost(1));
     }
+
     [Fact]
     public async Task CleanupExpiredTokensAsync_LogsCompletion_AfterCleanup()
     {
@@ -152,7 +150,7 @@ public class TokenCleanupServiceTests
 
         _repositoryMock.Setup(x => x.DeleteExpiredTokensAsync()).Returns(Task.CompletedTask);
 
-        // Act
+        // Act - Executa o serviço
         try
         {
             await service.StartAsync(cts.Token);
@@ -164,7 +162,7 @@ public class TokenCleanupServiceTests
             // Esperado
         }
 
-        // Assert
+        // Assert - Verifica se o log de conclusão da limpeza foi registrado
         _loggerMock.Verify(
             x => x.Log(
                 LogLevel.Information,
@@ -174,10 +172,11 @@ public class TokenCleanupServiceTests
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.AtMost(1));
     }
+
     [Fact]
     public async Task ExecuteAsync_WhenRepositoryThrows_ShouldLogAndRetry()
     {
-        // Arrange
+        // Arrange - Configura falha no repositório para teste de tratamento de erro
         var service = new TokenCleanupService(_serviceProviderMock.Object, _loggerMock.Object);
         var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromMilliseconds(200)); // Run for a short time
@@ -185,7 +184,7 @@ public class TokenCleanupServiceTests
         _repositoryMock.Setup(x => x.DeleteExpiredTokensAsync())
             .ThrowsAsync(new Exception("Database error"));
 
-        // Act
+        // Act - Executa o serviço com falha no repositório
         try
         {
             await service.StartAsync(cts.Token);
@@ -197,7 +196,7 @@ public class TokenCleanupServiceTests
             // Expected
         }
 
-        // Assert
+        // Assert - Verifica se o erro foi logado
         _loggerMock.Verify(
             x => x.Log(
                 LogLevel.Error,

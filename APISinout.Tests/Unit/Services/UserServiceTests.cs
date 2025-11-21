@@ -175,7 +175,7 @@ public class UserServiceTests
     [Fact]
     public async Task CreateUserAsync_NoRoleSpecified_DefaultsToClient()
     {
-        // Arrange
+        // Arrange - Configura requisição sem role especificada
         var request = new CreateUserRequest
         {
             Name = "New User",
@@ -185,17 +185,17 @@ public class UserServiceTests
         _userRepositoryMock.Setup(x => x.GetNextUserIdAsync()).ReturnsAsync(10);
         _userRepositoryMock.Setup(x => x.CreateUserAsync(It.IsAny<User>())).Returns(Task.CompletedTask);
 
-        // Act
+        // Act - Cria usuário sem role
         var result = await _service.CreateUserAsync(request, "system");
 
-        // Assert
+        // Assert - Verifica se role padrão (Client) foi atribuída
         result.Role.Should().Be("Client");
     }
 
     [Fact]
     public async Task CreateUserAsync_PasswordIsHashed()
     {
-        // Arrange
+        // Arrange - Configura requisição com senha em texto plano
         var request = new CreateUserRequest
         {
             Name = "New User",
@@ -206,10 +206,10 @@ public class UserServiceTests
         _userRepositoryMock.Setup(x => x.GetNextUserIdAsync()).ReturnsAsync(1);
         _userRepositoryMock.Setup(x => x.CreateUserAsync(It.IsAny<User>())).Returns(Task.CompletedTask);
 
-        // Act
+        // Act - Cria usuário
         var result = await _service.CreateUserAsync(request, "admin");
 
-        // Assert
+        // Assert - Verifica se a senha foi hasheada corretamente
         result.PasswordHash.Should().NotBe("PlainPassword123");
         result.PasswordHash.Should().StartWith("$2a$"); // BCrypt hash prefix
         BCrypt.Net.BCrypt.Verify("PlainPassword123", result.PasswordHash).Should().BeTrue();
@@ -256,7 +256,7 @@ public class UserServiceTests
     [Fact]
     public async Task UpdateUserAsync_PartialUpdate_OnlyUpdatesProvidedFields()
     {
-        // Arrange
+        // Arrange - Configura atualização parcial de campos
         var existingUser = new User
         {
             UserId = 1,
@@ -273,10 +273,10 @@ public class UserServiceTests
         _userRepositoryMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(existingUser);
         _userRepositoryMock.Setup(x => x.UpdateUserAsync(1, It.IsAny<User>())).Returns(Task.CompletedTask);
 
-        // Act
+        // Act - Executa atualização parcial
         await _service.UpdateUserAsync(1, updateRequest);
 
-        // Assert
+        // Assert - Verifica se apenas os campos fornecidos foram alterados
         _userRepositoryMock.Verify(x => x.UpdateUserAsync(1, It.Is<User>(u =>
             u.Name == "Updated Name" &&
             u.Email == "original@example.com" &&
@@ -288,14 +288,14 @@ public class UserServiceTests
     [Fact]
     public async Task UpdateUserAsync_NonExistingUser_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura atualização para usuário inexistente
         var updateRequest = new UpdateUserRequest { Name = "New Name" };
         _userRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((User?)null);
 
-        // Act
+        // Act - Tenta atualizar usuário que não existe
         Func<Task> action = async () => await _service.UpdateUserAsync(999, updateRequest);
 
-        // Assert
+        // Assert - Deve lançar exceção de usuário não encontrado
         await action.Should().ThrowAsync<Exception>()
             .WithMessage("User not found");
     }
@@ -327,13 +327,13 @@ public class UserServiceTests
     [Fact]
     public async Task DeleteUserAsync_NonExistingUser_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura exclusão para usuário inexistente
         _userRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((User?)null);
 
-        // Act
+        // Act - Tenta excluir usuário que não existe
         Func<Task> action = async () => await _service.DeleteUserAsync(999);
 
-        // Assert
+        // Assert - Deve lançar exceção de usuário não encontrado
         await action.Should().ThrowAsync<Exception>()
             .WithMessage("User not found");
     }
@@ -345,7 +345,7 @@ public class UserServiceTests
     [Fact]
     public async Task UpdatePatientNameAsync_ValidRequest_UpdatesPatientName()
     {
-        // Arrange
+        // Arrange - Configura usuário para atualização do nome do paciente
         var user = new User
         {
             UserId = 1,
@@ -356,23 +356,23 @@ public class UserServiceTests
         _userRepositoryMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(user);
         _userRepositoryMock.Setup(x => x.UpdatePatientNameAsync(1, "New Patient")).Returns(Task.CompletedTask);
 
-        // Act
+        // Act - Executa atualização do nome do paciente
         await _service.UpdatePatientNameAsync(1, "New Patient");
 
-        // Assert
+        // Assert - Verifica se o nome do paciente foi atualizado
         _userRepositoryMock.Verify(x => x.UpdatePatientNameAsync(1, "New Patient"), Times.Once);
     }
 
     [Fact]
     public async Task UpdatePatientNameAsync_NonExistingUser_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura atualização para usuário inexistente
         _userRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((User?)null);
 
-        // Act
+        // Act - Tenta atualizar nome do paciente de usuário inexistente
         Func<Task> action = async () => await _service.UpdatePatientNameAsync(999, "Patient Name");
 
-        // Assert
+        // Assert - Deve lançar exceção de usuário não encontrado
         await action.Should().ThrowAsync<Exception>()
             .WithMessage("User not found");
     }
