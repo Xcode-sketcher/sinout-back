@@ -267,5 +267,34 @@ public class PatientServiceTests
         _mockPatientRepository.Verify(x => x.DeletePatientAsync(patient.Id), Times.Once);
     }
 
+    [Fact]
+    public async Task GetAllPatientsAsync_ShouldReturnAllPatientsWithCuidadorNames()
+    {
+        // Arrange
+        var patient1 = PatientFixtures.CreateValidPatient(1, 1);
+        patient1.Name = "Patient 1";
+        var patient2 = PatientFixtures.CreateValidPatient(2, 2);
+        patient2.Name = "Patient 2";
+        
+        var patients = new List<Patient> { patient1, patient2 };
+        
+        var cuidador1 = UserFixtures.CreateValidUser(1);
+        var cuidador2 = UserFixtures.CreateValidUser(2);
+        
+        _mockPatientRepository.Setup(x => x.GetAllAsync()).ReturnsAsync(patients);
+        _mockUserRepository.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(cuidador1);
+        _mockUserRepository.Setup(x => x.GetByIdAsync(2)).ReturnsAsync(cuidador2);
+
+        // Act
+        var result = await _patientService.GetAllPatientsAsync();
+
+        // Assert
+        result.Should().HaveCount(2);
+        result[0].Name.Should().Be("Patient 1");
+        result[0].CuidadorName.Should().Be(cuidador1.Name);
+        result[1].Name.Should().Be("Patient 2");
+        result[1].CuidadorName.Should().Be(cuidador2.Name);
+    }
+
     #endregion
 }

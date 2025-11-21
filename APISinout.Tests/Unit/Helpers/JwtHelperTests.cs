@@ -177,4 +177,52 @@ public class JwtHelperTests
         // Assert
         token1.Should().NotBe(token2);
     }
+
+    [Fact]
+    public void GenerateToken_WithNullEmail_ShouldThrowArgumentException()
+    {
+        // Arrange
+        var user = UserFixtures.CreateValidUser();
+        user.Email = null!;
+
+        // Act & Assert
+        var exception = Assert.Throws<ArgumentException>(() => JwtHelper.GenerateToken(user, _configuration));
+        exception.Message.Should().Contain("Email do usuário não pode ser null ou vazio");
+    }
+
+    [Fact]
+    public void GenerateToken_WithEmptyEmail_ShouldThrowArgumentException()
+    {
+        // Arrange
+        var user = UserFixtures.CreateValidUser();
+        user.Email = string.Empty;
+
+        // Act & Assert
+        var exception = Assert.Throws<ArgumentException>(() => JwtHelper.GenerateToken(user, _configuration));
+        exception.Message.Should().Contain("Email do usuário não pode ser null ou vazio");
+    }
+
+    [Fact]
+    public void GenerateToken_WithNullRole_ShouldThrowArgumentException()
+    {
+        // Arrange
+        var user = UserFixtures.CreateValidUser();
+        user.Role = null!;
+
+        // Act & Assert
+        var exception = Assert.Throws<ArgumentException>(() => JwtHelper.GenerateToken(user, _configuration));
+        exception.Message.Should().Contain("Role do usuário não pode ser null ou vazio");
+    }
+
+    [Fact]
+    public void GenerateToken_WithEmptyRole_ShouldThrowArgumentException()
+    {
+        // Arrange
+        var user = UserFixtures.CreateValidUser();
+        user.Role = string.Empty;
+
+        // Act & Assert
+        var exception = Assert.Throws<ArgumentException>(() => JwtHelper.GenerateToken(user, _configuration));
+        exception.Message.Should().Contain("Role do usuário não pode ser null ou vazio");
+    }
 }
