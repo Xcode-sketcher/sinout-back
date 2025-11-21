@@ -137,6 +137,37 @@ public class UserControllerTests
     }
 
     [Fact]
+    public async Task Create_WithNullCreatorEmail_ShouldReturnUnauthorized()
+    {
+        // Arrange - Configurar usuário sem email (caso edge onde GetCurrentUserEmail retorna null)
+        var userWithoutEmail = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, "1"),
+            new Claim(ClaimTypes.Role, "Admin")
+            // Sem ClaimTypes.Email
+        }));
+
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = userWithoutEmail }
+        };
+
+        var request = new CreateUserRequest
+        {
+            Name = "Novo Usuário",
+            Email = "novo@test.com",
+            Password = "Senha123!",
+            Role = UserRole.Cuidador.ToString()
+        };
+
+        // Act - Executar método Create
+        var result = await _controller.Create(request);
+
+        // Assert - Verificar se retornou Unauthorized quando creatorEmail é null
+        result.Should().BeOfType<UnauthorizedResult>();
+    }
+
+    [Fact]
     public async Task Create_WithoutAuthentication_ShouldReturnUnauthorized()
     {
         // Arrange - Configurar contexto sem usuário autenticado

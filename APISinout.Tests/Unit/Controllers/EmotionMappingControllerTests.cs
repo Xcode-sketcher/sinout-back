@@ -100,6 +100,31 @@ public class EmotionMappingControllerTests
     }
 
     [Fact]
+    public async Task CreateMapping_WithUserIdZero_ShouldUseCurrentUserId()
+    {
+        // Arrange - Configurar usuário regular e request com UserId = 0
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = _regularUser }
+        };
+
+        var request = EmotionMappingFixtures.CreateValidEmotionMappingRequest();
+        request.UserId = 0; // Simular UserId = 0, deve usar o ID do usuário atual (2)
+
+        var expectedResponse = EmotionMappingFixtures.CreateValidEmotionMappingResponse(null, 2);
+        _mockEmotionMappingService.Setup(s => s.CreateMappingAsync(It.Is<EmotionMappingRequest>(r => r.UserId == 2), 2, "Cuidador"))
+            .ReturnsAsync(expectedResponse);
+
+        // Act - Executar método CreateMapping
+        var result = await _controller.CreateMapping(request);
+
+        // Assert - Verificar se UserId foi definido como o ID do usuário atual
+        var createdResult = result.Should().BeOfType<CreatedAtActionResult>().Subject;
+        var response = createdResult.Value.Should().BeOfType<EmotionMappingResponse>().Subject;
+        response.UserId.Should().Be(2);
+    }
+
+    [Fact]
     public async Task CreateMapping_WithoutAuthentication_ShouldReturnBadRequest()
     {
         // Arrange - Configurar contexto sem usuário autenticado
