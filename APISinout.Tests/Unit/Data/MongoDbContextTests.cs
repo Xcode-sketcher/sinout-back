@@ -127,7 +127,7 @@ public class MongoDbContextTests
         }
 
         var configMock = new Mock<IConfiguration>();
-        // Use a mock connection string
+        // Mock do MongoDB
         configMock.Setup(c => c["MongoDb:ConnectionString"]).Returns("mongodb://test.example.com:27017");
         configMock.Setup(c => c["MongoDb:DatabaseName"]).Returns("testdb");
 
