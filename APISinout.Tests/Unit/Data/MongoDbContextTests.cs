@@ -128,31 +128,23 @@ public class MongoDbContextTests
 
         var configMock = new Mock<IConfiguration>();
         // Use a mock connection string
-        configMock.Setup(c => c["MongoDb:ConnectionString"]).Returns("mongodb://mock-server:27017");
+        configMock.Setup(c => c["MongoDb:ConnectionString"]).Returns("mongodb://test.example.com:27017");
         configMock.Setup(c => c["MongoDb:DatabaseName"]).Returns("testdb");
 
         // Act & Assert - Tenta criar o contexto e acessar as coleções
-        try
-        {
-            var context = new MongoDbContext(configMock.Object);
-            
-            // Assert - Verifica se as coleções não são nulas
-            Assert.NotNull(context.Users);
-            Assert.NotNull(context.Counters);
-            Assert.NotNull(context.Patients);
-            Assert.NotNull(context.EmotionMappings);
-            Assert.NotNull(context.HistoryRecords);
-            Assert.NotNull(context.PasswordResetTokens);
-            
-            // Verify mapping
-            var isUserMapRegistered = BsonClassMap.IsClassMapRegistered(typeof(User));
-            Assert.True(isUserMapRegistered, "User class map should be registered");
-        }
-        catch (Exception ex)
-        {
-            // If it fails due to connection, we at least verified it tried to execute
-            Assert.Contains("MongoDB", ex.Message);
-        }
+        var context = new MongoDbContext(configMock.Object);
+        
+        // Assert - Verifica se as coleções não são nulas
+        Assert.NotNull(context.Users);
+        Assert.NotNull(context.Counters);
+        Assert.NotNull(context.Patients);
+        Assert.NotNull(context.EmotionMappings);
+        Assert.NotNull(context.HistoryRecords);
+        Assert.NotNull(context.PasswordResetTokens);
+        
+        // Verify mapping
+        var isUserMapRegistered = BsonClassMap.IsClassMapRegistered(typeof(User));
+        Assert.True(isUserMapRegistered, "User class map should be registered");
     }
 
     #endregion
