@@ -60,8 +60,6 @@ public class EmotionMappingService : IEmotionMappingService
     // Cria um novo mapeamento de emoção.
     public async Task<EmotionMappingResponse> CreateMappingAsync(EmotionMappingRequest request, int currentUserId, string currentUserRole)
     {
-        Console.WriteLine($"[DEBUG] Criando mapeamento: Emotion={request.Emotion}, Intensity={request.IntensityLevel}, MinPerc={request.MinPercentage}, Priority={request.Priority}, UserId={request.UserId}, CurrentUserId={currentUserId}");
-
         // Validações
         if (string.IsNullOrEmpty(request.Emotion) || !_validEmotions.Contains(request.Emotion.ToLower()))
             throw new AppException($"Emoção inválida. Valores permitidos: {string.Join(", ", _validEmotions)}");
@@ -116,8 +114,6 @@ public class EmotionMappingService : IEmotionMappingService
         };
 
         await _mappingRepository.CreateMappingAsync(mapping);
-
-        Console.WriteLine($"[DEBUG] Mapeamento criado com sucesso: Id={mapping.Id}");
 
         return new EmotionMappingResponse(mapping, user.Name);
     }
@@ -209,9 +205,6 @@ public class EmotionMappingService : IEmotionMappingService
     {
         var mappings = await _mappingRepository.GetByUserAndEmotionAsync(userId, emotion.ToLower());
         
-        Console.WriteLine($"[EmotionMapping] Buscando regra para userId={userId}, emotion={emotion}, percentage={percentage}");
-        Console.WriteLine($"[EmotionMapping] Total de regras encontradas: {mappings.Count}");
-        
         // Filtrar por percentual mínimo E nível de intensidade
         var matchingMapping = mappings
             .Where(m => {
@@ -231,14 +224,12 @@ public class EmotionMappingService : IEmotionMappingService
                 }
                 
                 var matches = percentageMatch && intensityMatch;
-                Console.WriteLine($"[EmotionMapping] Regra: id={m.Id}, level={m.IntensityLevel}, minPct={m.MinPercentage}, priority={m.Priority} => Match={matches} (pct={percentageMatch}, int={intensityMatch})");
                 
                 return matches;
             })
             .OrderBy(m => m.Priority)
             .FirstOrDefault();
 
-        Console.WriteLine($"[EmotionMapping] Regra selecionada: {matchingMapping?.Message ?? "NENHUMA"} (ID: {matchingMapping?.Id ?? "null"})");
         return (matchingMapping?.Message, matchingMapping?.Id);
     }
 }

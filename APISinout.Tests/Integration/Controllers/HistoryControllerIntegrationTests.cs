@@ -21,8 +21,9 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
         _client = factory.CreateClient();
     }
 
-    private async Task<(string? token, int userId)> GetCuidadorTokenAndId()
+    private async Task<int> GetCuidadorUserId(HttpClient? client = null)
     {
+        var httpClient = client ?? _client;
         var cuidadorEmail = $"cuidador{Guid.NewGuid()}@test.com";
         var cuidadorPassword = "Cuidador@123";
         
@@ -35,7 +36,7 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
             PatientName = "Cuidador Patient"
         };
 
-        await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
+        await httpClient.PostAsJsonAsync("/api/auth/register", registerRequest);
 
         var loginRequest = new LoginRequest
         {
@@ -43,19 +44,19 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
             Password = cuidadorPassword
         };
 
-        var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
-        var authResponse = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
-        authResponse.Should().NotBeNull();
-        authResponse!.User.Should().NotBeNull();
-        return ((authResponse.Token ?? throw new InvalidOperationException("Token not found")), authResponse!.User!.UserId);
+        await httpClient.PostAsJsonAsync("/api/auth/login", loginRequest);
+
+        // Get current user info using cookies
+        var userResponse = await httpClient.GetFromJsonAsync<UserResponse>("/api/users/me");
+        userResponse.Should().NotBeNull();
+        return userResponse!.UserId;
     }
 
     [Fact]
     public async Task GetMyHistory_WithValidToken_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
 
         // Seed data
         var request = new
@@ -91,8 +92,8 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetMyHistory_WithCustomHours_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
+
 
         // Seed data
         var request = new
@@ -117,8 +118,8 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetMyHistory_WithCustomHours_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
+
 
         // Seed data to avoid NotFound
         var request = new
@@ -142,8 +143,8 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetMyHistory_WithCustomHours_ShouldReturn404NotFound()
     {
         // Arrange
-        var (token, _) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        await GetCuidadorUserId();
+
 
         // Act
         var response = await _client.GetAsync("/api/history/my-history?hours=24");
@@ -156,8 +157,8 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetHistoryByUser_AsOwner_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
+
 
         // Seed data
         var request = new
@@ -185,10 +186,9 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetHistoryByUser_AsNonOwner_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token1, _) = await GetCuidadorTokenAndId();
-        var (_, userId2) = await GetCuidadorTokenAndId();
-        
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token1);
+        var userId1 = await GetCuidadorUserId();
+        var client2 = _factory.CreateClientWithCookies();
+        var userId2 = await GetCuidadorUserId(client2);
 
         // Act - Try to access another user's history
         var response = await _client.GetAsync($"/api/history/user/{userId2}?hours=24");
@@ -201,8 +201,8 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetMyStatistics_WithValidToken_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
+
 
         // Seed data
         var request = new
@@ -238,8 +238,8 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetMyStatistics_WithCustomHours_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
+
 
         // Seed data
         var request = new
@@ -264,8 +264,8 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetMyStatistics_WithCustomHours_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
+
 
         // Seed data to avoid NotFound
         var request = new
@@ -288,8 +288,8 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetMyStatistics_WithCustomHours_ShouldReturn404NotFound()
     {
         // Arrange
-        var (token, _) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        await GetCuidadorUserId();
+
 
         // Act
         var response = await _client.GetAsync("/api/history/statistics/my-stats?hours=24");
@@ -302,8 +302,8 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetUserStatistics_AsOwner_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
+
 
         // Seed data
         var request = new
@@ -331,10 +331,11 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetUserStatistics_AsNonOwner_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token1, _) = await GetCuidadorTokenAndId();
-        var (_, userId2) = await GetCuidadorTokenAndId();
+        var userId1 = await GetCuidadorUserId();
+        var client2 = _factory.CreateClientWithCookies();
+        var userId2 = await GetCuidadorUserId(client2);
         
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token1);
+
 
         // Act - Try to access another user's statistics
         var response = await _client.GetAsync($"/api/history/statistics/user/{userId2}?hours=24");
@@ -349,8 +350,8 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task GetHistoryByFilter_WithValidFilter_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
+
 
         var filter = new
         {
@@ -392,8 +393,8 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task ClearOldHistory_AsCuidador_ShouldReturn403Forbidden()
     {
         // Arrange
-        var (token, _) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        await GetCuidadorUserId();
+
 
         // Act
         var response = await _client.DeleteAsync("/api/history/cleanup?days=90");
@@ -408,8 +409,8 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task SaveCuidadorEmotion_ValidRequest_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
+
 
         var request = new
         {
@@ -431,8 +432,8 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task SaveCuidadorEmotion_InvalidRequest_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token, _) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        await GetCuidadorUserId();
+
 
         var request = new
         {
@@ -450,8 +451,8 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     public async Task SaveCuidadorEmotion_AsOtherUser_ShouldReturn403Forbidden()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
+
 
         var request = new
         {

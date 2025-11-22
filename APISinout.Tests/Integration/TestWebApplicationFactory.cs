@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using APISinout.Services;
 using APISinout.Data;
+using System.Net;
+using System.Net.Http;
+using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
 
 namespace APISinout.Tests.Integration;
 
@@ -13,6 +17,16 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseEnvironment("Testing");
+
+        builder.ConfigureAppConfiguration((context, config) =>
+        {
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { "Jwt:CookieSecure", "false" }
+            });
+        });
+
         builder.ConfigureServices(services =>
         {
             // Remove existing IEmailService registration if present
@@ -45,6 +59,14 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(T));
         if (descriptor != null)
             services.Remove(descriptor);
+    }
+
+    public HttpClient CreateClientWithCookies()
+    {
+        return CreateClient(new WebApplicationFactoryClientOptions
+        {
+            HandleCookies = true
+        });
     }
 }
 

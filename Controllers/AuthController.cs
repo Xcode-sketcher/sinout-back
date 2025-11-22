@@ -18,18 +18,21 @@ public class AuthController : ControllerBase
     private readonly IPasswordResetService _passwordResetService;
     private readonly IValidator<RegisterRequest> _registerValidator;
     private readonly IValidator<LoginRequest> _loginValidator;
+    private readonly IConfiguration _configuration;
 
     // Construtor que injeta os serviços necessários.
     public AuthController(
         IAuthService authService,
         IPasswordResetService passwordResetService,
         IValidator<RegisterRequest> registerValidator,
-        IValidator<LoginRequest> loginValidator)
+        IValidator<LoginRequest> loginValidator,
+        IConfiguration configuration)
     {
         _authService = authService;
         _passwordResetService = passwordResetService;
         _registerValidator = registerValidator;
         _loginValidator = loginValidator;
+        _configuration = configuration;
     }
 
     // Método para registro de usuário.
@@ -43,6 +46,8 @@ public class AuthController : ControllerBase
         try
         {
             var response = await _authService.RegisterAsync(request);
+            SetTokenCookie(response.Token);
+            response.Token = null;
             return Created(string.Empty, response);
         }
         catch (AppException ex)
@@ -62,6 +67,8 @@ public class AuthController : ControllerBase
         try
         {
             var response = await _authService.LoginAsync(request);
+            SetTokenCookie(response.Token);
+            response.Token = null;
             return Ok(response);
         }
         catch (AppException ex)
@@ -159,5 +166,24 @@ public class AuthController : ControllerBase
         {
             return Unauthorized(new { message = ex.Message });
         }
+    }
+
+    private void SetTokenCookie(string? token)
+    {
+        if (string.IsNullOrEmpty(token)) return;
+
+        var expirationMinutes = _configuration.GetValue<int>("Jwt:AccessTokenExpirationMinutes");
+        if (expirationMinutes == 0) expirationMinutes = 30;
+
+        var cookieSecure = _configuration.GetValue<bool>("Jwt:CookieSecure", true);
+
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Expires = DateTime.UtcNow.AddMinutes(expirationMinutes),
+            Secure = cookieSecure,
+            SameSite = cookieSecure ? SameSiteMode.None : SameSiteMode.Lax
+        };
+        Response.Cookies.Append("accessToken", token, cookieOptions);
     }
 }

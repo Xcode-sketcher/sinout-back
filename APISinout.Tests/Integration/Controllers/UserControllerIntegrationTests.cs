@@ -21,7 +21,7 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
         _client = factory.CreateClient();
     }
 
-    private async Task<string> GetCuidadorToken()
+    private async Task SetupCuidadorAuth()
     {
         var cuidadorEmail = $"cuidador{Guid.NewGuid()}@test.com";
         var cuidadorPassword = "Cuidador@123";
@@ -43,10 +43,7 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
             Password = cuidadorPassword
         };
 
-        var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
-        var authResponse = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
-        authResponse.Should().NotBeNull();
-        return authResponse!.Token ?? throw new InvalidOperationException("Token not found");
+        await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
     }
 
     // Teste de admin removido
@@ -55,8 +52,8 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
     public async Task GetAll_AsCuidador_ShouldReturn403Forbidden()
     {
         // Arrange
-        var token = await GetCuidadorToken();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        await SetupCuidadorAuth();
+
 
         // Act
         var response = await _client.GetAsync("/api/users");
@@ -79,8 +76,8 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
     public async Task GetCurrentUser_WithValidToken_ShouldReturn200WithUserData()
     {
         // Arrange
-        var token = await GetCuidadorToken();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        await SetupCuidadorAuth();
+
 
         // Act
         var response = await _client.GetAsync("/api/users/me");
@@ -108,8 +105,8 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
     public async Task CreateUser_AsCuidador_ShouldReturn403Forbidden()
     {
         // Arrange
-        var token = await GetCuidadorToken();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        await SetupCuidadorAuth();
+
 
         var request = new CreateUserRequest
         {
@@ -130,8 +127,8 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
     public async Task UpdatePatientName_WithValidData_ShouldReturn200OK()
     {
         // Arrange
-        var token = await GetCuidadorToken();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        await SetupCuidadorAuth();
+
 
         var request = new UpdatePatientNameRequest
         {
@@ -169,8 +166,8 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
     public async Task GetCuidadores_AsCuidador_ShouldReturn403Forbidden()
     {
         // Arrange
-        var token = await GetCuidadorToken();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        await SetupCuidadorAuth();
+
 
         // Act
         var response = await _client.GetAsync("/api/users/cuidadores");
