@@ -168,6 +168,15 @@ public class AuthController : ControllerBase
         }
     }
 
+    // Método para logout.
+    [HttpPost("logout")]
+    [Authorize]
+    public IActionResult Logout()
+    {
+        ClearTokenCookie();
+        return Ok(new { message = "Logout realizado com sucesso" });
+    }
+
     private void SetTokenCookie(string? token)
     {
         if (string.IsNullOrEmpty(token)) return;
@@ -185,5 +194,19 @@ public class AuthController : ControllerBase
             SameSite = cookieSecure ? SameSiteMode.None : SameSiteMode.Lax
         };
         Response.Cookies.Append("accessToken", token, cookieOptions);
+    }
+
+    private void ClearTokenCookie()
+    {
+        var cookieSecure = _configuration.GetValue<bool>("Jwt:CookieSecure", true);
+
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Expires = DateTime.UtcNow.AddDays(-1), // Expira imediatamente
+            Secure = cookieSecure,
+            SameSite = cookieSecure ? SameSiteMode.None : SameSiteMode.Lax
+        };
+        Response.Cookies.Append("accessToken", "", cookieOptions);
     }
 }

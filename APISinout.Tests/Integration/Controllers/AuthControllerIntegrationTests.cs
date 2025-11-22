@@ -240,4 +240,48 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
         var loginContent = await loginResponse.Content.ReadAsStringAsync();
         loginContent.Should().Contain("\"user\"");
     }
+
+    [Fact]
+    public async Task Logout_AfterLogin_ShouldClearCookieAndReturn401OnProtectedRoute()
+    {
+        // Arrange - Register and login a user
+        var email = $"logout{Guid.NewGuid()}@test.com";
+        var password = "Test@123";
+        var registerRequest = new RegisterRequest
+        {
+            Name = "Logout Test User",
+            Email = email,
+            Password = password,
+            Phone = "+55 11 99999-9999",
+            PatientName = "Logout Patient"
+        };
+
+        await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
+
+        var loginRequest = new LoginRequest
+        {
+            Email = email,
+            Password = password
+        };
+
+        await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
+
+        // Act - Logout
+        var logoutResponse = await _client.PostAsync("/api/auth/logout", null);
+
+        // Assert - Logout should succeed
+        logoutResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Check if cookie was cleared (should have expired date)
+        var logoutCookies = logoutResponse.Headers.GetValues("Set-Cookie").ToList();
+        logoutCookies.Should().Contain(cookie => cookie.Contains("accessToken=") && cookie.Contains("expires="));
+
+        // Response body should contain success message
+        var logoutContent = await logoutResponse.Content.ReadAsStringAsync();
+        logoutContent.Should().Contain("Logout realizado com sucesso");
+
+        // Now try to access a protected route - should return 401
+        var protectedResponse = await _client.GetAsync("/api/auth/me");
+        protectedResponse.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
 }
