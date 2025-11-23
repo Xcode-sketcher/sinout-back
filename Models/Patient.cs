@@ -9,8 +9,8 @@ public class Patient
 {
     // ID único do paciente.
     [BsonId]
-    [BsonRepresentation(BsonType.Int32)]
-    public int Id { get; set; }
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string? Id { get; set; }
 
     // Nome do paciente.
     [BsonElement("nome")]
@@ -18,27 +18,20 @@ public class Patient
 
     // ID do usuário cuidador responsável.
     [BsonElement("id_cuidador")]
-    public int CuidadorId { get; set; }
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string? CuidadorId { get; set; }
 
     // Data de cadastro do paciente.
     [BsonElement("data_cadastro")]
     public DateTime DataCadastro { get; set; }
 
-    // Indica se o paciente está ativo.
-    [BsonElement("status")]
-    public bool Status { get; set; }
-
     // Informações adicionais sobre o paciente.
     [BsonElement("informacoes_adicionais")]
     public string? AdditionalInfo { get; set; }
 
-    // URL ou base64 da foto de perfil.
+    // ID da foto de perfil (índice do avatar pré-definido).
     [BsonElement("foto_perfil")]
-    public string? ProfilePhoto { get; set; }
-
-    // Quem cadastrou o paciente (Admin ou Self).
-    [BsonElement("criado_por")]
-    public string? CreatedBy { get; set; }
+    public int? ProfilePhoto { get; set; }
 }
 
 // Representa uma solicitação para criar ou atualizar um paciente.
@@ -48,26 +41,26 @@ public class PatientRequest
     public string? Name { get; set; }
 
     // ID do cuidador (opcional se for cadastro).
-    public int? CuidadorId { get; set; }
+    public string? CuidadorId { get; set; }
 
     // Informações adicionais.
     public string? AdditionalInfo { get; set; }
 
-    // Foto de perfil.
-    public string? ProfilePhoto { get; set; }
+    // ID da foto de perfil (índice).
+    public int? ProfilePhoto { get; set; }
 }
 
 // Representa a resposta com dados de um paciente.
 public class PatientResponse
 {
     // ID único do paciente.
-    public int Id { get; set; }
+    public string? Id { get; set; }
 
     // Nome do paciente.
     public string? Name { get; set; }
 
     // ID do cuidador.
-    public int CuidadorId { get; set; }
+    public string? CuidadorId { get; set; }
 
     // Nome do cuidador.
     public string? CuidadorName { get; set; }
@@ -75,17 +68,11 @@ public class PatientResponse
     // Data de cadastro.
     public DateTime DataCadastro { get; set; }
 
-    // Indica se está ativo.
-    public bool Status { get; set; }
-
     // Informações adicionais.
     public string? AdditionalInfo { get; set; }
 
-    // Foto de perfil.
-    public string? ProfilePhoto { get; set; }
-
-    // Quem criou.
-    public string? CreatedBy { get; set; }
+    // ID da foto de perfil.
+    public int? ProfilePhoto { get; set; }
 
     // Construtor padrão para desserialização JSON.
     public PatientResponse() { }
@@ -98,9 +85,7 @@ public class PatientResponse
         CuidadorId = patient.CuidadorId;
         CuidadorName = cuidadorName;
         DataCadastro = patient.DataCadastro;
-        Status = patient.Status;
         AdditionalInfo = patient.AdditionalInfo;
         ProfilePhoto = patient.ProfilePhoto;
-        CreatedBy = patient.CreatedBy;
     }
 }

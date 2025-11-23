@@ -7,7 +7,7 @@ namespace APISinout.Data;
 public interface IPasswordResetRepository
 {
     Task<PasswordResetToken?> GetByTokenAsync(string token);
-    Task<PasswordResetToken?> GetActiveTokenByUserIdAsync(int userId);
+    Task<PasswordResetToken?> GetActiveTokenByUserIdAsync(string userId);
     Task CreateTokenAsync(PasswordResetToken resetToken);
     Task MarkAsUsedAsync(string id);
     Task DeleteExpiredTokensAsync();
@@ -38,7 +38,7 @@ public class PasswordResetRepository : IPasswordResetRepository
     }
 
     // Obtém token ativo por ID do usuário.
-    public async Task<PasswordResetToken?> GetActiveTokenByUserIdAsync(int userId)
+    public async Task<PasswordResetToken?> GetActiveTokenByUserIdAsync(string userId)
     {
         return await _tokens.Find(t => t.UserId == userId && !t.Used && t.ExpiresAt > DateTime.UtcNow)
             .SortByDescending(t => t.CreatedAt)

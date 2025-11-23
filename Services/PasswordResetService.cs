@@ -28,7 +28,7 @@ public interface IPasswordResetService
     /// <summary>
     /// Altera a senha.
     /// </summary>
-    Task<MessageResponse> ChangePasswordAsync(ChangePasswordRequest request, int userId);
+    Task<MessageResponse> ChangePasswordAsync(ChangePasswordRequest request, string userId);
 }
 
 public class PasswordResetService : IPasswordResetService
@@ -77,9 +77,6 @@ public class PasswordResetService : IPasswordResetService
             return new MessageResponse("Se o email existir, você receberá um código para redefinir sua senha");
         }
 
-        if (!user.Status)
-            throw new AppException("Usuário inativo");
-
         // Registrar tentativa
         _rateLimitService.RecordAttempt($"reset:{email}");
 
@@ -90,7 +87,7 @@ public class PasswordResetService : IPasswordResetService
 
         var resetToken = new PasswordResetToken
         {
-            UserId = user.UserId, // ID numérico do usuário
+            UserId = user.Id, // ID do usuário
             Email = user.Email,
             Token = code,
             CreatedAt = DateTime.UtcNow,
@@ -139,11 +136,8 @@ public class PasswordResetService : IPasswordResetService
             return new MessageResponse("Se o email existir, você receberá um código para redefinir sua senha");
         }
 
-        if (!user.Status)
-            throw new AppException("Usuário inativo");
-
         // Verificar se há token ativo recente (menos de 5 minutos)
-        var existingToken = await _resetRepository.GetActiveTokenByUserIdAsync(user.UserId);
+        var existingToken = await _resetRepository.GetActiveTokenByUserIdAsync(user.Id);
         if (existingToken != null && existingToken.CreatedAt > DateTime.UtcNow.AddMinutes(-5))
         {
             var waitTime = 5 - (DateTime.UtcNow - existingToken.CreatedAt).TotalMinutes;
@@ -161,7 +155,7 @@ public class PasswordResetService : IPasswordResetService
 
         var resetToken = new PasswordResetToken
         {
-            UserId = user.UserId,
+            UserId = user.Id,
             Email = user.Email,
             Token = code,
             CreatedAt = DateTime.UtcNow,
@@ -212,7 +206,7 @@ public class PasswordResetService : IPasswordResetService
         // Atualizar senha
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         user.UpdatedAt = DateTime.UtcNow;
-        await _userRepository.UpdateUserAsync(user.UserId, user);
+        await _userRepository.UpdateUserAsync(user.Id, user);
 
         // Marcar token como usado
         await _resetRepository.MarkAsUsedAsync(resetToken.Id!);
@@ -236,7 +230,7 @@ public class PasswordResetService : IPasswordResetService
     }
 
     // Altera a senha.
-    public async Task<MessageResponse> ChangePasswordAsync(ChangePasswordRequest request, int userId)
+    public async Task<MessageResponse> ChangePasswordAsync(ChangePasswordRequest request, string userId)
     {
         if (string.IsNullOrEmpty(request.CurrentPassword))
             throw new AppException("Senha atual é obrigatória");
@@ -261,7 +255,7 @@ public class PasswordResetService : IPasswordResetService
         // Atualizar senha
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         user.UpdatedAt = DateTime.UtcNow;
-        await _userRepository.UpdateUserAsync(user.UserId, user);
+        await _userRepository.UpdateUserAsync(user.Id, user);
 
         // Enviar notificação de senha alterada
         try

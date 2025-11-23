@@ -94,24 +94,6 @@ public class PasswordResetServiceTests
     }
 
     [Fact]
-    public async Task RequestPasswordResetAsync_WithInactiveUser_ShouldThrowException()
-    {
-        // Arrange - Configura usuário inativo para teste
-        var request = PasswordResetFixtures.CreateForgotPasswordRequest();
-        var user = UserFixtures.CreateInactiveUser();
-        
-        _mockUserRepository.Setup(x => x.GetByEmailAsync(It.IsAny<string>())).ReturnsAsync(user);
-        _mockRateLimitService.Setup(x => x.IsRateLimited(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>())).Returns(false);
-
-        // Act - Tenta solicitar reset para usuário inativo
-        var act = async () => await _passwordResetService.RequestPasswordResetAsync(request);
-
-        // Assert - Verifica se lança exceção de usuário inativo
-        await act.Should().ThrowAsync<AppException>()
-            .WithMessage("Usuário inativo");
-    }
-
-    [Fact]
     public async Task RequestPasswordResetAsync_WhenRateLimited_ShouldThrowException()
     {
         // Arrange - Configura rate limiting ativo para o email
@@ -192,7 +174,7 @@ public class PasswordResetServiceTests
         
         _mockResetRepository.Setup(x => x.GetByTokenAsync(request.Token)).ReturnsAsync(token);
         _mockUserRepository.Setup(x => x.GetByIdAsync(token.UserId)).ReturnsAsync(user);
-        _mockUserRepository.Setup(x => x.UpdateUserAsync(It.IsAny<int>(), It.IsAny<User>())).Returns(Task.CompletedTask);
+        _mockUserRepository.Setup(x => x.UpdateUserAsync(It.IsAny<string>(), It.IsAny<User>())).Returns(Task.CompletedTask);
         _mockResetRepository.Setup(x => x.MarkAsUsedAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
         _mockEmailService.Setup(x => x.SendPasswordChangedNotificationAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
 
@@ -201,7 +183,7 @@ public class PasswordResetServiceTests
 
         // Assert - Verifica se a senha foi atualizada e o token marcado como usado
         result.Message.Should().Be("Senha redefinida com sucesso");
-        _mockUserRepository.Verify(x => x.UpdateUserAsync(user.UserId, It.IsAny<User>()), Times.Once);
+        _mockUserRepository.Verify(x => x.UpdateUserAsync(user.Id, It.IsAny<User>()), Times.Once);
         _mockResetRepository.Verify(x => x.MarkAsUsedAsync(token.Id!), Times.Once);
     }
 
@@ -262,7 +244,7 @@ public class PasswordResetServiceTests
         
         _mockResetRepository.Setup(x => x.GetByTokenAsync(request.Token)).ReturnsAsync(token);
         _mockUserRepository.Setup(x => x.GetByIdAsync(token.UserId)).ReturnsAsync(user);
-        _mockUserRepository.Setup(x => x.UpdateUserAsync(It.IsAny<int>(), It.IsAny<User>())).Returns(Task.CompletedTask);
+        _mockUserRepository.Setup(x => x.UpdateUserAsync(It.IsAny<string>(), It.IsAny<User>())).Returns(Task.CompletedTask);
         _mockResetRepository.Setup(x => x.MarkAsUsedAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
         _mockEmailService.Setup(x => x.SendPasswordChangedNotificationAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
 
@@ -283,7 +265,7 @@ public class PasswordResetServiceTests
         
         _mockResetRepository.Setup(x => x.GetByTokenAsync(request.Token)).ReturnsAsync(token);
         _mockUserRepository.Setup(x => x.GetByIdAsync(token.UserId)).ReturnsAsync(user);
-        _mockUserRepository.Setup(x => x.UpdateUserAsync(It.IsAny<int>(), It.IsAny<User>())).Returns(Task.CompletedTask);
+        _mockUserRepository.Setup(x => x.UpdateUserAsync(It.IsAny<string>(), It.IsAny<User>())).Returns(Task.CompletedTask);
         _mockResetRepository.Setup(x => x.MarkAsUsedAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
         _mockEmailService.Setup(x => x.SendPasswordChangedNotificationAsync(It.IsAny<string>()))
             .ThrowsAsync(new Exception("Email server error"));
@@ -313,10 +295,10 @@ public class PasswordResetServiceTests
         // Arrange - Configura dados válidos para mudança de senha
         var request = PasswordResetFixtures.CreateChangePasswordRequest();
         var user = UserFixtures.CreateValidUser();
-        var userId = user.UserId;
+        var userId = user.Id;
         
         _mockUserRepository.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(user);
-        _mockUserRepository.Setup(x => x.UpdateUserAsync(It.IsAny<int>(), It.IsAny<User>())).Returns(Task.CompletedTask);
+        _mockUserRepository.Setup(x => x.UpdateUserAsync(It.IsAny<string>(), It.IsAny<User>())).Returns(Task.CompletedTask);
         _mockEmailService.Setup(x => x.SendPasswordChangedNotificationAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
 
         // Act - Executa a alteração de senha
@@ -335,10 +317,10 @@ public class PasswordResetServiceTests
         request.CurrentPassword = "WrongPassword123";
         var user = UserFixtures.CreateValidUser();
         
-        _mockUserRepository.Setup(x => x.GetByIdAsync(user.UserId)).ReturnsAsync(user);
+        _mockUserRepository.Setup(x => x.GetByIdAsync(user.Id)).ReturnsAsync(user);
 
         // Act - Tenta alterar senha com senha atual incorreta
-        var act = async () => await _passwordResetService.ChangePasswordAsync(request, user.UserId);
+        var act = async () => await _passwordResetService.ChangePasswordAsync(request, user.Id);
 
         // Assert - Verifica se lança exceção de senha incorreta
         await act.Should().ThrowAsync<AppException>()
@@ -353,7 +335,7 @@ public class PasswordResetServiceTests
         request.ConfirmPassword = "DifferentPassword123";
 
         // Act - Tenta alterar senha com confirmação incorreta
-        var act = async () => await _passwordResetService.ChangePasswordAsync(request, 1);
+        var act = async () => await _passwordResetService.ChangePasswordAsync(request, MongoDB.Bson.ObjectId.GenerateNewId().ToString());
 
         // Assert - Verifica se lança exceção de senhas não coincidentes
         await act.Should().ThrowAsync<AppException>()
@@ -367,12 +349,12 @@ public class PasswordResetServiceTests
         var request = PasswordResetFixtures.CreateChangePasswordRequest();
         var user = UserFixtures.CreateValidUser();
         
-        _mockUserRepository.Setup(x => x.GetByIdAsync(user.UserId)).ReturnsAsync(user);
-        _mockUserRepository.Setup(x => x.UpdateUserAsync(It.IsAny<int>(), It.IsAny<User>())).Returns(Task.CompletedTask);
+        _mockUserRepository.Setup(x => x.GetByIdAsync(user.Id)).ReturnsAsync(user);
+        _mockUserRepository.Setup(x => x.UpdateUserAsync(It.IsAny<string>(), It.IsAny<User>())).Returns(Task.CompletedTask);
         _mockEmailService.Setup(x => x.SendPasswordChangedNotificationAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
 
         // Act - Executa a alteração de senha
-        await _passwordResetService.ChangePasswordAsync(request, user.UserId);
+        await _passwordResetService.ChangePasswordAsync(request, user.Id);
 
         // Assert - Verifica se a notificação foi enviada
         _mockEmailService.Verify(x => x.SendPasswordChangedNotificationAsync(user.Email!), Times.Once);
@@ -385,13 +367,13 @@ public class PasswordResetServiceTests
         var request = PasswordResetFixtures.CreateChangePasswordRequest();
         var user = UserFixtures.CreateValidUser();
         
-        _mockUserRepository.Setup(x => x.GetByIdAsync(user.UserId)).ReturnsAsync(user);
-        _mockUserRepository.Setup(x => x.UpdateUserAsync(It.IsAny<int>(), It.IsAny<User>())).Returns(Task.CompletedTask);
+        _mockUserRepository.Setup(x => x.GetByIdAsync(user.Id)).ReturnsAsync(user);
+        _mockUserRepository.Setup(x => x.UpdateUserAsync(It.IsAny<string>(), It.IsAny<User>())).Returns(Task.CompletedTask);
         _mockEmailService.Setup(x => x.SendPasswordChangedNotificationAsync(It.IsAny<string>()))
             .ThrowsAsync(new Exception("Email server error"));
 
         // Act - Executa a alteração de senha com falha na notificação
-        var result = await _passwordResetService.ChangePasswordAsync(request, user.UserId);
+        var result = await _passwordResetService.ChangePasswordAsync(request, user.Id);
 
         // Assert - Verifica se o processo completa mesmo com erro na notificação
         result.Message.Should().Be("Senha alterada com sucesso");
@@ -418,7 +400,7 @@ public class PasswordResetServiceTests
         
         _mockUserRepository.Setup(x => x.GetByEmailAsync(It.IsAny<string>())).ReturnsAsync(user);
         _mockRateLimitService.Setup(x => x.IsRateLimited(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>())).Returns(false);
-        _mockResetRepository.Setup(x => x.GetActiveTokenByUserIdAsync(user.UserId)).ReturnsAsync((PasswordResetToken?)null);
+        _mockResetRepository.Setup(x => x.GetActiveTokenByUserIdAsync(user.Id)).ReturnsAsync((PasswordResetToken?)null);
         _mockResetRepository.Setup(x => x.CreateTokenAsync(It.IsAny<PasswordResetToken>())).Returns(Task.CompletedTask);
         _mockEmailService.Setup(x => x.SendPasswordResetEmailAsync(It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask);
 
@@ -441,7 +423,7 @@ public class PasswordResetServiceTests
         
         _mockUserRepository.Setup(x => x.GetByEmailAsync(It.IsAny<string>())).ReturnsAsync(user);
         _mockRateLimitService.Setup(x => x.IsRateLimited(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>())).Returns(false);
-        _mockResetRepository.Setup(x => x.GetActiveTokenByUserIdAsync(user.UserId)).ReturnsAsync(recentToken);
+        _mockResetRepository.Setup(x => x.GetActiveTokenByUserIdAsync(user.Id)).ReturnsAsync(recentToken);
 
         // Act - Tenta reenviar código antes do tempo permitido
         var act = async () => await _passwordResetService.ResendResetCodeAsync(request);
@@ -460,7 +442,7 @@ public class PasswordResetServiceTests
         
         _mockUserRepository.Setup(x => x.GetByEmailAsync(It.IsAny<string>())).ReturnsAsync(user);
         _mockRateLimitService.Setup(x => x.IsRateLimited(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>())).Returns(false);
-        _mockResetRepository.Setup(x => x.GetActiveTokenByUserIdAsync(user.UserId)).ReturnsAsync((PasswordResetToken?)null);
+        _mockResetRepository.Setup(x => x.GetActiveTokenByUserIdAsync(user.Id)).ReturnsAsync((PasswordResetToken?)null);
         _mockResetRepository.Setup(x => x.CreateTokenAsync(It.IsAny<PasswordResetToken>())).Returns(Task.CompletedTask);
         _mockEmailService.Setup(x => x.SendPasswordResetEmailAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ThrowsAsync(new Exception("Email server error"));

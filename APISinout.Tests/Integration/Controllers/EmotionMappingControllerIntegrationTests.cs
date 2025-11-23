@@ -21,7 +21,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         _client = factory.CreateClient();
     }
 
-    private async Task<int> GetCuidadorUserId(HttpClient? client = null)
+    private async Task<string> GetCuidadorUserId(HttpClient? client = null)
     {
         var httpClient = client ?? _client;
         var cuidadorEmail = $"cuidador{Guid.NewGuid()}@test.com";
@@ -111,7 +111,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         // Arrange
         var request = new EmotionMappingRequest
         {
-            UserId = 1,
+            UserId = "1",
             Emotion = "angry",
             IntensityLevel = "high",
             MinPercentage = 75.0,

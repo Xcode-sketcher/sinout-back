@@ -1,5 +1,6 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using System.Text.Json.Serialization;
 
 namespace APISinout.Models;
 
@@ -14,11 +15,13 @@ public class HistoryRecord
 
     // ID do usuário cuidador.
     [BsonElement("id_usuario")]
-    public int UserId { get; set; }
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string? UserId { get; set; }
 
-    // Nome do paciente.
-    [BsonElement("nome_paciente")]
-    public string? PatientName { get; set; }
+    // ID do paciente.
+    [BsonElement("id_paciente")]
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string? PatientId { get; set; }
 
     // Timestamp da análise.
     [BsonElement("timestamp")]
@@ -49,7 +52,7 @@ public class HistoryRecord
 public class HistoryRecordRequest
 {
     // ID do paciente.
-    public int PatientId { get; set; }
+    public string? PatientId { get; set; }
 
     // Emoções detectadas com percentuais.
     public Dictionary<string, double>? EmotionsDetected { get; set; }
@@ -74,7 +77,7 @@ public class HistoryRecordResponse
     public string? Id { get; set; }
 
     // ID do paciente.
-    public int PatientId { get; set; }
+    public string? PatientId { get; set; }
 
     // Nome do paciente.
     public string? PatientName { get; set; }
@@ -95,11 +98,11 @@ public class HistoryRecordResponse
     public string? MessageTriggered { get; set; }
 
     // Construtor que inicializa a partir de um objeto HistoryRecord.
-    public HistoryRecordResponse(HistoryRecord record, string? userName = null)
+    public HistoryRecordResponse(HistoryRecord record, string? patientName = null)
     {
         Id = record.Id;
-        PatientId = record.UserId;
-        PatientName = record.PatientName ?? userName;
+        PatientId = record.PatientId;
+        PatientName = patientName; // Agora vem do parâmetro, não do record
         Timestamp = record.Timestamp;
         EmotionsDetected = record.EmotionsDetected;
         DominantEmotion = record.DominantEmotion;
@@ -112,7 +115,7 @@ public class HistoryRecordResponse
 public class PatientStatistics
 {
     // ID do paciente.
-    public int PatientId { get; set; }
+    public string? PatientId { get; set; }
 
     // Nome do paciente.
     public string? PatientName { get; set; }
@@ -159,7 +162,10 @@ public class EmotionTrend
 public class HistoryFilter
 {
     // ID do paciente (opcional).
-    public int? PatientId { get; set; }
+    public string? PatientId { get; set; }
+
+    // ID do cuidador (opcional, para filtro de segurança).
+    public string? CuidadorId { get; set; }
 
     // Data de início (opcional).
     public DateTime? StartDate { get; set; }

@@ -36,7 +36,7 @@ public class PasswordResetRepositoryTests
         {
             Id = "token-id",
             Token = token,
-            UserId = 1,
+            UserId = "user-id-1",
             Used = false,
             ExpiresAt = DateTime.UtcNow.AddHours(1),
             CreatedAt = DateTime.UtcNow
@@ -116,7 +116,7 @@ public class PasswordResetRepositoryTests
     public async Task GetActiveTokenByUserIdAsync_ShouldReturnMostRecentToken_WhenMultipleExist()
     {
         // Arrange - Configura múltiplos tokens ativos para o usuário
-        var userId = 1;
+        var userId = "user-id-1";
         var tokens = new List<PasswordResetToken>
         {
             new PasswordResetToken
@@ -175,7 +175,7 @@ public class PasswordResetRepositoryTests
             .ReturnsAsync(mockCursor.Object);
 
         // Act - Executa busca de token ativo para usuário sem tokens
-        var result = await _repository.GetActiveTokenByUserIdAsync(999);
+        var result = await _repository.GetActiveTokenByUserIdAsync("nonexistent-user");
 
         // Assert - Verifica se null foi retornado
         Assert.Null(result);
@@ -193,7 +193,7 @@ public class PasswordResetRepositoryTests
         {
             Id = "new-token-id",
             Token = "new-token-123",
-            UserId = 1,
+            UserId = "user-id-1",
             Used = false,
             ExpiresAt = DateTime.UtcNow.AddHours(1),
             CreatedAt = DateTime.UtcNow

@@ -48,20 +48,14 @@ public class UserResponse
     // Construtor padrão para desserialização JSON.
     public UserResponse() { }
 
-    // ID numérico do usuário.
-    public int UserId { get; set; }
+    // ID do usuário.
+    public string? UserId { get; set; }
 
     // Nome do usuário.
     public string? Name { get; set; }
 
     // Email do usuário.
-    public string? Email { get; set; }
-
-    // Data de cadastro do usuário.
-    public DateTime DataCadastro { get; set; }
-
-    // Indica se o usuário está ativo.
-    public bool Status { get; set; }
+    public string Email { get; set; } = string.Empty;
 
     // Papel do usuário: Admin ou Cuidador.
     public string? Role { get; set; }
@@ -72,17 +66,23 @@ public class UserResponse
     // Data do último login.
     public DateTime? LastLogin { get; set; }
 
+    // ID do paciente associado.
+    public string? PatientId { get; set; }
+
+    // Nome do paciente associado.
+    public string? PatientName { get; set; }
+
     // Construtor que inicializa a partir de um objeto User.
-    public UserResponse(User user)
+    public UserResponse(User user, string? patientId = null, string? patientName = null)
     {
-        UserId = user.UserId;
+        UserId = user.Id;
         Name = user.Name;
-        Email = user.Email;
-        DataCadastro = user.DataCadastro;
-        Status = user.Status;
+        Email = user.Email ?? string.Empty;
         Role = user.Role;
         Phone = user.Phone;
         LastLogin = user.LastLogin;
+        PatientId = patientId;
+        PatientName = patientName;
     }
 }
 

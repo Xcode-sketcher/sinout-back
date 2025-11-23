@@ -22,7 +22,7 @@ public class AuthorizationHelperTests
         {
             new Claim("userId", "123"),
             new Claim(ClaimTypes.Email, "test@example.com"),
-            new Claim(ClaimTypes.Role, "Admin")
+            new Claim(ClaimTypes.Role, "Cuidador")
         };
         var identity = new ClaimsIdentity(claims, "TestAuth");
         var claimsPrincipal = new ClaimsPrincipal(identity);
@@ -31,7 +31,7 @@ public class AuthorizationHelperTests
         var result = AuthorizationHelper.GetCurrentUserId(claimsPrincipal);
 
         // Assert
-        result.Should().Be(123);
+        result.Should().Be("123");
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class AuthorizationHelperTests
         var result = AuthorizationHelper.GetCurrentUserId(claimsPrincipal);
 
         // Assert
-        result.Should().Be(456);
+        result.Should().Be("456");
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public class AuthorizationHelperTests
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.Email, "test@example.com"),
-            new Claim(ClaimTypes.Role, "Admin")
+            new Claim(ClaimTypes.Role, "Cuidador")
         };
         var identity = new ClaimsIdentity(claims, "TestAuth");
         var claimsPrincipal = new ClaimsPrincipal(identity);
@@ -71,23 +71,7 @@ public class AuthorizationHelperTests
             .WithMessage("*Usuário não encontrado*");
     }
 
-    [Fact]
-    public void GetCurrentUserId_InvalidUserId_ThrowsAppException()
-    {
-        // Arrange - userId não numérico
-        var claims = new List<Claim>
-        {
-            new Claim("userId", "invalid"),
-            new Claim(ClaimTypes.Email, "test@example.com")
-        };
-        var identity = new ClaimsIdentity(claims, "TestAuth");
-        var claimsPrincipal = new ClaimsPrincipal(identity);
-
-        // Act & Assert
-        var action = () => AuthorizationHelper.GetCurrentUserId(claimsPrincipal);
-        action.Should().Throw<AppException>()
-            .WithMessage("*userId inválido*");
-    }
+    // Removed GetCurrentUserId_InvalidUserId_ThrowsAppException as userId is now string and any string is valid
 
     [Fact]
     public void GetCurrentUserRole_ValidRole_ReturnsRole()
@@ -96,7 +80,7 @@ public class AuthorizationHelperTests
         var claims = new List<Claim>
         {
             new Claim("userId", "123"),
-            new Claim(ClaimTypes.Role, "Admin")
+            new Claim(ClaimTypes.Role, "Cuidador")
         };
         var identity = new ClaimsIdentity(claims, "TestAuth");
         var claimsPrincipal = new ClaimsPrincipal(identity);
@@ -105,7 +89,7 @@ public class AuthorizationHelperTests
         var result = AuthorizationHelper.GetCurrentUserRole(claimsPrincipal);
 
         // Assert
-        result.Should().Be("Admin");
+        result.Should().Be("Cuidador");
     }
 
     [Fact]
@@ -153,7 +137,7 @@ public class AuthorizationHelperTests
         var claims = new List<Claim>
         {
             new Claim("userId", "123"),
-            new Claim(ClaimTypes.Role, "Admin")
+            new Claim(ClaimTypes.Role, "Cuidador")
         };
         var identity = new ClaimsIdentity(claims, "TestAuth");
         var claimsPrincipal = new ClaimsPrincipal(identity);
@@ -163,44 +147,6 @@ public class AuthorizationHelperTests
 
         // Assert
         result.Should().BeNull();
-    }
-
-    [Fact]
-    public void IsAdmin_AdminRole_ReturnsTrue()
-    {
-        // Arrange
-        var claims = new List<Claim>
-        {
-            new Claim("userId", "123"),
-            new Claim(ClaimTypes.Role, UserRole.Admin.ToString())
-        };
-        var identity = new ClaimsIdentity(claims, "TestAuth");
-        var claimsPrincipal = new ClaimsPrincipal(identity);
-
-        // Act
-        var result = AuthorizationHelper.IsAdmin(claimsPrincipal);
-
-        // Assert
-        result.Should().BeTrue();
-    }
-
-    [Fact]
-    public void IsAdmin_CuidadorRole_ReturnsFalse()
-    {
-        // Arrange
-        var claims = new List<Claim>
-        {
-            new Claim("userId", "123"),
-            new Claim(ClaimTypes.Role, UserRole.Cuidador.ToString())
-        };
-        var identity = new ClaimsIdentity(claims, "TestAuth");
-        var claimsPrincipal = new ClaimsPrincipal(identity);
-
-        // Act
-        var result = AuthorizationHelper.IsAdmin(claimsPrincipal);
-
-        // Assert
-        result.Should().BeFalse();
     }
 
     [Fact]
@@ -222,24 +168,7 @@ public class AuthorizationHelperTests
         result.Should().BeTrue();
     }
 
-    [Fact]
-    public void IsCuidador_AdminRole_ReturnsFalse()
-    {
-        // Arrange
-        var claims = new List<Claim>
-        {
-            new Claim("userId", "123"),
-            new Claim(ClaimTypes.Role, UserRole.Admin.ToString())
-        };
-        var identity = new ClaimsIdentity(claims, "TestAuth");
-        var claimsPrincipal = new ClaimsPrincipal(identity);
-
-        // Act
-        var result = AuthorizationHelper.IsCuidador(claimsPrincipal);
-
-        // Assert
-        result.Should().BeFalse();
-    }
+    // Removed IsCuidador_AdminRole_ReturnsFalse as Admin role is deprecated
 
     [Fact]
     public void GetCurrentUserId_EmptyClaims_ThrowsAppException()

@@ -21,7 +21,7 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
         _client = factory.CreateClient();
     }
 
-    private async Task<int> GetCuidadorUserId(HttpClient? client = null)
+    private async Task<string> GetCuidadorUserId(HttpClient? client = null)
     {
         var httpClient = client ?? _client;
         var cuidadorEmail = $"cuidador{Guid.NewGuid()}@test.com";
@@ -85,7 +85,7 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
         var request = new PatientRequest
         {
             Name = "Unauthorized Patient",
-            CuidadorId = 1
+            CuidadorId = "1"
         };
 
         // Act
@@ -187,20 +187,6 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
     }
 
     // Teste de admin removido
-
-    [Fact]
-    public async Task GetPatientsByCuidador_AsCuidador_ShouldReturn403Forbidden()
-    {
-        // Arrange
-        await GetCuidadorUserId();
-
-
-        // Act
-        var response = await _client.GetAsync("/api/patients/cuidador/1");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
 
     [Fact]
     public async Task UpdatePatient_AsOwner_ShouldReturn200OK()

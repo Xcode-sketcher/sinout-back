@@ -6,6 +6,7 @@ using MongoDB.Bson.Serialization.Attributes;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
@@ -23,7 +24,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Configuração dos serviços
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options => 
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        // Removed PropertyNameCaseInsensitive for strict camelCase compliance
+    });
 
 // Contexto do MongoDB
 builder.Services.AddSingleton<MongoDbContext>();
@@ -94,9 +100,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.SetIsOriginAllowed(origin => origin.StartsWith("http://localhost"))
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 

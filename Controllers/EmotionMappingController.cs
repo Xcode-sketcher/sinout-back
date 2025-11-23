@@ -31,7 +31,7 @@ public class EmotionMappingController : ControllerBase
             var userId = AuthorizationHelper.GetCurrentUserId(User);
             var userRole = AuthorizationHelper.GetCurrentUserRole(User);
 
-            if (request.UserId == 0)
+            if (string.IsNullOrEmpty(request.UserId))
                 request.UserId = userId;
 
             var response = await _mappingService.CreateMappingAsync(request, userId, userRole);
@@ -45,7 +45,7 @@ public class EmotionMappingController : ControllerBase
 
     // Método para obter mapeamentos por usuário.
     [HttpGet("user/{userId}")]
-    public async Task<IActionResult> GetMappingsByUser(int userId)
+    public async Task<IActionResult> GetMappingsByUser(string userId)
     {
         try
         {

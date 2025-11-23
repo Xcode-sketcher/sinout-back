@@ -7,11 +7,11 @@ namespace APISinout.Data;
 public interface IHistoryRepository
 {
     Task<HistoryRecord?> GetByIdAsync(string id);
-    Task<List<HistoryRecord>> GetByUserIdAsync(int userId, int hours = 24);
+    Task<List<HistoryRecord>> GetByPatientIdAsync(string patientId, int hours = 24);
     Task<List<HistoryRecord>> GetByFilterAsync(HistoryFilter filter);
     Task CreateRecordAsync(HistoryRecord record);
     Task DeleteOldRecordsAsync(int hours = 24);
-    Task<PatientStatistics> GetUserStatisticsAsync(int userId, int hours = 24);
+    Task<PatientStatistics> GetPatientStatisticsAsync(string patientId, int hours = 24);
 }
 
 // Implementação do repositório de histórico usando MongoDB.
@@ -37,11 +37,11 @@ public class HistoryRepository : IHistoryRepository
         return await _history.Find(h => h.Id == id).FirstOrDefaultAsync();
     }
 
-    // Obtém registros de histórico por ID do usuário.
-    public async Task<List<HistoryRecord>> GetByUserIdAsync(int userId, int hours = 24)
+    // Obtém registros de histórico por ID do paciente.
+    public async Task<List<HistoryRecord>> GetByPatientIdAsync(string patientId, int hours = 24)
     {
         var cutoffTime = DateTime.UtcNow.AddHours(-hours);
-        return await _history.Find(h => h.UserId == userId && h.Timestamp >= cutoffTime)
+        return await _history.Find(h => h.PatientId == patientId && h.Timestamp >= cutoffTime)
             .SortByDescending(h => h.Timestamp)
             .ToListAsync();
     }
@@ -52,8 +52,11 @@ public class HistoryRepository : IHistoryRepository
         var builder = Builders<HistoryRecord>.Filter;
         var filters = new List<FilterDefinition<HistoryRecord>>();
 
-        if (filter.PatientId.HasValue)
-            filters.Add(builder.Eq(h => h.UserId, filter.PatientId.Value));
+        if (!string.IsNullOrEmpty(filter.PatientId))
+            filters.Add(builder.Eq(h => h.PatientId, filter.PatientId));
+
+        if (filter.CuidadorId != null)
+            filters.Add(builder.Eq(h => h.UserId, filter.CuidadorId));
 
         if (filter.StartDate.HasValue)
             filters.Add(builder.Gte(h => h.Timestamp, filter.StartDate.Value));
@@ -84,17 +87,16 @@ public class HistoryRepository : IHistoryRepository
     // Cria um novo registro de histórico.
     public async Task CreateRecordAsync(HistoryRecord record)
     {
-        Console.WriteLine($"[DEBUG REPO] Inserindo no MongoDB - UserId: {record.UserId}, Emotion: {record.DominantEmotion}");
-        try
+        Console.WriteLine("💾 HistoryRepository.CreateRecordAsync");
+        Console.WriteLine($"   EmotionsDetected: {record.EmotionsDetected?.Count ?? 0} emotions");
+        if (record.EmotionsDetected != null)
         {
-            await _history.InsertOneAsync(record);
-            Console.WriteLine($"[DEBUG REPO] ✅ Inserção bem-sucedida! ID: {record.Id}");
+            foreach (var kvp in record.EmotionsDetected)
+                Console.WriteLine($"      {kvp.Key}: {kvp.Value}");
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[DEBUG REPO] ❌ ERRO ao inserir: {ex.Message}");
-            throw;
-        }
+        
+        await _history.InsertOneAsync(record);
+        Console.WriteLine("✅ Registro inserido no MongoDB com sucesso!");
     }
 
     // Remove registros antigos de histórico.
@@ -104,16 +106,16 @@ public class HistoryRepository : IHistoryRepository
         await _history.DeleteManyAsync(h => h.Timestamp < cutoffTime);
     }
 
-    // Obtém estatísticas do usuário.
-    public async Task<PatientStatistics> GetUserStatisticsAsync(int userId, int hours = 24)
+    // Obtém estatísticas do paciente.
+    public async Task<PatientStatistics> GetPatientStatisticsAsync(string patientId, int hours = 24)
     {
         var cutoffTime = DateTime.UtcNow.AddHours(-hours);
-        var records = await _history.Find(h => h.UserId == userId && h.Timestamp >= cutoffTime)
+        var records = await _history.Find(h => h.PatientId == patientId && h.Timestamp >= cutoffTime)
             .ToListAsync();
 
         var stats = new PatientStatistics
         {
-            PatientId = userId,
+            PatientId = patientId,
             StartPeriod = cutoffTime,
             EndPeriod = DateTime.UtcNow,
             TotalAnalyses = records.Count,

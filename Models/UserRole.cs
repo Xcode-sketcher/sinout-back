@@ -1,9 +1,8 @@
 namespace APISinout.Models;
 
-// Enumeração dos papéis de usuário disponíveis no sistema.
-// Define os tipos de perfil: Admin ou Cuidador.
+// Representa os papéis que um usuário pode ter no sistema.
+// Simplificado para ter apenas Cuidador (removido Admin).
 public enum UserRole
 {
-    Admin,
-    Cuidador
+    Cuidador = 1
 }

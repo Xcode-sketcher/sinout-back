@@ -10,19 +10,19 @@ namespace APISinout.Services;
 public interface IHistoryService
 {
     /// <summary>
-    /// Obtém o histórico de um usuário.
+    /// Obtém o histórico de um paciente.
     /// </summary>
-    Task<List<HistoryRecordResponse>> GetHistoryByUserAsync(int userId, int currentUserId, string currentUserRole, int hours = 24);
+    Task<List<HistoryRecordResponse>> GetHistoryByPatientAsync(string patientId, string currentUserId, string currentUserRole, int hours = 24);
 
     /// <summary>
     /// Obtém o histórico por filtro.
     /// </summary>
-    Task<List<HistoryRecordResponse>> GetHistoryByFilterAsync(HistoryFilter filter, int currentUserId, string currentUserRole);
+    Task<List<HistoryRecordResponse>> GetHistoryByFilterAsync(HistoryFilter filter, string currentUserId, string currentUserRole);
 
     /// <summary>
-    /// Obtém as estatísticas de um usuário.
+    /// Obtém as estatísticas de um paciente.
     /// </summary>
-    Task<PatientStatistics> GetUserStatisticsAsync(int userId, int currentUserId, string currentUserRole, int hours = 24);
+    Task<PatientStatistics> GetPatientStatisticsAsync(string patientId, string currentUserId, string currentUserRole, int hours = 24);
 
     /// <summary>
     /// Limpa o histórico antigo.
@@ -39,35 +39,37 @@ public class HistoryService : IHistoryService
 {
     private readonly IHistoryRepository _historyRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IPatientRepository _patientRepository;
 
-    public HistoryService(IHistoryRepository historyRepository, IUserRepository userRepository)
+    public HistoryService(IHistoryRepository historyRepository, IUserRepository userRepository, IPatientRepository patientRepository)
     {
         _historyRepository = historyRepository;
         _userRepository = userRepository;
+        _patientRepository = patientRepository;
     }
 
-    // Obtém o histórico de um usuário.
-    public async Task<List<HistoryRecordResponse>> GetHistoryByUserAsync(int userId, int currentUserId, string currentUserRole, int hours = 24)
+    // Obtém o histórico de um paciente.
+    public async Task<List<HistoryRecordResponse>> GetHistoryByPatientAsync(string patientId, string currentUserId, string currentUserRole, int hours = 24)
     {
-        // Verificar permissão
-        if (currentUserRole != UserRole.Admin.ToString() && userId != currentUserId)
+        var patient = await _patientRepository.GetByIdAsync(patientId);
+        if (patient == null)
+            throw new AppException("Paciente não encontrado");
+
+        // Verificar se o paciente pertence ao usuário
+        if (patient.CuidadorId != currentUserId && currentUserRole != "Admin")
             throw new AppException("Acesso negado");
 
-        var user = await _userRepository.GetByIdAsync(userId);
-        if (user == null)
-            throw new AppException("Usuário não encontrado");
-
-        var records = await _historyRepository.GetByUserIdAsync(userId, hours);
-        return records.Select(r => new HistoryRecordResponse(r, user.Name)).ToList();
+        var records = await _historyRepository.GetByPatientIdAsync(patientId, hours);
+        return records.Select(r => new HistoryRecordResponse(r, patient.Name)).ToList();
     }
 
     // Obtém o histórico por filtro.
-    public async Task<List<HistoryRecordResponse>> GetHistoryByFilterAsync(HistoryFilter filter, int currentUserId, string currentUserRole)
+    public async Task<List<HistoryRecordResponse>> GetHistoryByFilterAsync(HistoryFilter filter, string currentUserId, string currentUserRole)
     {
-        // Se não for Admin, só pode ver histórico próprio
-        if (currentUserRole != UserRole.Admin.ToString())
+        // Se não for admin, só pode ver histórico próprio
+        if (currentUserRole != "Admin")
         {
-            filter.PatientId = currentUserId;
+            filter.CuidadorId = currentUserId;
         }
 
         var records = await _historyRepository.GetByFilterAsync(filter);
@@ -75,26 +77,31 @@ public class HistoryService : IHistoryService
 
         foreach (var record in records)
         {
-            var user = await _userRepository.GetByIdAsync(record.UserId);
-            responses.Add(new HistoryRecordResponse(record, user?.Name));
+            string? patientName = null;
+            if (!string.IsNullOrEmpty(record.PatientId))
+            {
+                 var p = await _patientRepository.GetByIdAsync(record.PatientId);
+                 patientName = p?.Name;
+            }
+            responses.Add(new HistoryRecordResponse(record, patientName));
         }
 
         return responses;
     }
 
-    // Obtém as estatísticas de um usuário.
-    public async Task<PatientStatistics> GetUserStatisticsAsync(int userId, int currentUserId, string currentUserRole, int hours = 24)
+    // Obtém as estatísticas de um paciente.
+    public async Task<PatientStatistics> GetPatientStatisticsAsync(string patientId, string currentUserId, string currentUserRole, int hours = 24)
     {
-        // Verificar permissão
-        if (currentUserRole != UserRole.Admin.ToString() && userId != currentUserId)
+        var patient = await _patientRepository.GetByIdAsync(patientId);
+        if (patient == null)
+            throw new AppException("Paciente não encontrado");
+
+        // Verificar se o paciente pertence ao usuário
+        if (patient.CuidadorId != currentUserId && currentUserRole != "Admin")
             throw new AppException("Acesso negado");
 
-        var user = await _userRepository.GetByIdAsync(userId);
-        if (user == null)
-            throw new AppException("Usuário não encontrado");
-
-        var stats = await _historyRepository.GetUserStatisticsAsync(userId, hours);
-        stats.PatientName = user.Name;
+        var stats = await _historyRepository.GetPatientStatisticsAsync(patientId, hours);
+        stats.PatientName = patient.Name;
 
         return stats;
     }
@@ -110,8 +117,6 @@ public class HistoryService : IHistoryService
     // Cria um registro de histórico.
     public async Task CreateHistoryRecordAsync(HistoryRecord record)
     {
-        Console.WriteLine($"[DEBUG SERVICE] CreateHistoryRecordAsync chamado - UserId: {record.UserId}");
         await _historyRepository.CreateRecordAsync(record);
-        Console.WriteLine($"[DEBUG SERVICE] CreateHistoryRecordAsync concluído");
     }
 }

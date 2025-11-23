@@ -31,9 +31,7 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
             .MaximumLength(20).WithMessage("Telefone muito longo")
             .When(x => !string.IsNullOrEmpty(x.Phone));
 
-        RuleFor(x => x.Role)
-            .Must(r => string.IsNullOrEmpty(r) || r == UserRole.Admin.ToString() || r == UserRole.Cuidador.ToString())
-            .WithMessage($"Role inválido. Valores permitidos: {UserRole.Admin}, {UserRole.Cuidador}")
-            .When(x => !string.IsNullOrEmpty(x.Role));
+        // Role validation removed - system only supports Cuidador now
+        // Role is automatically set to Cuidador during registration
     }
 }

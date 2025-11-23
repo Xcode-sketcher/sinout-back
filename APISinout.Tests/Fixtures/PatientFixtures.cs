@@ -1,25 +1,24 @@
 using APISinout.Models;
+using MongoDB.Bson;
 
 namespace APISinout.Tests.Fixtures;
 
 public static class PatientFixtures
 {
-    public static Patient CreateValidPatient(int id = 1, int cuidadorId = 1)
+    public static Patient CreateValidPatient(string? id = null, string? cuidadorId = null)
     {
         return new Patient
         {
-            Id = id,
+            Id = id ?? ObjectId.GenerateNewId().ToString(),
             Name = "Maria Silva",
-            CuidadorId = cuidadorId,
+            CuidadorId = cuidadorId ?? ObjectId.GenerateNewId().ToString(),
             DataCadastro = DateTime.UtcNow,
-            Status = true,
             AdditionalInfo = "Paciente com ELA",
-            ProfilePhoto = null,
-            CreatedBy = "test"
+            ProfilePhoto = null
         };
     }
 
-    public static PatientRequest CreateValidPatientRequest(int? cuidadorId = null)
+    public static PatientRequest CreateValidPatientRequest(string? cuidadorId = null)
     {
         return new PatientRequest
         {
@@ -30,12 +29,12 @@ public static class PatientFixtures
         };
     }
 
-    public static List<Patient> CreateMultiplePatients(int cuidadorId, int count = 3)
+    public static List<Patient> CreateMultiplePatients(string cuidadorId, int count = 3)
     {
         var patients = new List<Patient>();
         for (int i = 1; i <= count; i++)
         {
-            var patient = CreateValidPatient(i, cuidadorId);
+            var patient = CreateValidPatient(ObjectId.GenerateNewId().ToString(), cuidadorId);
             patient.Name = $"Paciente {i}";
             patients.Add(patient);
         }

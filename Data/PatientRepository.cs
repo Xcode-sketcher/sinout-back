@@ -6,52 +6,48 @@ namespace APISinout.Data;
 // Interface para operações de repositório de pacientes.
 public interface IPatientRepository
 {
-    Task<Patient?> GetByIdAsync(int id);
-    Task<List<Patient>> GetByCuidadorIdAsync(int cuidadorId);
+    Task<Patient?> GetByIdAsync(string id);
+    Task<List<Patient>> GetByCuidadorIdAsync(string cuidadorId);
     Task<List<Patient>> GetAllAsync();
     Task CreatePatientAsync(Patient patient);
-    Task UpdatePatientAsync(int id, Patient patient);
-    Task DeletePatientAsync(int id);
-    Task<int> GetNextPatientIdAsync();
-    Task<bool> ExistsAsync(int id);
+    Task UpdatePatientAsync(string id, Patient patient);
+    Task DeletePatientAsync(string id);
+    Task<bool> ExistsAsync(string id);
 }
 
 // Implementação do repositório de pacientes usando MongoDB.
 public class PatientRepository : IPatientRepository
 {
     private readonly IMongoCollection<Patient> _patients;
-    private readonly IMongoCollection<Counter> _counters;
 
     // Construtor que injeta o contexto do MongoDB.
     public PatientRepository(MongoDbContext context)
     {
         _patients = context.Patients;
-        _counters = context.Counters;
     }
 
     // Construtor para testes (injeta coleções diretamente).
-    public PatientRepository(IMongoCollection<Patient> patientsCollection, IMongoCollection<Counter> countersCollection)
+    public PatientRepository(IMongoCollection<Patient> patientsCollection)
     {
         _patients = patientsCollection;
-        _counters = countersCollection;
     }
 
     // Obtém paciente por ID.
-    public async Task<Patient?> GetByIdAsync(int id)
+    public async Task<Patient?> GetByIdAsync(string id)
     {
         return await _patients.Find(p => p.Id == id).FirstOrDefaultAsync();
     }
 
     // Obtém pacientes por ID do cuidador.
-    public async Task<List<Patient>> GetByCuidadorIdAsync(int cuidadorId)
+    public async Task<List<Patient>> GetByCuidadorIdAsync(string cuidadorId)
     {
-        return await _patients.Find(p => p.CuidadorId == cuidadorId && p.Status).ToListAsync();
+        return await _patients.Find(p => p.CuidadorId == cuidadorId).ToListAsync();
     }
 
-    // Lista todos os pacientes ativos.
+    // Lista todos os pacientes.
     public async Task<List<Patient>> GetAllAsync()
     {
-        return await _patients.Find(p => p.Status).ToListAsync();
+        return await _patients.Find(_ => true).ToListAsync();
     }
 
     // Cria um novo paciente.
@@ -61,45 +57,27 @@ public class PatientRepository : IPatientRepository
     }
 
     // Atualiza um paciente existente.
-    public async Task UpdatePatientAsync(int id, Patient patient)
+    public async Task UpdatePatientAsync(string id, Patient patient)
     {
         var filter = Builders<Patient>.Filter.Eq(p => p.Id, id);
         var update = Builders<Patient>.Update
             .Set(p => p.Name, patient.Name)
             .Set(p => p.CuidadorId, patient.CuidadorId)
-            .Set(p => p.Status, patient.Status)
             .Set(p => p.AdditionalInfo, patient.AdditionalInfo)
             .Set(p => p.ProfilePhoto, patient.ProfilePhoto);
 
         await _patients.UpdateOneAsync(filter, update);
     }
 
-    // Remove um paciente (soft delete).
-    public async Task DeletePatientAsync(int id)
+    // Remove um paciente.
+    public async Task DeletePatientAsync(string id)
     {
-        // Soft delete: apenas marca como inativo
         var filter = Builders<Patient>.Filter.Eq(p => p.Id, id);
-        var update = Builders<Patient>.Update.Set(p => p.Status, false);
-        await _patients.UpdateOneAsync(filter, update);
-    }
-
-    // Obtém o próximo ID disponível para paciente.
-    public async Task<int> GetNextPatientIdAsync()
-    {
-        var filter = Builders<Counter>.Filter.Eq(c => c.Id, "patient");
-        var update = Builders<Counter>.Update.Inc(c => c.Seq, 1);
-        var options = new FindOneAndUpdateOptions<Counter>
-        {
-            ReturnDocument = ReturnDocument.After,
-            IsUpsert = true
-        };
-
-        var counter = await _counters.FindOneAndUpdateAsync(filter, update, options);
-        return counter?.Seq ?? 1;
+        await _patients.DeleteOneAsync(filter);
     }
 
     // Verifica se o paciente existe.
-    public async Task<bool> ExistsAsync(int id)
+    public async Task<bool> ExistsAsync(string id)
     {
         var count = await _patients.CountDocumentsAsync(p => p.Id == id);
         return count > 0;

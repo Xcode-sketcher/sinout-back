@@ -4,12 +4,12 @@ namespace APISinout.Tests.Fixtures;
 
 public static class EmotionMappingFixtures
 {
-    public static EmotionMapping CreateValidEmotionMapping(string? id = null, int userId = 1)
+    public static EmotionMapping CreateValidEmotionMapping(string? id = null, string? userId = null)
     {
         return new EmotionMapping
         {
             Id = id ?? MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
-            UserId = userId,
+            UserId = userId ?? MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
             Emotion = "happy",
             IntensityLevel = "high",
             MinPercentage = 80.0,
@@ -21,11 +21,11 @@ public static class EmotionMappingFixtures
         };
     }
 
-    public static EmotionMappingRequest CreateValidEmotionMappingRequest(int userId = 1)
+    public static EmotionMappingRequest CreateValidEmotionMappingRequest(string? userId = null)
     {
         return new EmotionMappingRequest
         {
-            UserId = userId,
+            UserId = userId ?? MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
             Emotion = "happy",
             IntensityLevel = "high",
             MinPercentage = 80.0,
@@ -34,12 +34,12 @@ public static class EmotionMappingFixtures
         };
     }
 
-    public static EmotionMappingResponse CreateValidEmotionMappingResponse(string? id = null, int userId = 1)
+    public static EmotionMappingResponse CreateValidEmotionMappingResponse(string? id = null, string? userId = null)
     {
         return new EmotionMappingResponse
         {
             Id = id ?? MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
-            UserId = userId,
+            UserId = userId ?? MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
             UserName = "João Silva",
             Emotion = "happy",
             IntensityLevel = "high",

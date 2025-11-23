@@ -77,27 +77,22 @@ public class MongoDbContextTests
         // Ensure BsonClassMap is registered
         if (!BsonClassMap.IsClassMapRegistered(typeof(User)))
         {
+
             BsonClassMap.RegisterClassMap<User>(cm =>
             {
                 cm.MapIdProperty(u => u.Id);
-                cm.MapProperty(u => u.UserId).SetElementName("id_usuario");
                 cm.MapProperty(u => u.Name).SetElementName("nome");
                 cm.MapProperty(u => u.Email).SetElementName("email");
                 cm.MapProperty(u => u.DataCadastro).SetElementName("data_cadastro");
-                cm.MapProperty(u => u.Status).SetElementName("status");
                 cm.MapProperty(u => u.Role).SetElementName("cargo");
                 cm.MapProperty(u => u.PasswordHash).SetElementName("password_hash");
                 cm.MapProperty(u => u.CreatedBy).SetElementName("criado_por");
                 cm.MapProperty(u => u.LastLogin).SetElementName("ultimo_acesso");
                 cm.MapProperty(u => u.Phone).SetElementName("telefone");
                 cm.MapProperty(u => u.UpdatedAt).SetElementName("data_atualizacao");
-                cm.MapProperty(u => u.PatientName).SetElementName("nome_paciente");
                 cm.SetIgnoreExtraElements(true);
             });
         }
-
-        // Verify it is registered before
-        Assert.True(BsonClassMap.IsClassMapRegistered(typeof(User)), "User class map should be registered before calling ConfigureMappings");
 
         // Act - Chama ConfigureMappings quando já está registrado
         var contextInstance = System.Runtime.Serialization.FormatterServices.GetUninitializedObject(contextType);

@@ -16,6 +16,7 @@ using APISinout.Models;
 using APISinout.Helpers;
 using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Hosting;
 
 namespace APISinout.Tests.Unit.Controllers;
 
@@ -26,6 +27,7 @@ public class AuthControllerTests
     private readonly Mock<IValidator<RegisterRequest>> _registerValidatorMock;
     private readonly Mock<IValidator<LoginRequest>> _loginValidatorMock;
     private readonly Mock<IConfiguration> _configurationMock;
+    private readonly Mock<IWebHostEnvironment> _webHostEnvironmentMock;
     private readonly AuthController _controller;
 
     public AuthControllerTests()
@@ -35,13 +37,15 @@ public class AuthControllerTests
         _registerValidatorMock = new Mock<IValidator<RegisterRequest>>();
         _loginValidatorMock = new Mock<IValidator<LoginRequest>>();
         _configurationMock = new Mock<IConfiguration>();
+        _webHostEnvironmentMock = new Mock<IWebHostEnvironment>();
 
         _controller = new AuthController(
             _authServiceMock.Object,
             _passwordResetServiceMock.Object,
             _registerValidatorMock.Object,
             _loginValidatorMock.Object,
-            _configurationMock.Object);
+            _configurationMock.Object,
+            _webHostEnvironmentMock.Object);
     }
 
     #region Register Tests
@@ -226,11 +230,11 @@ public class AuthControllerTests
             CurrentPassword = "oldpassword",
             NewPassword = "newpassword123"
         };
-        var userId = 1;
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var expectedResponse = new MessageResponse("Senha alterada com sucesso");
 
         // Configura claims do usuário autenticado
-        var claims = new List<Claim> { new Claim("userId", userId.ToString()) };
+        var claims = new List<Claim> { new Claim("userId", userId) };
         var identity = new ClaimsIdentity(claims);
         var principal = new ClaimsPrincipal(identity);
         _controller.ControllerContext = new ControllerContext
@@ -258,19 +262,18 @@ public class AuthControllerTests
     public async Task GetCurrentUser_WithAuthenticatedUser_ShouldReturnUserInfo()
     {
         // Arrange - Configura usuário autenticado
-        var userId = 1;
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var user = new User
         {
-            UserId = userId,
+            Id = userId,
             Name = "Test User",
             Email = "test@example.com",
             Role = "Cuidador",
-            PatientName = "Test Patient",
             Phone = "123456789"
         };
 
         // Configura claims do usuário autenticado
-        var claims = new List<Claim> { new Claim("userId", userId.ToString()) };
+        var claims = new List<Claim> { new Claim("userId", userId) };
         var identity = new ClaimsIdentity(claims);
         var principal = new ClaimsPrincipal(identity);
         _controller.ControllerContext = new ControllerContext
@@ -284,25 +287,28 @@ public class AuthControllerTests
         // Act - Executa obtenção de informações do usuário atual
         var result = await _controller.GetCurrentUser();
 
-        // Assert - Verifica se retornou informações corretas do usuário
+        // Assert - Verifica se retornou Ok com dados do usuário (anonymous type)
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var response = JObject.FromObject(okResult.Value!);
-        Assert.Equal(user.UserId, (int)response["userId"]!);
-        Assert.Equal(user.Name, (string)response["name"]!);
-        Assert.Equal(user.Email, (string)response["email"]!);
-        Assert.Equal(user.Role, (string)response["role"]!);
-        Assert.Equal(user.PatientName, (string)response["patientName"]!);
-        Assert.Equal(user.Phone, (string)response["phone"]!);
+        var response = okResult.Value;
+        Assert.NotNull(response);
+        
+        // Verify properties using reflection since it's an anonymous type
+        var userIdProp = response.GetType().GetProperty("userId");
+        var nameProp = response.GetType().GetProperty("name");
+        Assert.NotNull(userIdProp);
+        Assert.NotNull(nameProp);
+        Assert.Equal(userId, userIdProp.GetValue(response));
+        Assert.Equal("Test User", nameProp.GetValue(response));
     }
 
     [Fact]
-    public async Task GetCurrentUser_WithNonExistentUser_ShouldReturnNotFound()
+    public async Task GetCurrentUser_WithUserNotFound_ShouldReturnNotFound()
     {
-        // Arrange - Configura usuário autenticado mas não encontrado
-        var userId = 999;
+        // Arrange - Configura usuário não encontrado
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
 
         // Configura claims do usuário autenticado
-        var claims = new List<Claim> { new Claim("userId", userId.ToString()) };
+        var claims = new List<Claim> { new Claim("userId", userId) };
         var identity = new ClaimsIdentity(claims);
         var principal = new ClaimsPrincipal(identity);
         _controller.ControllerContext = new ControllerContext

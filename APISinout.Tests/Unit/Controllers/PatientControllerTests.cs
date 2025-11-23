@@ -33,7 +33,7 @@ public class PatientControllerTests
         // Configurar usuário admin para testes
         _adminUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, "1"),
+            new Claim(ClaimTypes.NameIdentifier, MongoDB.Bson.ObjectId.GenerateNewId().ToString()),
             new Claim(ClaimTypes.Email, "admin@test.com"),
             new Claim(ClaimTypes.Role, "Admin")
         }));
@@ -41,7 +41,7 @@ public class PatientControllerTests
         // Configurar usuário regular para testes
         _regularUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, "2"),
+            new Claim(ClaimTypes.NameIdentifier, MongoDB.Bson.ObjectId.GenerateNewId().ToString()),
             new Claim(ClaimTypes.Email, "user@test.com"),
             new Claim(ClaimTypes.Role, "Cuidador")
         }));
@@ -62,8 +62,8 @@ public class PatientControllerTests
 
         var patients = new List<PatientResponse>
         {
-            new PatientResponse(PatientFixtures.CreateValidPatient(1, 1)),
-            new PatientResponse(PatientFixtures.CreateValidPatient(2, 2))
+            new PatientResponse(PatientFixtures.CreateValidPatient()),
+            new PatientResponse(PatientFixtures.CreateValidPatient())
         };
 
         _mockPatientService.Setup(s => s.GetAllPatientsAsync()).ReturnsAsync(patients);
@@ -81,6 +81,7 @@ public class PatientControllerTests
     public async Task GetPatients_WithRegularUserRole_ShouldReturnOwnPatients()
     {
         // Arrange - Configurar usuário regular e seus pacientes
+        var userId = _regularUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _regularUser }
@@ -88,11 +89,11 @@ public class PatientControllerTests
 
         var patients = new List<PatientResponse>
         {
-            new PatientResponse(PatientFixtures.CreateValidPatient(1, 2)),
-            new PatientResponse(PatientFixtures.CreateValidPatient(2, 2))
+            new PatientResponse(PatientFixtures.CreateValidPatient(null, userId)),
+            new PatientResponse(PatientFixtures.CreateValidPatient(null, userId))
         };
 
-        _mockPatientService.Setup(s => s.GetPatientsByCuidadorAsync(2)).ReturnsAsync(patients);
+        _mockPatientService.Setup(s => s.GetPatientsByCuidadorAsync(userId)).ReturnsAsync(patients);
 
         // Act - Executar método GetPatients
         var result = await _controller.GetPatients();
@@ -101,7 +102,7 @@ public class PatientControllerTests
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         var responsePatients = okResult.Value.Should().BeAssignableTo<IEnumerable<PatientResponse>>().Subject;
         responsePatients.Should().HaveCount(2);
-        responsePatients.All(p => p.CuidadorId == 2).Should().BeTrue();
+        responsePatients.All(p => p.CuidadorId == userId).Should().BeTrue();
     }
 
     #endregion

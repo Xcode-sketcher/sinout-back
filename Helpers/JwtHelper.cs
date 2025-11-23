@@ -23,8 +23,8 @@ public static class JwtHelper
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Email),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim("userId", user.UserId.ToString()),
-            new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+            new Claim("userId", user.Id ?? string.Empty),
+            new Claim(ClaimTypes.NameIdentifier, user.Id ?? string.Empty),
             new Claim(ClaimTypes.Role, user.Role)
         };
 

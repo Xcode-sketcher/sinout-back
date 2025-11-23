@@ -14,7 +14,8 @@ public class PasswordResetToken
 
     // ID do usuário associado.
     [BsonElement("id_usuario")]
-    public int UserId { get; set; }
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string? UserId { get; set; }
 
     // Email do usuário.
     [BsonElement("email")]

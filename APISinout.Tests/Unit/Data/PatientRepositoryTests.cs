@@ -11,20 +11,19 @@ using APISinout.Data;
 using APISinout.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MongoDB.Bson;
 
 namespace APISinout.Tests.Unit.Data;
 
 public class PatientRepositoryTests
 {
     private readonly Mock<IMongoCollection<Patient>> _patientsMock;
-    private readonly Mock<IMongoCollection<Counter>> _countersMock;
     private readonly PatientRepository _repository;
 
     public PatientRepositoryTests()
     {
         _patientsMock = new Mock<IMongoCollection<Patient>>();
-        _countersMock = new Mock<IMongoCollection<Counter>>();
-        _repository = new PatientRepository(_patientsMock.Object, _countersMock.Object);
+        _repository = new PatientRepository(_patientsMock.Object);
     }
 
     #region GetByIdAsync Tests
@@ -33,7 +32,7 @@ public class PatientRepositoryTests
     public async Task GetByIdAsync_ShouldReturnPatient_WhenExists()
     {
         // Arrange - Configura paciente existente no mock
-        var patientId = 1;
+        var patientId = ObjectId.GenerateNewId().ToString();
         var expectedPatient = new Patient { Id = patientId, Name = "Test Patient" };
         var mockCursor = new Mock<IAsyncCursor<Patient>>();
         mockCursor.Setup(c => c.Current).Returns(new List<Patient> { expectedPatient });
@@ -72,7 +71,7 @@ public class PatientRepositoryTests
             .ReturnsAsync(mockCursor.Object);
 
         // Act - Executa busca por ID inexistente
-        var result = await _repository.GetByIdAsync(999);
+        var result = await _repository.GetByIdAsync(ObjectId.GenerateNewId().ToString());
 
         // Assert - Verifica se null foi retornado
         Assert.Null(result);
@@ -86,11 +85,11 @@ public class PatientRepositoryTests
     public async Task GetByCuidadorIdAsync_ShouldReturnPatients()
     {
         // Arrange - Configura pacientes associados a um cuidador
-        var cuidadorId = 1;
+        var cuidadorId = "cuidador-id-1";
         var patients = new List<Patient>
         {
-            new Patient { Id = 1, CuidadorId = cuidadorId, Status = true },
-            new Patient { Id = 2, CuidadorId = cuidadorId, Status = true }
+            new Patient { Id = ObjectId.GenerateNewId().ToString(), CuidadorId = cuidadorId },
+            new Patient { Id = ObjectId.GenerateNewId().ToString(), CuidadorId = cuidadorId }
         };
 
         var mockCursor = new Mock<IAsyncCursor<Patient>>();
@@ -112,7 +111,6 @@ public class PatientRepositoryTests
         Assert.NotNull(result);
         Assert.Equal(2, result.Count);
         Assert.All(result, p => Assert.Equal(cuidadorId, p.CuidadorId));
-        Assert.All(result, p => Assert.True(p.Status));
     }
 
     #endregion
@@ -125,8 +123,8 @@ public class PatientRepositoryTests
         // Arrange - Configura pacientes ativos no mock
         var patients = new List<Patient>
         {
-            new Patient { Id = 1, Status = true },
-            new Patient { Id = 2, Status = true }
+            new Patient { Id = ObjectId.GenerateNewId().ToString() },
+            new Patient { Id = ObjectId.GenerateNewId().ToString() }
         };
 
         var mockCursor = new Mock<IAsyncCursor<Patient>>();
@@ -147,7 +145,6 @@ public class PatientRepositoryTests
         // Assert - Verifica se pacientes ativos foram retornados
         Assert.NotNull(result);
         Assert.Equal(2, result.Count);
-        Assert.All(result, p => Assert.True(p.Status));
     }
 
     #endregion
@@ -158,7 +155,7 @@ public class PatientRepositoryTests
     public async Task CreatePatientAsync_ShouldCallInsertOne()
     {
         // Arrange - Configura novo paciente para criação
-        var patient = new Patient { Id = 1, Name = "New Patient" };
+        var patient = new Patient { Id = ObjectId.GenerateNewId().ToString(), Name = "New Patient" };
 
         // Act - Executa criação do paciente
         await _repository.CreatePatientAsync(patient);
@@ -175,8 +172,8 @@ public class PatientRepositoryTests
     public async Task UpdatePatientAsync_ShouldCallUpdateOne()
     {
         // Arrange - Configura dados para atualização de paciente
-        var patientId = 1;
-        var patient = new Patient { Name = "Updated Patient", CuidadorId = 2, Status = true };
+        var patientId = ObjectId.GenerateNewId().ToString();
+        var patient = new Patient { Name = "Updated Patient", CuidadorId = "cuidador-id-2" };
 
         // Act - Executa atualização do paciente
         await _repository.UpdatePatientAsync(patientId, patient);
@@ -194,49 +191,18 @@ public class PatientRepositoryTests
     #region DeletePatientAsync Tests
 
     [Fact]
-    public async Task DeletePatientAsync_ShouldPerformSoftDelete()
+    public async Task DeletePatientAsync_ShouldPerformHardDelete()
     {
-        // Arrange - Configura ID do paciente para exclusão lógica
-        var patientId = 1;
+        // Arrange - Configura ID do paciente para exclusão
+        var patientId = ObjectId.GenerateNewId().ToString();
 
-        // Act - Executa exclusão lógica do paciente
+        // Act - Executa exclusão do paciente
         await _repository.DeletePatientAsync(patientId);
 
-        // Assert - Verifica se UpdateOneAsync foi chamado para soft delete
-        _patientsMock.Verify(p => p.UpdateOneAsync(
+        // Assert - Verifica se DeleteOneAsync foi chamado
+        _patientsMock.Verify(p => p.DeleteOneAsync(
             It.IsAny<FilterDefinition<Patient>>(),
-            It.IsAny<UpdateDefinition<Patient>>(),
-            It.IsAny<UpdateOptions>(),
             default), Times.Once);
-    }
-
-    #endregion
-
-    #region GetNextPatientIdAsync Tests
-
-    [Fact]
-    public async Task GetNextPatientIdAsync_ShouldReturnNextId()
-    {
-        // Arrange - Configura contador para geração de próximo ID
-        var counter = new Counter { Id = "patient", Seq = 5 };
-        var mockCursor = new Mock<IAsyncCursor<Counter>>();
-        mockCursor.Setup(c => c.Current).Returns(new List<Counter> { counter });
-        mockCursor.SetupSequence(c => c.MoveNextAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true)
-            .ReturnsAsync(false);
-
-        _countersMock.Setup(c => c.FindOneAndUpdateAsync(
-            It.IsAny<FilterDefinition<Counter>>(),
-            It.IsAny<UpdateDefinition<Counter>>(),
-            It.IsAny<FindOneAndUpdateOptions<Counter, Counter>>(),
-            default))
-            .ReturnsAsync(counter);
-
-        // Act - Executa obtenção do próximo ID de paciente
-        var result = await _repository.GetNextPatientIdAsync();
-
-        // Assert - Verifica se o próximo ID foi retornado corretamente
-        Assert.Equal(5, result);
     }
 
     #endregion
@@ -247,7 +213,7 @@ public class PatientRepositoryTests
     public async Task ExistsAsync_ShouldReturnTrue_WhenPatientExists()
     {
         // Arrange - Configura mock para paciente existente
-        var patientId = 1;
+        var patientId = ObjectId.GenerateNewId().ToString();
         _patientsMock.Setup(p => p.CountDocumentsAsync(
             It.IsAny<FilterDefinition<Patient>>(),
             It.IsAny<CountOptions>(),
@@ -265,7 +231,7 @@ public class PatientRepositoryTests
     public async Task ExistsAsync_ShouldReturnFalse_WhenPatientNotExists()
     {
         // Arrange - Configura mock para paciente inexistente
-        var patientId = 999;
+        var patientId = ObjectId.GenerateNewId().ToString();
         _patientsMock.Setup(p => p.CountDocumentsAsync(
             It.IsAny<FilterDefinition<Patient>>(),
             It.IsAny<CountOptions>(),

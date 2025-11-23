@@ -35,7 +35,7 @@ public class EmotionMappingRepositoryTests
         var expectedMapping = new EmotionMapping
         {
             Id = mappingId,
-            UserId = 1,
+            UserId = "user-id-1",
             Emotion = "happy",
             IntensityLevel = "high",
             MinPercentage = 80,
@@ -95,7 +95,7 @@ public class EmotionMappingRepositoryTests
     public async Task GetByUserIdAsync_ShouldReturnMappingsOrderedByEmotionAndPriority()
     {
         // Arrange - Configura múltiplos mapeamentos para o usuário
-        var userId = 1;
+        var userId = "user-id-1";
         var mappings = new List<EmotionMapping>
         {
             new EmotionMapping { Id = "1", UserId = userId, Emotion = "happy", Priority = 2, Active = true },
@@ -132,7 +132,7 @@ public class EmotionMappingRepositoryTests
     public async Task GetActiveByUserIdAsync_ShouldReturnOnlyActiveMappings()
     {
         // Arrange - Configura mapeamentos ativos e inativos para o usuário
-        var userId = 1;
+        var userId = "user-id-1";
         var mappings = new List<EmotionMapping>
         {
             new EmotionMapping { Id = "1", UserId = userId, Emotion = "happy", Active = true },
@@ -170,7 +170,7 @@ public class EmotionMappingRepositoryTests
     public async Task GetByUserAndEmotionAsync_ShouldReturnMappingsForSpecificEmotion()
     {
         // Arrange - Configura mapeamentos para emoção específica
-        var userId = 1;
+        var userId = "user-id-1";
         var emotion = "happy";
         var mappings = new List<EmotionMapping>
         {
@@ -212,7 +212,7 @@ public class EmotionMappingRepositoryTests
         var mapping = new EmotionMapping
         {
             Id = "new-mapping-id",
-            UserId = 1,
+            UserId = "user-id-1",
             Emotion = "happy",
             IntensityLevel = "high",
             MinPercentage = 80,
@@ -286,7 +286,7 @@ public class EmotionMappingRepositoryTests
     public async Task CountByUserAndEmotionAsync_ShouldReturnCorrectCount()
     {
         // Arrange - Configura contagem de mapeamentos por usuário e emoção
-        var userId = 1;
+        var userId = "user-id-1";
         var emotion = "happy";
         var expectedCount = 3L;
 
@@ -307,7 +307,7 @@ public class EmotionMappingRepositoryTests
     public async Task CountByUserAndEmotionAsync_ShouldReturnZero_WhenNoMappings()
     {
         // Arrange - Configura contagem zero para usuário e emoção sem mapeamentos
-        var userId = 1;
+        var userId = "user-id-1";
         var emotion = "nonexistent";
 
         _mappingsMock.Setup(m => m.CountDocumentsAsync(

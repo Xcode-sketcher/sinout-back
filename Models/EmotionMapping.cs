@@ -14,7 +14,8 @@ public class EmotionMapping
 
     // ID do usuário cuidador ao qual este mapeamento pertence.
     [BsonElement("id_usuario")]
-    public int UserId { get; set; }
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string? UserId { get; set; }
 
     // Emoção primária detectada (ex: happy, sad, angry, fear, surprise, neutral).
     [BsonElement("emocao")]
@@ -53,7 +54,7 @@ public class EmotionMapping
 public class EmotionMappingRequest
 {
     // ID do usuário cuidador.
-    public int UserId { get; set; }
+    public string? UserId { get; set; }
 
     // Emoção primária (ex: happy, sad, angry, fear, surprise, neutral).
     public string? Emotion { get; set; }
@@ -78,7 +79,7 @@ public class EmotionMappingResponse
     public string? Id { get; set; }
 
     // ID do usuário cuidador.
-    public int UserId { get; set; }
+    public string? UserId { get; set; }
 
     // Nome do usuário cuidador.
     public string? UserName { get; set; }

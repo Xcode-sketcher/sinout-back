@@ -8,13 +8,16 @@ namespace APISinout.Services;
 public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
+    private readonly IPatientService _patientService;
     private readonly IConfiguration _config;
 
     public AuthService(
         IUserRepository userRepository,
+        IPatientService patientService,
         IConfiguration config)
     {
         _userRepository = userRepository;
+        _patientService = patientService;
         _config = config;
     }
 
@@ -33,30 +36,43 @@ public class AuthService : IAuthService
         if (await _userRepository.GetByEmailAsync(request.Email.ToLower().Trim()) != null)
             throw new AppException("Email já cadastrado");
 
-        var role = string.IsNullOrEmpty(request.Role) ? UserRole.Cuidador.ToString() : request.Role;
-        if (role != UserRole.Admin.ToString() && role != UserRole.Cuidador.ToString())
-            throw new AppException($"Role inválido. Valores permitidos: {UserRole.Admin}, {UserRole.Cuidador}");
+        // Validar role se fornecida
+        if (!string.IsNullOrEmpty(request.Role) && 
+            request.Role != UserRole.Cuidador.ToString() && 
+            request.Role != "Admin")
+        {
+             throw new AppException("Role inválida");
+        }
 
-        if (role == UserRole.Admin.ToString())
-            throw new AppException("Não é possível auto-registrar como Admin");
+        // Sistema agora só suporta Cuidador (default) ou Admin (se solicitado explicitamente)
+        var role = !string.IsNullOrEmpty(request.Role) ? request.Role : UserRole.Cuidador.ToString();
 
         var user = new User
         {
             Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
-            UserId = await _userRepository.GetNextUserIdAsync(),
             Name = request.Name.Trim(),
             Email = request.Email.ToLower().Trim(),
             Phone = request.Phone?.Trim(),
-            PatientName = request.PatientName?.Trim(),
             DataCadastro = DateTime.UtcNow,
-            Status = true,
             Role = role,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            CreatedBy = "cadastro",
+            CreatedBy = "auto_registration",
             LastLogin = null
         };
 
         await _userRepository.CreateUserAsync(user);
+
+        // Sempre cria um paciente automaticamente durante o registro
+        if (!string.IsNullOrEmpty(request.PatientName))
+        {
+            var patientRequest = new PatientRequest
+            {
+                Name = request.PatientName
+            };
+            
+            // Cria o paciente associado a este novo usuário (Cuidador)
+            await _patientService.CreatePatientAsync(patientRequest, user.Id, user.Role);
+        }
         
         return new AuthResponse { 
             User = new UserResponse(user),
@@ -72,7 +88,7 @@ public class AuthService : IAuthService
 
         var user = await _userRepository.GetByEmailAsync(request.Email.ToLower().Trim());
 
-        if (user == null || !user.Status)
+        if (user == null)
         {
             throw new AppException("Credenciais inválidas");
         }
@@ -95,7 +111,7 @@ public class AuthService : IAuthService
                 user.FailedLoginAttempts = 0;
             }
 
-            await _userRepository.UpdateUserAsync(user.UserId, user);
+            await _userRepository.UpdateUserAsync(user.Id!, user);
 
             throw new AppException("Credenciais inválidas");
         }
@@ -110,7 +126,7 @@ public class AuthService : IAuthService
         user.FailedLoginAttempts = 0;
         user.LockoutEndDate = null;
 
-        await _userRepository.UpdateUserAsync(user.UserId, user);
+        await _userRepository.UpdateUserAsync(user.Id!, user);
 
         return new AuthResponse
         {
@@ -133,7 +149,7 @@ public class AuthService : IAuthService
     }
 
     // Método para obter usuário por ID
-    public async Task<User> GetUserByIdAsync(int userId)
+    public async Task<User> GetUserByIdAsync(string userId)
     {
         var user = await _userRepository.GetByIdAsync(userId);
         if (user == null)

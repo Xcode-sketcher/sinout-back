@@ -8,7 +8,7 @@ namespace APISinout.Helpers;
 public static class AuthorizationHelper
 {
     // Obtém o ID do usuário atual a partir dos claims.
-    public static int GetCurrentUserId(ClaimsPrincipal user)
+    public static string GetCurrentUserId(ClaimsPrincipal user)
     {
         var userIdClaim = user.FindFirst("userId");
 
@@ -22,12 +22,7 @@ public static class AuthorizationHelper
             throw new AppException("Usuário não encontrado");
         }
 
-        if (!int.TryParse(userIdClaim.Value, out int userId))
-        {
-            throw new AppException($"Usuário não autenticado - userId inválido: {userIdClaim.Value}");
-        }
-
-        return userId;
+        return userIdClaim.Value;
     }
 
     // Obtém o papel do usuário atual a partir dos claims.
@@ -46,13 +41,7 @@ public static class AuthorizationHelper
         return user.FindFirst(ClaimTypes.Email)?.Value;
     }
 
-    // Verifica se o usuário atual é um administrador.
-    public static bool IsAdmin(ClaimsPrincipal user)
-    {
-        return GetCurrentUserRole(user) == UserRole.Admin.ToString();
-    }
-
-    // Verifica se o usuário atual é um cuidador.
+    // Verifica se o usuário atual é um cuidador (sempre true agora).
     public static bool IsCuidador(ClaimsPrincipal user)
     {
         return GetCurrentUserRole(user) == UserRole.Cuidador.ToString();

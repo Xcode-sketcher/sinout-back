@@ -16,12 +16,14 @@ using APISinout.Models;
 using APISinout.Helpers;
 using APISinout.Tests.Fixtures;
 using Newtonsoft.Json.Linq;
+using APISinout.Data;
 
 namespace APISinout.Tests.Unit.Controllers;
 
 public class HistoryControllerTests
 {
     private readonly Mock<IHistoryService> _mockHistoryService;
+    private readonly Mock<IPatientRepository> _mockPatientRepository;
     private readonly Mock<IEmotionMappingService> _mockEmotionMappingService;
     private readonly HistoryController _controller;
     private readonly ClaimsPrincipal _adminUser;
@@ -30,12 +32,13 @@ public class HistoryControllerTests
     public HistoryControllerTests()
     {
         _mockHistoryService = new Mock<IHistoryService>();
+        _mockPatientRepository = new Mock<IPatientRepository>();
         _mockEmotionMappingService = new Mock<IEmotionMappingService>();
 
         // Configurar usuário admin para testes
         _adminUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, "1"),
+            new Claim(ClaimTypes.NameIdentifier, MongoDB.Bson.ObjectId.GenerateNewId().ToString()),
             new Claim(ClaimTypes.Email, "admin@test.com"),
             new Claim(ClaimTypes.Role, "Admin")
         }));
@@ -43,20 +46,23 @@ public class HistoryControllerTests
         // Configurar usuário regular para testes
         _regularUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, "2"),
+            new Claim(ClaimTypes.NameIdentifier, MongoDB.Bson.ObjectId.GenerateNewId().ToString()),
             new Claim(ClaimTypes.Email, "user@test.com"),
             new Claim(ClaimTypes.Role, "Cuidador")
         }));
 
-        _controller = new HistoryController(_mockHistoryService.Object);
+        _controller = new HistoryController(_mockHistoryService.Object, _mockPatientRepository.Object, _mockEmotionMappingService.Object);
     }
 
-    #region GetHistoryByUser Tests
+    #region GetHistoryByPatient Tests
 
     [Fact]
-    public async Task GetHistoryByUser_WithValidUserId_ShouldReturnHistory()
+    public async Task GetHistoryByPatient_WithValidPatientId_ShouldReturnHistory()
     {
         // Arrange - Configurar usuário admin e lista de histórico mock
+        var adminId = _adminUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _adminUser }
@@ -64,14 +70,14 @@ public class HistoryControllerTests
 
         var history = new List<HistoryRecordResponse>
         {
-            HistoryFixtures.CreateValidHistoryRecordResponse("hist1", 1),
-            HistoryFixtures.CreateValidHistoryRecordResponse("hist2", 1)
+            HistoryFixtures.CreateValidHistoryRecordResponse("hist1", null, patientId),
+            HistoryFixtures.CreateValidHistoryRecordResponse("hist2", null, patientId)
         };
 
-        _mockHistoryService.Setup(s => s.GetHistoryByUserAsync(1, 1, "Admin", 24)).ReturnsAsync(history);
+        _mockHistoryService.Setup(s => s.GetHistoryByPatientAsync(patientId, adminId, "Admin", 24)).ReturnsAsync(history);
 
-        // Act - Executar método GetHistoryByUser
-        var result = await _controller.GetHistoryByUser(1, 24);
+        // Act - Executar método GetHistoryByPatient
+        var result = await _controller.GetHistoryByPatient(patientId, 24);
 
         // Assert - Verificar se retornou Ok com lista de histórico
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
@@ -81,24 +87,27 @@ public class HistoryControllerTests
     }
 
     [Fact]
-    public async Task GetHistoryByUser_WithInvalidUserId_ShouldReturnBadRequest()
+    public async Task GetHistoryByPatient_WithInvalidPatientId_ShouldReturnBadRequest()
     {
         // Arrange - Configurar usuário admin e serviço que lança exceção
+        var adminId = _adminUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _adminUser }
         };
 
-        _mockHistoryService.Setup(s => s.GetHistoryByUserAsync(999, 1, "Admin", 24))
-            .ThrowsAsync(new AppException("Usuário não encontrado"));
+        _mockHistoryService.Setup(s => s.GetHistoryByPatientAsync(patientId, adminId, "Admin", 24))
+            .ThrowsAsync(new AppException("Paciente não encontrado"));
 
-        // Act - Executar método GetHistoryByUser
-        var result = await _controller.GetHistoryByUser(999, 24);
+        // Act - Executar método GetHistoryByPatient
+        var result = await _controller.GetHistoryByPatient(patientId, 24);
 
         // Assert - Verificar se retornou BadRequest com mensagem de erro
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         var response = JObject.FromObject(badRequestResult.Value!);
-        Assert.Equal("Usuário não encontrado", response["message"]!.ToString());
+        Assert.Equal("Paciente não encontrado", response["message"]!.ToString());
     }
 
     #endregion
@@ -109,6 +118,9 @@ public class HistoryControllerTests
     public async Task GetMyHistory_WithValidUser_ShouldReturnUserHistory()
     {
         // Arrange - Configurar usuário regular e seu histórico
+        var userId = _regularUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _regularUser }
@@ -116,11 +128,11 @@ public class HistoryControllerTests
 
         var history = new List<HistoryRecordResponse>
         {
-            HistoryFixtures.CreateValidHistoryRecordResponse("hist1", 2),
-            HistoryFixtures.CreateValidHistoryRecordResponse("hist2", 2)
+            HistoryFixtures.CreateValidHistoryRecordResponse("hist1", null, patientId),
+            HistoryFixtures.CreateValidHistoryRecordResponse("hist2", null, patientId)
         };
 
-        _mockHistoryService.Setup(s => s.GetHistoryByUserAsync(2, 2, "Cuidador", 24)).ReturnsAsync(history);
+        _mockHistoryService.Setup(s => s.GetHistoryByFilterAsync(It.IsAny<HistoryFilter>(), userId, "Cuidador")).ReturnsAsync(history);
 
         // Act - Executar método GetMyHistory
         var result = await _controller.GetMyHistory(24);
@@ -129,51 +141,30 @@ public class HistoryControllerTests
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         var responseHistory = okResult.Value.Should().BeAssignableTo<IEnumerable<HistoryRecordResponse>>().Subject;
         responseHistory.Should().HaveCount(2);
-        responseHistory.All(h => h.PatientId == 2).Should().BeTrue();
+        responseHistory.All(h => h.PatientId == patientId).Should().BeTrue();
     }
 
     [Fact]
-    public async Task GetMyHistory_WithEmptyHistory_ShouldReturnNotFound()
+    public async Task GetMyHistory_WithEmptyHistory_ShouldReturnEmptyList()
     {
         // Arrange - Configurar usuário regular com histórico vazio
+        var userId = _regularUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _regularUser }
         };
 
         var emptyHistory = new List<HistoryRecordResponse>();
-        _mockHistoryService.Setup(s => s.GetHistoryByUserAsync(2, 2, "Cuidador", 24)).ReturnsAsync(emptyHistory);
+        _mockHistoryService.Setup(s => s.GetHistoryByFilterAsync(It.IsAny<HistoryFilter>(), userId, "Cuidador")).ReturnsAsync(emptyHistory);
 
         // Act - Executar método GetMyHistory
         var result = await _controller.GetMyHistory(24);
 
-        // Assert - Verificar se retornou NotFound
-        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
-        Assert.Equal("Histórico não encontrado", notFoundResult.Value);
-    }
-
-    [Fact]
-    public async Task GetMyHistory_WithLessThan24Hours_ShouldReturnBadRequest()
-    {
-        // Arrange - Configurar usuário regular
-        _controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext { User = _regularUser }
-        };
-
-        var history = new List<HistoryRecordResponse>
-        {
-            HistoryFixtures.CreateValidHistoryRecordResponse("hist1", 2)
-        };
-
-        _mockHistoryService.Setup(s => s.GetHistoryByUserAsync(2, 2, "Cuidador", 12)).ReturnsAsync(history);
-
-        // Act - Executar método GetMyHistory com menos de 24 horas
-        var result = await _controller.GetMyHistory(12);
-
-        // Assert - Verificar se retornou BadRequest
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Equal("Histórico deve ter pelo menos 24 horas", badRequestResult.Value);
+        // Assert - Verificar se retornou Ok com lista vazia
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var responseHistory = okResult.Value.Should().BeAssignableTo<IEnumerable<HistoryRecordResponse>>().Subject;
+        responseHistory.Should().BeEmpty();
     }
 
     #endregion
@@ -184,6 +175,9 @@ public class HistoryControllerTests
     public async Task GetHistoryByFilter_WithValidFilter_ShouldReturnFilteredHistory()
     {
         // Arrange - Configurar usuário regular e filtro
+        var userId = _regularUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _regularUser }
@@ -192,10 +186,10 @@ public class HistoryControllerTests
         var filter = HistoryFixtures.CreateValidHistoryFilter();
         var history = new List<HistoryRecordResponse>
         {
-            HistoryFixtures.CreateValidHistoryRecordResponse("hist1", 2)
+            HistoryFixtures.CreateValidHistoryRecordResponse("hist1", null, patientId)
         };
 
-        _mockHistoryService.Setup(s => s.GetHistoryByFilterAsync(filter, 2, "Cuidador")).ReturnsAsync(history);
+        _mockHistoryService.Setup(s => s.GetHistoryByFilterAsync(filter, userId, "Cuidador")).ReturnsAsync(history);
 
         // Act - Executar método GetHistoryByFilter
         var result = await _controller.GetHistoryByFilter(filter);
@@ -210,13 +204,15 @@ public class HistoryControllerTests
     public async Task GetHistoryByFilter_WithInvalidFilter_ShouldReturnBadRequest()
     {
         // Arrange - Configurar usuário regular e serviço que lança exceção
+        var userId = _regularUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _regularUser }
         };
 
         var filter = new HistoryFilter();
-        _mockHistoryService.Setup(s => s.GetHistoryByFilterAsync(filter, 2, "Cuidador"))
+        _mockHistoryService.Setup(s => s.GetHistoryByFilterAsync(filter, userId, "Cuidador"))
             .ThrowsAsync(new AppException("Filtro inválido"));
 
         // Act - Executar método GetHistoryByFilter
@@ -230,22 +226,25 @@ public class HistoryControllerTests
 
     #endregion
 
-    #region GetUserStatistics Tests
+    #region GetPatientStatistics Tests
 
     [Fact]
-    public async Task GetUserStatistics_WithValidUserId_ShouldReturnStatistics()
+    public async Task GetPatientStatistics_WithValidPatientId_ShouldReturnStatistics()
     {
         // Arrange - Configurar usuário admin e estatísticas mock
+        var adminId = _adminUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _adminUser }
         };
 
-        var stats = HistoryFixtures.CreateValidPatientStatistics(1);
-        _mockHistoryService.Setup(s => s.GetUserStatisticsAsync(1, 1, "Admin", 24)).ReturnsAsync(stats);
+        var stats = HistoryFixtures.CreateValidPatientStatistics(patientId);
+        _mockHistoryService.Setup(s => s.GetPatientStatisticsAsync(patientId, adminId, "Admin", 24)).ReturnsAsync(stats);
 
-        // Act - Executar método GetUserStatistics
-        var result = await _controller.GetUserStatistics(1, 24);
+        // Act - Executar método GetPatientStatistics
+        var result = await _controller.GetPatientStatistics(patientId, 24);
 
         // Assert - Verificar se retornou Ok com estatísticas
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
@@ -255,115 +254,53 @@ public class HistoryControllerTests
     }
 
     [Fact]
-    public async Task GetUserStatistics_WithInvalidUserId_ShouldReturnBadRequest()
+    public async Task GetPatientStatistics_WithInvalidPatientId_ShouldReturnBadRequest()
     {
         // Arrange - Configurar usuário admin e serviço que lança exceção
+        var adminId = _adminUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _adminUser }
         };
 
-        _mockHistoryService.Setup(s => s.GetUserStatisticsAsync(999, 1, "Admin", 24))
-            .ThrowsAsync(new AppException("Usuário não encontrado"));
+        _mockHistoryService.Setup(s => s.GetPatientStatisticsAsync(patientId, adminId, "Admin", 24))
+            .ThrowsAsync(new AppException("Paciente não encontrado"));
 
-        // Act - Executar método GetUserStatistics
-        var result = await _controller.GetUserStatistics(999, 24);
+        // Act - Executar método GetPatientStatistics
+        var result = await _controller.GetPatientStatistics(patientId, 24);
 
         // Assert - Verificar se retornou BadRequest com mensagem de erro
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         var response = JObject.FromObject(badRequestResult.Value!);
-        Assert.Equal("Usuário não encontrado", response["message"]!.ToString());
+        Assert.Equal("Paciente não encontrado", response["message"]!.ToString());
     }
-
-    #endregion
-
-    #region GetMyStatistics Tests
-
-    [Fact]
-    public async Task GetMyStatistics_WithValidUser_ShouldReturnUserStatistics()
-    {
-        // Arrange - Configurar usuário regular e suas estatísticas
-        _controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext { User = _regularUser }
-        };
-
-        var stats = HistoryFixtures.CreateValidPatientStatistics(2);
-        _mockHistoryService.Setup(s => s.GetUserStatisticsAsync(2, 2, "Cuidador", 24)).ReturnsAsync(stats);
-
-        // Act - Executar método GetMyStatistics
-        var result = await _controller.GetMyStatistics(24);
-
-        // Assert - Verificar se retornou Ok com estatísticas do usuário
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var responseStats = okResult.Value.Should().BeOfType<PatientStatistics>().Subject;
-        responseStats.PatientId.Should().Be(2);
-        responseStats.TotalAnalyses.Should().Be(10);
-    }
-
-    [Fact]
-    public async Task GetMyStatistics_WithNoAnalyses_ShouldReturnNotFound()
-    {
-        // Arrange - Configurar usuário regular com estatísticas vazias
-        _controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext { User = _regularUser }
-        };
-
-        var emptyStats = HistoryFixtures.CreateValidPatientStatistics(2);
-        emptyStats.TotalAnalyses = 0;
-        _mockHistoryService.Setup(s => s.GetUserStatisticsAsync(2, 2, "Cuidador", 24)).ReturnsAsync(emptyStats);
-
-        // Act - Executar método GetMyStatistics
-        var result = await _controller.GetMyStatistics(24);
-
-        // Assert - Verificar se retornou NotFound
-        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
-        Assert.Equal("Estatísticas não encontradas", notFoundResult.Value);
-    }
-
-    [Fact]
-    public async Task GetMyStatistics_WithLessThan24Hours_ShouldReturnBadRequest()
-    {
-        // Arrange - Configurar usuário regular
-        _controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext { User = _regularUser }
-        };
-
-        var stats = HistoryFixtures.CreateValidPatientStatistics(2);
-        _mockHistoryService.Setup(s => s.GetUserStatisticsAsync(2, 2, "Cuidador", 12)).ReturnsAsync(stats);
-
-        // Act - Executar método GetMyStatistics com menos de 24 horas
-        var result = await _controller.GetMyStatistics(12);
-
-        // Assert - Verificar se retornou BadRequest
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Equal("Estatísticas devem ter pelo menos 24 horas", badRequestResult.Value);
-    }
-
-    #endregion
-
-    #region SaveCuidadorEmotion Tests
-
     [Fact]
     public async Task SaveCuidadorEmotion_WithValidRequest_ShouldReturnSuccess()
     {
         // Arrange - Configurar usuário regular e requisição válida
+        var userId = _regularUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _regularUser }
         };
 
-        var request = HistoryFixtures.CreateValidCuidadorEmotionRequest(2);
+        var request = HistoryFixtures.CreateValidCuidadorEmotionRequest(userId);
         _mockHistoryService.Setup(s => s.CreateHistoryRecordAsync(It.IsAny<HistoryRecord>())).Returns(Task.CompletedTask);
+        
+        // Mock para PatientRepository
+        var patient = new Patient { Id = patientId, Name = "Test Patient", CuidadorId = userId };
+        _mockPatientRepository.Setup(r => r.GetByCuidadorIdAsync(userId)).ReturnsAsync(new List<Patient> { patient });
 
         // Configurar o serviço de mapeamento no HttpContext
         var serviceProviderMock = new Mock<IServiceProvider>();
         serviceProviderMock.Setup(sp => sp.GetService(typeof(IEmotionMappingService))).Returns(_mockEmotionMappingService.Object);
         _controller.ControllerContext.HttpContext.RequestServices = serviceProviderMock.Object;
 
-        _mockEmotionMappingService.Setup(s => s.FindMatchingRuleAsync(2, "happy", 0.8))
+        _mockEmotionMappingService.Setup(s => s.FindMatchingRuleAsync(userId, "happy", 0.8))
             .ReturnsAsync(("Mensagem encontrada", "rule1"));
 
         // Act - Executar método SaveCuidadorEmotion
@@ -392,7 +329,7 @@ public class HistoryControllerTests
         // Assert - Verificar se retornou BadRequest
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         var response = JObject.FromObject(badRequestResult.Value!);
-        Assert.Equal("Request vazio ou formato inválido - verifique o JSON", response["message"]!.ToString());
+        Assert.Equal("Request vazio ou formato inválido", response["message"]!.ToString());
     }
 
     [Fact]
@@ -404,7 +341,7 @@ public class HistoryControllerTests
             HttpContext = new DefaultHttpContext { User = _regularUser }
         };
 
-        var request = HistoryFixtures.CreateValidCuidadorEmotionRequest(0); // ID inválido
+        var request = HistoryFixtures.CreateValidCuidadorEmotionRequest(""); // ID inválido
 
         // Act - Executar método SaveCuidadorEmotion
         var result = await _controller.SaveCuidadorEmotion(request);
@@ -412,7 +349,7 @@ public class HistoryControllerTests
         // Assert - Verificar se retornou BadRequest
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         var response = JObject.FromObject(badRequestResult.Value!);
-        Assert.Equal("Request vazio ou formato inválido - verifique o JSON", response["message"]!.ToString());
+        Assert.Equal("Request vazio ou formato inválido", response["message"]!.ToString());
     }
 
     [Fact]
@@ -424,7 +361,7 @@ public class HistoryControllerTests
             HttpContext = new DefaultHttpContext { User = _regularUser }
         };
 
-        var request = HistoryFixtures.CreateValidCuidadorEmotionRequest(999); // ID diferente
+        var request = HistoryFixtures.CreateValidCuidadorEmotionRequest(MongoDB.Bson.ObjectId.GenerateNewId().ToString()); // ID diferente
 
         // Act - Executar método SaveCuidadorEmotion
         var result = await _controller.SaveCuidadorEmotion(request);

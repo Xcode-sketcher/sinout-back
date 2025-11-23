@@ -18,8 +18,10 @@ public class PatientRequestValidator : AbstractValidator<PatientRequest>
             .MaximumLength(500).WithMessage("Informações adicionais não podem ter mais de 500 caracteres")
             .When(x => !string.IsNullOrEmpty(x.AdditionalInfo));
 
+        // ProfilePhoto agora é int? (ID do avatar)
         RuleFor(x => x.ProfilePhoto)
-            .MaximumLength(100000).WithMessage("Foto de perfil muito grande")
-            .When(x => !string.IsNullOrEmpty(x.ProfilePhoto));
+            .GreaterThanOrEqualTo(0).WithMessage("ID da foto de perfil deve ser maior ou igual a 0")
+            .LessThan(100).WithMessage("ID da foto de perfil inválido")
+            .When(x => x.ProfilePhoto.HasValue);
     }
 }

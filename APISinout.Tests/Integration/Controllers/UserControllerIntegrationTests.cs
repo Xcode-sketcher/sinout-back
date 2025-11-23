@@ -48,29 +48,9 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
 
     // Teste de admin removido
 
-    [Fact]
-    public async Task GetAll_AsCuidador_ShouldReturn403Forbidden()
-    {
-        // Arrange
-        await SetupCuidadorAuth();
+    // GetAll_AsCuidador_ShouldReturn403Forbidden removed as route /api/users no longer exists
 
-
-        // Act
-        var response = await _client.GetAsync("/api/users");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
-
-    [Fact]
-    public async Task GetAll_WithoutAuth_ShouldReturn401Unauthorized()
-    {
-        // Act
-        var response = await _client.GetAsync("/api/users");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
+    // GetAll_WithoutAuth_ShouldReturn401Unauthorized removed as route /api/users no longer exists
 
     [Fact]
     public async Task GetCurrentUser_WithValidToken_ShouldReturn200WithUserData()
@@ -101,80 +81,13 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
 
     // Teste de admin removido
 
-    [Fact]
-    public async Task CreateUser_AsCuidador_ShouldReturn403Forbidden()
-    {
-        // Arrange
-        await SetupCuidadorAuth();
+    // CreateUser_AsCuidador_ShouldReturn403Forbidden removed as route /api/users no longer exists
 
-
-        var request = new CreateUserRequest
-        {
-            Name = "New User",
-            Email = $"newuser{Guid.NewGuid()}@test.com",
-            Password = "NewUser@123",
-            Role = "Cuidador"
-        };
-
-        // Act
-        var response = await _client.PostAsJsonAsync("/api/users", request);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
-
-    [Fact]
-    public async Task UpdatePatientName_WithValidData_ShouldReturn200OK()
-    {
-        // Arrange
-        await SetupCuidadorAuth();
-
-
-        var request = new UpdatePatientNameRequest
-        {
-            PatientName = "Updated Patient Name"
-        };
-
-        // Act
-        var response = await _client.PostAsJsonAsync("/api/users/update-patient-name", request);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var content = await response.Content.ReadAsStringAsync();
-        content.Should().NotBeNullOrEmpty();
-    }
-
-    [Fact]
-    public async Task UpdatePatientName_WithoutAuth_ShouldReturn401Unauthorized()
-    {
-        // Arrange
-        var request = new UpdatePatientNameRequest
-        {
-            PatientName = "Updated Patient Name"
-        };
-
-        // Act
-        var response = await _client.PostAsJsonAsync("/api/users/update-patient-name", request);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
+    // UpdatePatientName endpoint was removed - patient management now handled through Patient repository
 
     // Teste de admin removido
 
-    [Fact]
-    public async Task GetCuidadores_AsCuidador_ShouldReturn403Forbidden()
-    {
-        // Arrange
-        await SetupCuidadorAuth();
-
-
-        // Act
-        var response = await _client.GetAsync("/api/users/cuidadores");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
+    // GetCuidadores_AsCuidador_ShouldReturn403Forbidden removed as route /api/users/cuidadores no longer exists
 
     // Teste de admin removido
 

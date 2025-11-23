@@ -7,13 +7,13 @@ namespace APISinout.Data;
 public interface IEmotionMappingRepository
 {
     Task<EmotionMapping?> GetByIdAsync(string id);
-    Task<List<EmotionMapping>> GetByUserIdAsync(int userId);
-    Task<List<EmotionMapping>> GetActiveByUserIdAsync(int userId);
-    Task<List<EmotionMapping>> GetByUserAndEmotionAsync(int userId, string emotion);
+    Task<List<EmotionMapping>> GetByUserIdAsync(string userId);
+    Task<List<EmotionMapping>> GetActiveByUserIdAsync(string userId);
+    Task<List<EmotionMapping>> GetByUserAndEmotionAsync(string userId, string emotion);
     Task CreateMappingAsync(EmotionMapping mapping);
     Task UpdateMappingAsync(string id, EmotionMapping mapping);
     Task DeleteMappingAsync(string id);
-    Task<int> CountByUserAndEmotionAsync(int userId, string emotion);
+    Task<int> CountByUserAndEmotionAsync(string userId, string emotion);
     Task<bool> ExistsAsync(string id);
 }
 
@@ -41,7 +41,7 @@ public class EmotionMappingRepository : IEmotionMappingRepository
     }
 
     // Obtém mapeamentos por ID do usuário.
-    public async Task<List<EmotionMapping>> GetByUserIdAsync(int userId)
+    public async Task<List<EmotionMapping>> GetByUserIdAsync(string userId)
     {
         return await _mappings.Find(m => m.UserId == userId)
             .SortBy(m => m.Emotion)
@@ -50,7 +50,7 @@ public class EmotionMappingRepository : IEmotionMappingRepository
     }
 
     // Obtém mapeamentos ativos por ID do usuário.
-    public async Task<List<EmotionMapping>> GetActiveByUserIdAsync(int userId)
+    public async Task<List<EmotionMapping>> GetActiveByUserIdAsync(string userId)
     {
         return await _mappings.Find(m => m.UserId == userId && m.Active)
             .SortBy(m => m.Emotion)
@@ -59,7 +59,7 @@ public class EmotionMappingRepository : IEmotionMappingRepository
     }
 
     // Obtém mapeamentos por usuário e emoção.
-    public async Task<List<EmotionMapping>> GetByUserAndEmotionAsync(int userId, string emotion)
+    public async Task<List<EmotionMapping>> GetByUserAndEmotionAsync(string userId, string emotion)
     {
         return await _mappings.Find(m => m.UserId == userId && m.Emotion == emotion && m.Active)
             .SortBy(m => m.Priority)
@@ -101,7 +101,7 @@ public class EmotionMappingRepository : IEmotionMappingRepository
     }
 
     // Conta mapeamentos por usuário e emoção.
-    public async Task<int> CountByUserAndEmotionAsync(int userId, string emotion)
+    public async Task<int> CountByUserAndEmotionAsync(string userId, string emotion)
     {
         var count = await _mappings.CountDocumentsAsync(m =>
             m.UserId == userId &&
