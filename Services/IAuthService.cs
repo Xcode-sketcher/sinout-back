@@ -12,5 +12,5 @@ public interface IAuthService
     Task<AuthResponse> LoginAsync(LoginRequest request);
 
     /// <summary>Obtém um usuário pelo ID</summary>
-    Task<User> GetUserByIdAsync(int userId);
+    Task<User?> GetUserByIdAsync(string userId);
 }

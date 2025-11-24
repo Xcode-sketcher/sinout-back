@@ -21,8 +21,9 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         _client = factory.CreateClient();
     }
 
-    private async Task<(string? token, int userId)> GetCuidadorTokenAndId()
+    private async Task<string> GetCuidadorUserId(HttpClient? client = null)
     {
+        var httpClient = client ?? _client;
         var cuidadorEmail = $"cuidador{Guid.NewGuid()}@test.com";
         var cuidadorPassword = "Cuidador@123";
         
@@ -35,7 +36,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
             PatientName = "Cuidador Patient"
         };
 
-        await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
+        await httpClient.PostAsJsonAsync("/api/auth/register", registerRequest);
 
         var loginRequest = new LoginRequest
         {
@@ -43,19 +44,20 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
             Password = cuidadorPassword
         };
 
-        var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
-        var authResponse = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
-        authResponse.Should().NotBeNull();
-        authResponse!.User.Should().NotBeNull();
-        return ((authResponse.Token ?? throw new InvalidOperationException("Token not found")), authResponse!.User!.UserId);
+        await httpClient.PostAsJsonAsync("/api/auth/login", loginRequest);
+
+        // Get current user info using cookies
+        var userResponse = await httpClient.GetFromJsonAsync<UserResponse>("/api/users/me");
+        userResponse.Should().NotBeNull();
+        return userResponse!.UserId!;
     }
 
     [Fact]
     public async Task CreateMapping_WithValidData_ShouldReturn201Created()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
+
 
         var request = new EmotionMappingRequest
         {
@@ -82,8 +84,8 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task CreateMapping_WithoutUserId_ShouldUseCurrentUser()
     {
         // Arrange
-        var (token, _) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        await GetCuidadorUserId();
+
 
         var request = new EmotionMappingRequest
         {
@@ -109,7 +111,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         // Arrange
         var request = new EmotionMappingRequest
         {
-            UserId = 1,
+            UserId = "1",
             Emotion = "angry",
             IntensityLevel = "high",
             MinPercentage = 75.0,
@@ -128,8 +130,8 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task CreateMapping_ExceedingLimit_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
+
 
         // Create first mapping
         var request1 = new EmotionMappingRequest
@@ -177,8 +179,8 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task GetMyMappings_WithValidToken_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
+
 
         // Create a mapping first
         var createRequest = new EmotionMappingRequest
@@ -216,8 +218,8 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task GetMappingsByUser_AsOwner_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
+
 
         // Create a mapping first
         var createRequest = new EmotionMappingRequest
@@ -246,13 +248,16 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task GetMappingsByUser_AsNonOwner_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token1, _) = await GetCuidadorTokenAndId();
-        var (_, userId2) = await GetCuidadorTokenAndId();
+        var client1 = _factory.CreateClientWithCookies();
+        var userId1 = await GetCuidadorUserId(client1);
         
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token1);
+        var client2 = _factory.CreateClientWithCookies();
+        var userId2 = await GetCuidadorUserId(client2);
+        
 
-        // Act - Try to access another user's mappings
-        var response = await _client.GetAsync($"/api/emotion-mappings/user/{userId2}");
+
+        // Act - Try to access another user's mappings using client2
+        var response = await client2.GetAsync($"/api/emotion-mappings/user/{userId1}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -262,8 +267,8 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task UpdateMapping_AsOwner_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
+
 
         // Create a mapping
         var createRequest = new EmotionMappingRequest
@@ -303,11 +308,14 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task UpdateMapping_AsNonOwner_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token1, userId1) = await GetCuidadorTokenAndId();
-        var (token2, _) = await GetCuidadorTokenAndId();
+        var client1 = _factory.CreateClientWithCookies();
+        var userId1 = await GetCuidadorUserId(client1);
+        
+        var client2 = _factory.CreateClientWithCookies();
+        var userId2 = await GetCuidadorUserId(client2);
         
         // Cuidador 1 creates a mapping
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token1);
+
         var createRequest = new EmotionMappingRequest
         {
             UserId = userId1,
@@ -317,13 +325,13 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
             Message = "Estou feliz",
             Priority = 1
         };
-        var createResponse = await _client.PostAsJsonAsync("/api/emotion-mappings", createRequest);
+        var createResponse = await client1.PostAsJsonAsync("/api/emotion-mappings", createRequest);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var createdMapping = await createResponse.Content.ReadFromJsonAsync<EmotionMappingResponse>();
         createdMapping.Should().NotBeNull();
 
         // Cuidador 2 tries to update it
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token2);
+
         var updateRequest = new EmotionMappingRequest
         {
             UserId = userId1,
@@ -335,7 +343,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         };
 
         // Act
-        var response = await _client.PutAsJsonAsync($"/api/emotion-mappings/{createdMapping?.Id ?? throw new InvalidOperationException("Id not found")}", updateRequest);
+        var response = await client2.PutAsJsonAsync($"/api/emotion-mappings/{createdMapping?.Id ?? throw new InvalidOperationException("Id not found")}", updateRequest);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -345,8 +353,8 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task DeleteMapping_AsOwner_ShouldReturn200OK()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
+
 
         // Create a mapping
         var createRequest = new EmotionMappingRequest
@@ -374,11 +382,14 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task DeleteMapping_AsNonOwner_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token1, userId1) = await GetCuidadorTokenAndId();
-        var (token2, _) = await GetCuidadorTokenAndId();
+        var client1 = _factory.CreateClientWithCookies();
+        var userId1 = await GetCuidadorUserId(client1);
+        
+        var client2 = _factory.CreateClientWithCookies();
+        var userId2 = await GetCuidadorUserId(client2);
         
         // Cuidador 1 creates a mapping
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token1);
+
         var createRequest = new EmotionMappingRequest
         {
             UserId = userId1,
@@ -388,16 +399,16 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
             Message = "Calmo",
             Priority = 1
         };
-        var createResponse = await _client.PostAsJsonAsync("/api/emotion-mappings", createRequest);
+        var createResponse = await client1.PostAsJsonAsync("/api/emotion-mappings", createRequest);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var createdMapping = await createResponse.Content.ReadFromJsonAsync<EmotionMappingResponse>();
         createdMapping.Should().NotBeNull();
 
         // Cuidador 2 tries to delete it
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token2);
+
 
         // Act
-        var response = await _client.DeleteAsync($"/api/emotion-mappings/{createdMapping?.Id ?? throw new InvalidOperationException("Id not found")}");
+        var response = await client2.DeleteAsync($"/api/emotion-mappings/{createdMapping?.Id ?? throw new InvalidOperationException("Id not found")}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -409,8 +420,8 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task CreateMapping_WithInvalidPriority_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
+
 
         var request = new EmotionMappingRequest
         {
@@ -433,8 +444,8 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     public async Task CreateMapping_WithInvalidPercentage_ShouldReturn400BadRequest()
     {
         // Arrange
-        var (token, userId) = await GetCuidadorTokenAndId();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var userId = await GetCuidadorUserId();
+
 
         var request = new EmotionMappingRequest
         {

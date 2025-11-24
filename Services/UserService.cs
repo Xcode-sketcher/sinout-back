@@ -19,7 +19,7 @@ public class UserService : IUserService
     }
 
     // Método para obter usuário por ID
-    public async Task<User> GetByIdAsync(int id)
+    public async Task<User> GetByIdAsync(string id)
     {
         var user = await _userRepository.GetByIdAsync(id);
         if (user == null) throw new Exception("User not found");
@@ -40,11 +40,9 @@ public class UserService : IUserService
         var user = new User
         {
             Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
-            UserId = await _userRepository.GetNextUserIdAsync(),
             Name = request.Name,
             Email = request.Email,
             DataCadastro = DateTime.UtcNow,
-            Status = true,
             Role = request.Role ?? "Client",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             CreatedBy = createdBy
@@ -55,33 +53,21 @@ public class UserService : IUserService
     }
 
     // Método para atualizar um usuário
-    public async Task UpdateUserAsync(int id, UpdateUserRequest request)
+    public async Task UpdateUserAsync(string id, UpdateUserRequest request)
     {
         var user = await GetByIdAsync(id);
         
         if (request.Name != null) user.Name = request.Name;
         if (request.Email != null) user.Email = request.Email;
-        if (request.Status.HasValue) user.Status = request.Status.Value;
         if (request.Role != null) user.Role = request.Role;
         
         await _userRepository.UpdateUserAsync(id, user);
     }
 
     // Método para deletar um usuário
-    public async Task DeleteUserAsync(int id)
+    public async Task DeleteUserAsync(string id)
     {
         await GetByIdAsync(id);
         await _userRepository.DeleteUserAsync(id);
-    }
-
-    public async Task UpdatePatientNameAsync(int userId, string patientName)
-    {
-        Console.WriteLine($"[UserService] Atualizando nome do paciente - UserId={userId}, Nome='{patientName}'");
-        
-        var user = await GetByIdAsync(userId);
-        
-        await _userRepository.UpdatePatientNameAsync(userId, patientName);
-        
-        Console.WriteLine($"[UserService] Nome do paciente atualizado com sucesso!");
     }
 }

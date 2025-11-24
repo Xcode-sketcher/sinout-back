@@ -37,11 +37,10 @@ public class PatientServiceTests
     [Fact]
     public async Task CreatePatientAsync_AsCuidador_ShouldCreateForSelf()
     {
-        // Arrange
-        var cuidadorId = 1;
+        // Arrange - Configura cuidador criando paciente para si mesmo
+        var cuidadorId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = PatientFixtures.CreateValidPatientRequest();
         
-        _mockPatientRepository.Setup(x => x.GetNextPatientIdAsync()).ReturnsAsync(1);
         _mockPatientRepository.Setup(x => x.CreatePatientAsync(It.IsAny<Patient>())).Returns(Task.CompletedTask);
         _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(UserFixtures.CreateValidUser(cuidadorId));
 
@@ -55,22 +54,19 @@ public class PatientServiceTests
         
         _mockPatientRepository.Verify(x => x.CreatePatientAsync(It.Is<Patient>(p => 
             p.CuidadorId == cuidadorId &&
-            p.Name == request.Name &&
-            p.Status == true &&
-            p.CreatedBy == "self"
+            p.Name == request.Name
         )), Times.Once);
     }
 
     [Fact]
     public async Task CreatePatientAsync_AsAdmin_WithCuidadorId_ShouldCreateForSpecifiedCuidador()
     {
-        // Arrange
-        var adminId = 100;
-        var cuidadorId = 1;
+        // Arrange - Configura admin criando paciente para cuidador específico
+        var adminId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var cuidadorId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = PatientFixtures.CreateValidPatientRequest(cuidadorId);
         var cuidador = UserFixtures.CreateValidUser(cuidadorId);
         
-        _mockPatientRepository.Setup(x => x.GetNextPatientIdAsync()).ReturnsAsync(1);
         _mockPatientRepository.Setup(x => x.CreatePatientAsync(It.IsAny<Patient>())).Returns(Task.CompletedTask);
         _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(cuidador);
 
@@ -82,16 +78,15 @@ public class PatientServiceTests
         result.CuidadorId.Should().Be(cuidadorId);
         
         _mockPatientRepository.Verify(x => x.CreatePatientAsync(It.Is<Patient>(p => 
-            p.CuidadorId == cuidadorId &&
-            p.CreatedBy == $"admin_{adminId}"
+            p.CuidadorId == cuidadorId
         )), Times.Once);
     }
 
     [Fact]
     public async Task CreatePatientAsync_AsAdmin_WithoutCuidadorId_ShouldThrowAppException()
     {
-        // Arrange
-        var adminId = 100;
+        // Arrange - Configura admin tentando criar paciente sem especificar cuidador
+        var adminId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = PatientFixtures.CreateValidPatientRequest(null);
 
         // Act
@@ -105,9 +100,9 @@ public class PatientServiceTests
     [Fact]
     public async Task CreatePatientAsync_AsAdmin_WithInvalidCuidador_ShouldThrowAppException()
     {
-        // Arrange
-        var adminId = 100;
-        var invalidCuidadorId = 999;
+        // Arrange - Configura admin tentando criar paciente com cuidador inválido
+        var adminId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var invalidCuidadorId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = PatientFixtures.CreateValidPatientRequest(invalidCuidadorId);
         
         _mockUserRepository.Setup(x => x.GetByIdAsync(invalidCuidadorId)).ReturnsAsync((User?)null);
@@ -123,12 +118,13 @@ public class PatientServiceTests
     [Fact]
     public async Task CreatePatientAsync_WithEmptyName_ShouldThrowAppException()
     {
-        // Arrange
+        // Arrange - Configura criação de paciente com nome vazio
         var request = PatientFixtures.CreateValidPatientRequest();
         request.Name = "";
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
 
         // Act
-        var act = async () => await _patientService.CreatePatientAsync(request, 1, "Cuidador");
+        var act = async () => await _patientService.CreatePatientAsync(request, userId, "Cuidador");
 
         // Assert
         await act.Should().ThrowAsync<AppException>()
@@ -138,15 +134,16 @@ public class PatientServiceTests
     [Fact]
     public async Task CreatePatientAsync_InvalidRole_ShouldThrowAppException()
     {
-        // Arrange
+        // Arrange - Configura criação de paciente com role inválido
         var request = PatientFixtures.CreateValidPatientRequest();
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         
         // Act
-        var act = async () => await _patientService.CreatePatientAsync(request, 1, "User");
+        var act = async () => await _patientService.CreatePatientAsync(request, userId, "User");
 
         // Assert
         await act.Should().ThrowAsync<AppException>()
-            .WithMessage($"Apenas {UserRole.Admin} e {UserRole.Cuidador} podem cadastrar pacientes");
+            .WithMessage("Apenas Cuidadores podem cadastrar pacientes");
     }
 
     #endregion
@@ -156,16 +153,16 @@ public class PatientServiceTests
     [Fact]
     public async Task GetPatientByIdAsync_AsOwner_ShouldReturnPatient()
     {
-        // Arrange
-        var cuidadorId = 1;
-        var patient = PatientFixtures.CreateValidPatient(1, cuidadorId);
+        // Arrange - Configura cuidador dono buscando seu próprio paciente
+        var cuidadorId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var patient = PatientFixtures.CreateValidPatient(null, cuidadorId);
         var cuidador = UserFixtures.CreateValidUser(cuidadorId);
         
-        _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id)).ReturnsAsync(patient);
+        _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id!)).ReturnsAsync(patient);
         _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(cuidador);
 
         // Act
-        var result = await _patientService.GetPatientByIdAsync(patient.Id, cuidadorId, "Cuidador");
+        var result = await _patientService.GetPatientByIdAsync(patient.Id!, cuidadorId, "Cuidador");
 
         // Assert
         result.Should().NotBeNull();
@@ -176,17 +173,17 @@ public class PatientServiceTests
     [Fact]
     public async Task GetPatientByIdAsync_AsAdmin_ShouldReturnAnyPatient()
     {
-        // Arrange
-        var adminId = 100;
-        var cuidadorId = 1;
-        var patient = PatientFixtures.CreateValidPatient(1, cuidadorId);
+        // Arrange - Configura admin buscando qualquer paciente
+        var adminId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var cuidadorId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var patient = PatientFixtures.CreateValidPatient(null, cuidadorId);
         var cuidador = UserFixtures.CreateValidUser(cuidadorId);
         
-        _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id)).ReturnsAsync(patient);
+        _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id!)).ReturnsAsync(patient);
         _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(cuidador);
 
         // Act
-        var result = await _patientService.GetPatientByIdAsync(patient.Id, adminId, "Admin");
+        var result = await _patientService.GetPatientByIdAsync(patient.Id!, adminId, "Admin");
 
         // Assert
         result.Should().NotBeNull();
@@ -196,15 +193,15 @@ public class PatientServiceTests
     [Fact]
     public async Task GetPatientByIdAsync_AsNonOwner_ShouldThrowAppException()
     {
-        // Arrange
-        var requestingUserId = 2;
-        var patientOwnerId = 1;
-        var patient = PatientFixtures.CreateValidPatient(1, patientOwnerId);
+        // Arrange - Configura cuidador não dono tentando acessar paciente de outro
+        var requestingUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var patientOwnerId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var patient = PatientFixtures.CreateValidPatient(null, patientOwnerId);
         
-        _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id)).ReturnsAsync(patient);
+        _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id!)).ReturnsAsync(patient);
 
         // Act
-        var act = async () => await _patientService.GetPatientByIdAsync(patient.Id, requestingUserId, "Cuidador");
+        var act = async () => await _patientService.GetPatientByIdAsync(patient.Id!, requestingUserId, "Cuidador");
 
         // Assert
         await act.Should().ThrowAsync<AppException>()
@@ -214,12 +211,13 @@ public class PatientServiceTests
     [Fact]
     public async Task GetPatientByIdAsync_NotFound_ShouldThrowAppException()
     {
-        // Arrange
-        var id = 999;
+        // Arrange - Configura busca de paciente inexistente
+        var id = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync((Patient?)null);
 
         // Act
-        var act = async () => await _patientService.GetPatientByIdAsync(id, 1, "Cuidador");
+        var act = async () => await _patientService.GetPatientByIdAsync(id, userId, "Cuidador");
 
         // Assert
         await act.Should().ThrowAsync<AppException>()
@@ -233,8 +231,8 @@ public class PatientServiceTests
     [Fact]
     public async Task GetPatientsByCuidadorAsync_ShouldReturnAllPatientsForCuidador()
     {
-        // Arrange
-        var cuidadorId = 1;
+        // Arrange - Configura busca de todos os pacientes de um cuidador
+        var cuidadorId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var patients = PatientFixtures.CreateMultiplePatients(cuidadorId, 3);
         var cuidador = UserFixtures.CreateValidUser(cuidadorId);
         
@@ -256,19 +254,19 @@ public class PatientServiceTests
     [Fact]
     public async Task UpdatePatientAsync_AsOwner_ShouldUpdatePatient()
     {
-        // Arrange
-        var cuidadorId = 1;
-        var patient = PatientFixtures.CreateValidPatient(1, cuidadorId);
+        // Arrange - Configura cuidador dono atualizando seu próprio paciente
+        var cuidadorId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var patient = PatientFixtures.CreateValidPatient(null, cuidadorId);
         var request = PatientFixtures.CreateValidPatientRequest();
         request.Name = "Nome Atualizado";
         var cuidador = UserFixtures.CreateValidUser(cuidadorId);
         
-        _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id)).ReturnsAsync(patient);
-        _mockPatientRepository.Setup(x => x.UpdatePatientAsync(It.IsAny<int>(), It.IsAny<Patient>())).Returns(Task.CompletedTask);
+        _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id!)).ReturnsAsync(patient);
+        _mockPatientRepository.Setup(x => x.UpdatePatientAsync(patient.Id!, It.IsAny<Patient>())).Returns(Task.CompletedTask);
         _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(cuidador);
 
         // Act
-        var result = await _patientService.UpdatePatientAsync(patient.Id, request, cuidadorId, "Cuidador");
+        var result = await _patientService.UpdatePatientAsync(patient.Id!, request, cuidadorId, "Cuidador");
 
         // Assert
         result.Should().NotBeNull();
@@ -278,13 +276,14 @@ public class PatientServiceTests
     [Fact]
     public async Task UpdatePatientAsync_NotFound_ShouldThrowAppException()
     {
-        // Arrange
-        var id = 999;
+        // Arrange - Configura tentativa de atualização de paciente inexistente
+        var id = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = PatientFixtures.CreateValidPatientRequest();
         _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync((Patient?)null);
 
         // Act
-        var act = async () => await _patientService.UpdatePatientAsync(id, request, 1, "Cuidador");
+        var act = async () => await _patientService.UpdatePatientAsync(id, request, userId, "Cuidador");
 
         // Assert
         await act.Should().ThrowAsync<AppException>()
@@ -294,15 +293,17 @@ public class PatientServiceTests
     [Fact]
     public async Task UpdatePatientAsync_AccessDenied_ShouldThrowAppException()
     {
-        // Arrange
-        var id = 1;
-        var patient = PatientFixtures.CreateValidPatient(id, 1);
+        // Arrange - Configura tentativa de atualização sem permissão de acesso
+        var id = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var ownerId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var requesterId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var patient = PatientFixtures.CreateValidPatient(id, ownerId);
         var request = PatientFixtures.CreateValidPatientRequest();
         
         _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(patient);
 
         // Act
-        var act = async () => await _patientService.UpdatePatientAsync(id, request, 2, "Cuidador");
+        var act = async () => await _patientService.UpdatePatientAsync(id, request, requesterId, "Cuidador");
 
         // Assert
         await act.Should().ThrowAsync<AppException>()
@@ -312,15 +313,15 @@ public class PatientServiceTests
     [Fact]
     public async Task UpdatePatientAsync_UpdateAllFields_ShouldUpdatePatient()
     {
-        // Arrange
-        var id = 1;
-        var cuidadorId = 1;
+        // Arrange - Configura atualização de todos os campos do paciente
+        var id = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var cuidadorId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var patient = PatientFixtures.CreateValidPatient(id, cuidadorId);
         var request = new PatientRequest 
         { 
             Name = "New Name", 
             AdditionalInfo = "New Info", 
-            ProfilePhoto = "new_photo.jpg" 
+            ProfilePhoto = 1 
         };
         var cuidador = UserFixtures.CreateValidUser(cuidadorId);
         
@@ -334,16 +335,17 @@ public class PatientServiceTests
         // Assert
         result.Name.Should().Be("New Name");
         result.AdditionalInfo.Should().Be("New Info");
-        result.ProfilePhoto.Should().Be("new_photo.jpg");
+        result.ProfilePhoto.Should().Be(1);
     }
 
     [Fact]
     public async Task UpdatePatientAsync_AdminChangeCuidador_Success()
     {
-        // Arrange
-        var id = 1;
-        var oldCuidadorId = 1;
-        var newCuidadorId = 2;
+        // Arrange - Configura admin alterando cuidador do paciente
+        var id = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var oldCuidadorId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var newCuidadorId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var adminId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var patient = PatientFixtures.CreateValidPatient(id, oldCuidadorId);
         var request = new PatientRequest { CuidadorId = newCuidadorId };
         var newCuidador = UserFixtures.CreateValidUser(newCuidadorId);
@@ -353,7 +355,7 @@ public class PatientServiceTests
         _mockUserRepository.Setup(x => x.GetByIdAsync(newCuidadorId)).ReturnsAsync(newCuidador);
 
         // Act
-        var result = await _patientService.UpdatePatientAsync(id, request, 100, "Admin");
+        var result = await _patientService.UpdatePatientAsync(id, request, adminId, "Admin");
 
         // Assert
         result.CuidadorId.Should().Be(newCuidadorId);
@@ -362,16 +364,18 @@ public class PatientServiceTests
     [Fact]
     public async Task UpdatePatientAsync_AdminChangeCuidador_InvalidCuidador_ThrowsException()
     {
-        // Arrange
-        var id = 1;
-        var patient = PatientFixtures.CreateValidPatient(id, 1);
-        var request = new PatientRequest { CuidadorId = 999 };
+        // Arrange - Configura admin tentando alterar para cuidador inválido
+        var id = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var adminId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var invalidCuidadorId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var patient = PatientFixtures.CreateValidPatient(id, MongoDB.Bson.ObjectId.GenerateNewId().ToString());
+        var request = new PatientRequest { CuidadorId = invalidCuidadorId };
         
         _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(patient);
-        _mockUserRepository.Setup(x => x.GetByIdAsync(999)).ReturnsAsync((User?)null);
+        _mockUserRepository.Setup(x => x.GetByIdAsync(invalidCuidadorId)).ReturnsAsync((User?)null);
 
         // Act
-        var act = async () => await _patientService.UpdatePatientAsync(id, request, 100, "Admin");
+        var act = async () => await _patientService.UpdatePatientAsync(id, request, adminId, "Admin");
 
         // Assert
         await act.Should().ThrowAsync<AppException>()
@@ -385,29 +389,30 @@ public class PatientServiceTests
     [Fact]
     public async Task DeletePatientAsync_AsOwner_ShouldDeletePatient()
     {
-        // Arrange
-        var cuidadorId = 1;
-        var patient = PatientFixtures.CreateValidPatient(1, cuidadorId);
+        // Arrange - Configura cuidador dono excluindo seu próprio paciente
+        var cuidadorId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var patient = PatientFixtures.CreateValidPatient(null, cuidadorId);
         
-        _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id)).ReturnsAsync(patient);
-        _mockPatientRepository.Setup(x => x.DeletePatientAsync(patient.Id)).Returns(Task.CompletedTask);
+        _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id!)).ReturnsAsync(patient);
+        _mockPatientRepository.Setup(x => x.DeletePatientAsync(patient.Id!)).Returns(Task.CompletedTask);
 
         // Act
-        await _patientService.DeletePatientAsync(patient.Id, cuidadorId, "Cuidador");
+        await _patientService.DeletePatientAsync(patient.Id!, cuidadorId, "Cuidador");
 
         // Assert
-        _mockPatientRepository.Verify(x => x.DeletePatientAsync(patient.Id), Times.Once);
+        _mockPatientRepository.Verify(x => x.DeletePatientAsync(patient.Id!), Times.Once);
     }
 
     [Fact]
     public async Task DeletePatientAsync_NotFound_ShouldThrowAppException()
     {
-        // Arrange
-        var id = 999;
+        // Arrange - Configura tentativa de exclusão de paciente inexistente
+        var id = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync((Patient?)null);
 
         // Act
-        var act = async () => await _patientService.DeletePatientAsync(id, 1, "Cuidador");
+        var act = async () => await _patientService.DeletePatientAsync(id, userId, "Cuidador");
 
         // Assert
         await act.Should().ThrowAsync<AppException>()
@@ -417,14 +422,16 @@ public class PatientServiceTests
     [Fact]
     public async Task DeletePatientAsync_AccessDenied_ShouldThrowAppException()
     {
-        // Arrange
-        var id = 1;
-        var patient = PatientFixtures.CreateValidPatient(id, 1);
+        // Arrange - Configura tentativa de exclusão sem permissão de acesso
+        var id = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var ownerId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var requesterId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var patient = PatientFixtures.CreateValidPatient(id, ownerId);
         
         _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(patient);
 
         // Act
-        var act = async () => await _patientService.DeletePatientAsync(id, 2, "Cuidador");
+        var act = async () => await _patientService.DeletePatientAsync(id, requesterId, "Cuidador");
 
         // Assert
         await act.Should().ThrowAsync<AppException>()
@@ -434,20 +441,22 @@ public class PatientServiceTests
     [Fact]
     public async Task GetAllPatientsAsync_ShouldReturnAllPatientsWithCuidadorNames()
     {
-        // Arrange
-        var patient1 = PatientFixtures.CreateValidPatient(1, 1);
+        // Arrange - Configura busca de todos os pacientes com nomes dos cuidadores
+        var cuidador1Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var cuidador2Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var patient1 = PatientFixtures.CreateValidPatient(null, cuidador1Id);
         patient1.Name = "Patient 1";
-        var patient2 = PatientFixtures.CreateValidPatient(2, 2);
+        var patient2 = PatientFixtures.CreateValidPatient(null, cuidador2Id);
         patient2.Name = "Patient 2";
         
         var patients = new List<Patient> { patient1, patient2 };
         
-        var cuidador1 = UserFixtures.CreateValidUser(1);
-        var cuidador2 = UserFixtures.CreateValidUser(2);
+        var cuidador1 = UserFixtures.CreateValidUser(cuidador1Id);
+        var cuidador2 = UserFixtures.CreateValidUser(cuidador2Id);
         
         _mockPatientRepository.Setup(x => x.GetAllAsync()).ReturnsAsync(patients);
-        _mockUserRepository.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(cuidador1);
-        _mockUserRepository.Setup(x => x.GetByIdAsync(2)).ReturnsAsync(cuidador2);
+        _mockUserRepository.Setup(x => x.GetByIdAsync(cuidador1Id)).ReturnsAsync(cuidador1);
+        _mockUserRepository.Setup(x => x.GetByIdAsync(cuidador2Id)).ReturnsAsync(cuidador2);
 
         // Act
         var result = await _patientService.GetAllPatientsAsync();

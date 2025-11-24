@@ -4,12 +4,12 @@ namespace APISinout.Tests.Fixtures;
 
 public static class PasswordResetFixtures
 {
-    public static PasswordResetToken CreateValidToken(int userId = 1, string email = "test@test.com")
+    public static PasswordResetToken CreateValidToken(string? userId = null, string email = "test@test.com")
     {
         return new PasswordResetToken
         {
             Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
-            UserId = userId,
+            UserId = userId ?? MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
             Email = email,
             Token = "123456",
             CreatedAt = DateTime.UtcNow,
@@ -18,14 +18,14 @@ public static class PasswordResetFixtures
         };
     }
 
-    public static PasswordResetToken CreateExpiredToken(int userId = 1)
+    public static PasswordResetToken CreateExpiredToken(string? userId = null)
     {
         var token = CreateValidToken(userId);
         token.ExpiresAt = DateTime.UtcNow.AddHours(-1);
         return token;
     }
 
-    public static PasswordResetToken CreateUsedToken(int userId = 1)
+    public static PasswordResetToken CreateUsedToken(string? userId = null)
     {
         var token = CreateValidToken(userId);
         token.Used = true;

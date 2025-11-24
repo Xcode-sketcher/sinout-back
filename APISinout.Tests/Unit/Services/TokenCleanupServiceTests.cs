@@ -1,4 +1,8 @@
-// Tests for TokenCleanupService.
+// ============================================================
+// 🧹 TESTES DO TOKENCLEANUPSERVICE - LIMPEZA DE TOKENS
+// ============================================================
+// Valida a limpeza automática de tokens expirados de reset de senha,
+// incluindo execução em background e tratamento de cancelamento.
 
 using Xunit;
 using FluentAssertions;

@@ -25,9 +25,6 @@ public class UpdateUserRequest
     // Email do usuário.
     public string? Email { get; set; }
 
-    // Status do usuário (ativo/inativo).
-    public bool? Status { get; set; }
-
     // Papel do usuário.
     public string? Role { get; set; }
 }

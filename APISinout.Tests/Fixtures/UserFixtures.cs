@@ -4,18 +4,15 @@ namespace APISinout.Tests.Fixtures;
 
 public static class UserFixtures
 {
-    public static User CreateValidUser(int userId = 1, string role = "Cuidador")
+    public static User CreateValidUser(string? userId = null, string role = "Cuidador")
     {
         return new User
         {
-            Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
-            UserId = userId,
+            Id = userId ?? MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
             Name = "João Silva",
             Email = "joao.silva@test.com",
             Phone = "+55 11 99999-9999",
-            PatientName = "Maria Silva",
             DataCadastro = DateTime.UtcNow,
-            Status = true,
             Role = role,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Test@123"),
             CreatedBy = "test",
@@ -23,16 +20,9 @@ public static class UserFixtures
         };
     }
 
-    public static User CreateAdminUser(int userId = 100)
+    public static User CreateAdminUser(string? userId = null)
     {
         return CreateValidUser(userId, "Admin");
-    }
-
-    public static User CreateInactiveUser(int userId = 2)
-    {
-        var user = CreateValidUser(userId);
-        user.Status = false;
-        return user;
     }
 
     public static RegisterRequest CreateValidRegisterRequest()

@@ -1,3 +1,4 @@
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
 using Xunit;
 using Moq;
 using MongoDB.Driver;
@@ -27,7 +28,7 @@ namespace APISinout.Tests.Unit.Data
         public async Task CreateRecordAsync_ShouldInsertRecord()
         {
             // Arrange - Configura registro para teste de inserção
-            var record = new HistoryRecord { Id = "1", UserId = 1, DominantEmotion = "happy" };
+            var record = new HistoryRecord { Id = "1", UserId = "user-id-1", DominantEmotion = "happy" };
 
             // Act
             await _repository.CreateRecordAsync(record);
@@ -40,7 +41,7 @@ namespace APISinout.Tests.Unit.Data
         public async Task GetByIdAsync_ShouldReturnRecord_WhenRecordExists()
         {
             // Arrange - Configura mock para retornar registro existente
-            var record = new HistoryRecord { Id = "1", UserId = 1 };
+            var record = new HistoryRecord { Id = "1", UserId = "user-id-1" };
             var mockCursor = MockCursor(new List<HistoryRecord> { record });
 
             _mockCollection.Setup(c => c.FindAsync(
@@ -77,13 +78,14 @@ namespace APISinout.Tests.Unit.Data
         }
 
         [Fact]
-        public async Task GetByUserIdAsync_ShouldReturnRecords()
+        public async Task GetByPatientIdAsync_ShouldReturnRecords()
         {
-            // Arrange - Configura mock com registros para usuário específico
+            // Arrange - Configura mock com registros para paciente específico
+            var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
             var records = new List<HistoryRecord> 
             { 
-                new HistoryRecord { Id = "1", UserId = 1, Timestamp = DateTime.UtcNow },
-                new HistoryRecord { Id = "2", UserId = 1, Timestamp = DateTime.UtcNow.AddHours(-1) }
+                new HistoryRecord { Id = "1", PatientId = patientId, Timestamp = DateTime.UtcNow },
+                new HistoryRecord { Id = "2", PatientId = patientId, Timestamp = DateTime.UtcNow.AddHours(-1) }
             };
             var mockCursor = MockCursor(records);
 
@@ -94,7 +96,7 @@ namespace APISinout.Tests.Unit.Data
                 .ReturnsAsync(mockCursor.Object);
 
             // Act
-            var result = await _repository.GetByUserIdAsync(1);
+            var result = await _repository.GetByPatientIdAsync(patientId);
 
             // Assert
             Assert.Equal(2, result.Count);
@@ -115,15 +117,16 @@ namespace APISinout.Tests.Unit.Data
         }
 
         [Fact]
-        public async Task GetUserStatisticsAsync_ShouldReturnCorrectStatistics()
+        public async Task GetPatientStatisticsAsync_ShouldReturnCorrectStatistics()
         {
             // Arrange - Configura mock com múltiplos registros para cálculo de estatísticas
+            var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
             var records = new List<HistoryRecord> 
             { 
                 new HistoryRecord 
                 { 
                     Id = "1", 
-                    UserId = 1, 
+                    PatientId = patientId, 
                     DominantEmotion = "happy", 
                     MessageTriggered = "Keep it up!",
                     Timestamp = DateTime.UtcNow,
@@ -132,7 +135,7 @@ namespace APISinout.Tests.Unit.Data
                 new HistoryRecord 
                 { 
                     Id = "2", 
-                    UserId = 1, 
+                    PatientId = patientId, 
                     DominantEmotion = "sad", 
                     MessageTriggered = "Cheer up!",
                     Timestamp = DateTime.UtcNow.AddHours(-1),
@@ -141,7 +144,7 @@ namespace APISinout.Tests.Unit.Data
                 new HistoryRecord 
                 { 
                     Id = "3", 
-                    UserId = 1, 
+                    PatientId = patientId, 
                     DominantEmotion = "happy", 
                     MessageTriggered = "Keep it up!",
                     Timestamp = DateTime.UtcNow.AddHours(-2),
@@ -157,10 +160,10 @@ namespace APISinout.Tests.Unit.Data
                 .ReturnsAsync(mockCursor.Object);
 
             // Act
-            var stats = await _repository.GetUserStatisticsAsync(1);
+            var stats = await _repository.GetPatientStatisticsAsync(patientId);
 
             // Assert
-            Assert.Equal(1, stats.PatientId);
+            Assert.Equal(patientId, stats.PatientId);
             Assert.Equal(3, stats.TotalAnalyses);
             Assert.Equal("happy", stats.MostFrequentEmotion);
             Assert.Equal("Keep it up!", stats.MostFrequentMessage);
@@ -172,9 +175,10 @@ namespace APISinout.Tests.Unit.Data
         public async Task GetByFilterAsync_ShouldReturnFilteredRecords()
         {
             // Arrange - Configura filtro para buscar registros por emoção dominante
+            var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
             var filter = new HistoryFilter 
             { 
-                PatientId = 1, 
+                PatientId = patientId, 
                 DominantEmotion = "happy",
                 PageNumber = 1,
                 PageSize = 10
@@ -182,7 +186,7 @@ namespace APISinout.Tests.Unit.Data
 
             var records = new List<HistoryRecord> 
             { 
-                new HistoryRecord { Id = "1", UserId = 1, DominantEmotion = "happy" }
+                new HistoryRecord { Id = "1", PatientId = patientId, DominantEmotion = "happy" }
             };
             var mockCursor = MockCursor(records);
 
@@ -196,17 +200,19 @@ namespace APISinout.Tests.Unit.Data
             var result = await _repository.GetByFilterAsync(filter);
 
             // Assert
+            Assert.NotNull(result);
             Assert.Single(result);
-            Assert.Equal("happy", result[0]!.DominantEmotion!);
+            Assert.Equal("happy", result!.First().DominantEmotion);
         }
 
         [Fact]
         public async Task GetByFilterAsync_ShouldApplyMultipleFilters()
         {
             // Arrange - Configura filtro múltiplo com data e mensagem
+            var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
             var filter = new HistoryFilter 
             { 
-                PatientId = 1, 
+                PatientId = patientId, 
                 StartDate = DateTime.UtcNow.AddDays(-1),
                 EndDate = DateTime.UtcNow,
                 HasMessage = true
@@ -214,7 +220,7 @@ namespace APISinout.Tests.Unit.Data
 
             var records = new List<HistoryRecord> 
             { 
-                new HistoryRecord { Id = "1", UserId = 1, MessageTriggered = "Msg", Timestamp = DateTime.UtcNow.AddHours(-1) }
+                new HistoryRecord { Id = "1", PatientId = patientId, MessageTriggered = "Msg", Timestamp = DateTime.UtcNow.AddHours(-1) }
             };
             var mockCursor = MockCursor(records);
 

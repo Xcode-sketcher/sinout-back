@@ -32,8 +32,8 @@ public class UserServiceTests
         // Arrange - Configura lista de usuários para retorno
         var users = new List<User>
         {
-            new User { UserId = 1, Name = "User 1", Email = "user1@example.com", Role = "Admin" },
-            new User { UserId = 2, Name = "User 2", Email = "user2@example.com", Role = "Cuidador" }
+            new User { Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(), Name = "User 1", Email = "user1@example.com", Role = "Admin" },
+            new User { Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(), Name = "User 2", Email = "user2@example.com", Role = "Cuidador" }
         };
         _userRepositoryMock.Setup(x => x.GetAllAsync()).ReturnsAsync(users);
 
@@ -67,33 +67,34 @@ public class UserServiceTests
     public async Task GetByIdAsync_ExistingUser_ReturnsUser()
     {
         // Arrange - Configura usuário existente para retorno
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var user = new User
         {
-            UserId = 1,
+            Id = userId,
             Name = "Test User",
             Email = "test@example.com",
             Role = "Cuidador"
         };
-        _userRepositoryMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(user);
+        _userRepositoryMock.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(user);
 
         // Act - Executa busca por ID existente
-        var result = await _service.GetByIdAsync(1);
+        var result = await _service.GetByIdAsync(userId);
 
         // Assert - Verifica se usuário correto foi retornado
         result.Should().NotBeNull();
-        result.UserId.Should().Be(1);
+        result.Id.Should().Be(userId);
         result.Name.Should().Be("Test User");
-        _userRepositoryMock.Verify(x => x.GetByIdAsync(1), Times.Once);
+        _userRepositoryMock.Verify(x => x.GetByIdAsync(userId), Times.Once);
     }
 
     [Fact]
     public async Task GetByIdAsync_NonExistingUser_ThrowsException()
     {
         // Arrange - Configura retorno nulo para usuário inexistente
-        _userRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((User?)null);
+        _userRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
 
         // Act - Tenta buscar usuário que não existe
-        Func<Task> action = async () => await _service.GetByIdAsync(999);
+        Func<Task> action = async () => await _service.GetByIdAsync("nonexistent-id");
 
         // Assert - Deve lançar exceção de usuário não encontrado
         await action.Should().ThrowAsync<Exception>()
@@ -110,7 +111,7 @@ public class UserServiceTests
         // Arrange - Configura usuário existente para retorno por email
         var user = new User
         {
-            UserId = 1,
+            Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
             Name = "Test User",
             Email = "test@example.com",
             Role = "Cuidador"
@@ -154,7 +155,6 @@ public class UserServiceTests
             Password = "Password123",
             Role = "Cuidador"
         };
-        _userRepositoryMock.Setup(x => x.GetNextUserIdAsync()).ReturnsAsync(5);
         _userRepositoryMock.Setup(x => x.CreateUserAsync(It.IsAny<User>())).Returns(Task.CompletedTask);
 
         // Act - Executa criação do usuário
@@ -165,8 +165,7 @@ public class UserServiceTests
         result.Name.Should().Be("New User");
         result.Email.Should().Be("new@example.com");
         result.Role.Should().Be("Cuidador");
-        result.UserId.Should().Be(5);
-        result.Status.Should().BeTrue();
+        result.Id.Should().NotBeNullOrEmpty();
         result.CreatedBy.Should().Be("admin");
         result.PasswordHash.Should().NotBeNullOrEmpty();
         _userRepositoryMock.Verify(x => x.CreateUserAsync(It.IsAny<User>()), Times.Once);
@@ -182,7 +181,6 @@ public class UserServiceTests
             Email = "new@example.com",
             Password = "Password123"
         };
-        _userRepositoryMock.Setup(x => x.GetNextUserIdAsync()).ReturnsAsync(10);
         _userRepositoryMock.Setup(x => x.CreateUserAsync(It.IsAny<User>())).Returns(Task.CompletedTask);
 
         // Act - Cria usuário sem role
@@ -203,7 +201,6 @@ public class UserServiceTests
             Password = "PlainPassword123",
             Role = "Cuidador"
         };
-        _userRepositoryMock.Setup(x => x.GetNextUserIdAsync()).ReturnsAsync(1);
         _userRepositoryMock.Setup(x => x.CreateUserAsync(It.IsAny<User>())).Returns(Task.CompletedTask);
 
         // Act - Cria usuário
@@ -223,32 +220,30 @@ public class UserServiceTests
     public async Task UpdateUserAsync_ValidRequest_UpdatesUser()
     {
         // Arrange - Configura usuário existente e dados para atualização
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var existingUser = new User
         {
-            UserId = 1,
+            Id = userId,
             Name = "Old Name",
             Email = "old@example.com",
-            Status = true,
             Role = "Cuidador"
         };
         var updateRequest = new UpdateUserRequest
         {
             Name = "New Name",
             Email = "new@example.com",
-            Status = false,
             Role = "Admin"
         };
-        _userRepositoryMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(existingUser);
-        _userRepositoryMock.Setup(x => x.UpdateUserAsync(1, It.IsAny<User>())).Returns(Task.CompletedTask);
+        _userRepositoryMock.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(existingUser);
+        _userRepositoryMock.Setup(x => x.UpdateUserAsync(userId, It.IsAny<User>())).Returns(Task.CompletedTask);
 
         // Act - Executa atualização completa do usuário
-        await _service.UpdateUserAsync(1, updateRequest);
+        await _service.UpdateUserAsync(userId, updateRequest);
 
         // Assert - Verifica se todos os campos foram atualizados
-        _userRepositoryMock.Verify(x => x.UpdateUserAsync(1, It.Is<User>(u =>
+        _userRepositoryMock.Verify(x => x.UpdateUserAsync(userId, It.Is<User>(u =>
             u.Name == "New Name" &&
             u.Email == "new@example.com" &&
-            u.Status == false &&
             u.Role == "Admin"
         )), Times.Once);
     }
@@ -257,12 +252,12 @@ public class UserServiceTests
     public async Task UpdateUserAsync_PartialUpdate_OnlyUpdatesProvidedFields()
     {
         // Arrange - Configura atualização parcial de campos
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var existingUser = new User
         {
-            UserId = 1,
+            Id = userId,
             Name = "Original Name",
             Email = "original@example.com",
-            Status = true,
             Role = "Cuidador"
         };
         var updateRequest = new UpdateUserRequest
@@ -270,17 +265,16 @@ public class UserServiceTests
             Name = "Updated Name"
             // Outros campos null
         };
-        _userRepositoryMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(existingUser);
-        _userRepositoryMock.Setup(x => x.UpdateUserAsync(1, It.IsAny<User>())).Returns(Task.CompletedTask);
+        _userRepositoryMock.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(existingUser);
+        _userRepositoryMock.Setup(x => x.UpdateUserAsync(userId, It.IsAny<User>())).Returns(Task.CompletedTask);
 
         // Act - Executa atualização parcial
-        await _service.UpdateUserAsync(1, updateRequest);
+        await _service.UpdateUserAsync(userId, updateRequest);
 
         // Assert - Verifica se apenas os campos fornecidos foram alterados
-        _userRepositoryMock.Verify(x => x.UpdateUserAsync(1, It.Is<User>(u =>
+        _userRepositoryMock.Verify(x => x.UpdateUserAsync(userId, It.Is<User>(u =>
             u.Name == "Updated Name" &&
             u.Email == "original@example.com" &&
-            u.Status == true &&
             u.Role == "Cuidador"
         )), Times.Once);
     }
@@ -290,10 +284,10 @@ public class UserServiceTests
     {
         // Arrange - Configura atualização para usuário inexistente
         var updateRequest = new UpdateUserRequest { Name = "New Name" };
-        _userRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((User?)null);
+        _userRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
 
         // Act - Tenta atualizar usuário que não existe
-        Func<Task> action = async () => await _service.UpdateUserAsync(999, updateRequest);
+        Func<Task> action = async () => await _service.UpdateUserAsync("nonexistent-id", updateRequest);
 
         // Assert - Deve lançar exceção de usuário não encontrado
         await action.Should().ThrowAsync<Exception>()
@@ -308,30 +302,31 @@ public class UserServiceTests
     public async Task DeleteUserAsync_ExistingUser_DeletesUser()
     {
         // Arrange - Configura usuário existente para exclusão
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var user = new User
         {
-            UserId = 1,
+            Id = userId,
             Name = "User to Delete",
             Email = "delete@example.com"
         };
-        _userRepositoryMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(user);
-        _userRepositoryMock.Setup(x => x.DeleteUserAsync(1)).Returns(Task.CompletedTask);
+        _userRepositoryMock.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(user);
+        _userRepositoryMock.Setup(x => x.DeleteUserAsync(userId)).Returns(Task.CompletedTask);
 
         // Act - Executa exclusão do usuário
-        await _service.DeleteUserAsync(1);
+        await _service.DeleteUserAsync(userId);
 
         // Assert - Verifica se método de exclusão foi chamado
-        _userRepositoryMock.Verify(x => x.DeleteUserAsync(1), Times.Once);
+        _userRepositoryMock.Verify(x => x.DeleteUserAsync(userId), Times.Once);
     }
 
     [Fact]
     public async Task DeleteUserAsync_NonExistingUser_ThrowsException()
     {
         // Arrange - Configura exclusão para usuário inexistente
-        _userRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((User?)null);
+        _userRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
 
         // Act - Tenta excluir usuário que não existe
-        Func<Task> action = async () => await _service.DeleteUserAsync(999);
+        Func<Task> action = async () => await _service.DeleteUserAsync("nonexistent-id");
 
         // Assert - Deve lançar exceção de usuário não encontrado
         await action.Should().ThrowAsync<Exception>()
@@ -340,42 +335,5 @@ public class UserServiceTests
 
     #endregion
 
-    #region UpdatePatientNameAsync Tests
 
-    [Fact]
-    public async Task UpdatePatientNameAsync_ValidRequest_UpdatesPatientName()
-    {
-        // Arrange - Configura usuário para atualização do nome do paciente
-        var user = new User
-        {
-            UserId = 1,
-            Name = "Cuidador",
-            Email = "cuidador@example.com",
-            PatientName = "Old Patient"
-        };
-        _userRepositoryMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(user);
-        _userRepositoryMock.Setup(x => x.UpdatePatientNameAsync(1, "New Patient")).Returns(Task.CompletedTask);
-
-        // Act - Executa atualização do nome do paciente
-        await _service.UpdatePatientNameAsync(1, "New Patient");
-
-        // Assert - Verifica se o nome do paciente foi atualizado
-        _userRepositoryMock.Verify(x => x.UpdatePatientNameAsync(1, "New Patient"), Times.Once);
-    }
-
-    [Fact]
-    public async Task UpdatePatientNameAsync_NonExistingUser_ThrowsException()
-    {
-        // Arrange - Configura atualização para usuário inexistente
-        _userRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((User?)null);
-
-        // Act - Tenta atualizar nome do paciente de usuário inexistente
-        Func<Task> action = async () => await _service.UpdatePatientNameAsync(999, "Patient Name");
-
-        // Assert - Deve lançar exceção de usuário não encontrado
-        await action.Should().ThrowAsync<Exception>()
-            .WithMessage("User not found");
-    }
-
-    #endregion
 }

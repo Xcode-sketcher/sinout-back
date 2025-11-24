@@ -39,10 +39,15 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var result = await response.Content.ReadFromJsonAsync<AuthResponse>();
-        result.Should().NotBeNull();
-        result!.User.Should().NotBeNull();
-        result.Token.Should().NotBeNullOrEmpty();
+
+        // Check if HttpOnly cookies were set
+        var cookies = response.Headers.GetValues("Set-Cookie").ToList();
+        cookies.Should().Contain(cookie => cookie.Contains("accessToken=") && cookie.Contains("httponly"));
+
+        // Response body should contain user info
+        var responseContent = await response.Content.ReadAsStringAsync();
+        responseContent.Should().Contain("\"user\"");
+        responseContent.Should().Contain("\"email\"");
     }
 
     [Fact]
@@ -148,9 +153,15 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<AuthResponse>();
-        result.Should().NotBeNull();
-        result!.Token.Should().NotBeNullOrEmpty();
+
+        // Check if HttpOnly cookies were set
+        var cookies = response.Headers.GetValues("Set-Cookie").ToList();
+        cookies.Should().Contain(cookie => cookie.Contains("accessToken=") && cookie.Contains("httponly"));
+
+        // Response body should contain user info
+        var responseContent = await response.Content.ReadAsStringAsync();
+        responseContent.Should().Contain("\"user\"");
+        responseContent.Should().Contain("\"email\"");
     }
 
     [Fact]
@@ -203,8 +214,13 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
         var registerResponse = await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
         registerResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        var registerResult = await registerResponse.Content.ReadFromJsonAsync<AuthResponse>();
-        var registrationToken = registerResult!.Token;
+        // Check register cookies
+        var registerCookies = registerResponse.Headers.GetValues("Set-Cookie").ToList();
+        registerCookies.Should().Contain(cookie => cookie.Contains("accessToken=") && cookie.Contains("httponly"));
+
+        // Register response should contain user info
+        var registerContent = await registerResponse.Content.ReadAsStringAsync();
+        registerContent.Should().Contain("\"user\"");
 
         // Step 2: Login
         var loginRequest = new LoginRequest
@@ -216,13 +232,56 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
         var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
         loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var loginResult = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
-        loginResult.Should().NotBeNull();
-        var loginToken = loginResult!.Token;
+        // Check login cookies
+        var loginCookies = loginResponse.Headers.GetValues("Set-Cookie").ToList();
+        loginCookies.Should().Contain(cookie => cookie.Contains("accessToken=") && cookie.Contains("httponly"));
 
-        // Assert
-        registrationToken.Should().NotBeNullOrEmpty();
-        loginToken.Should().NotBeNullOrEmpty();
-        loginResult.User!.Email.Should().Be(email.ToLower());
+        // Login response should contain user info
+        var loginContent = await loginResponse.Content.ReadAsStringAsync();
+        loginContent.Should().Contain("\"user\"");
+    }
+
+    [Fact]
+    public async Task Logout_AfterLogin_ShouldClearCookieAndReturn401OnProtectedRoute()
+    {
+        // Arrange - Register and login a user
+        var email = $"logout{Guid.NewGuid()}@test.com";
+        var password = "Test@123";
+        var registerRequest = new RegisterRequest
+        {
+            Name = "Logout Test User",
+            Email = email,
+            Password = password,
+            Phone = "+55 11 99999-9999",
+            PatientName = "Logout Patient"
+        };
+
+        await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
+
+        var loginRequest = new LoginRequest
+        {
+            Email = email,
+            Password = password
+        };
+
+        await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
+
+        // Act - Logout
+        var logoutResponse = await _client.PostAsync("/api/auth/logout", null);
+
+        // Assert - Logout should succeed
+        logoutResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Check if cookie was cleared (should have expired date)
+        var logoutCookies = logoutResponse.Headers.GetValues("Set-Cookie").ToList();
+        logoutCookies.Should().Contain(cookie => cookie.Contains("accessToken=") && cookie.Contains("expires="));
+
+        // Response body should contain success message
+        var logoutContent = await logoutResponse.Content.ReadAsStringAsync();
+        logoutContent.Should().Contain("Logout realizado com sucesso");
+
+        // Now try to access a protected route - should return 401
+        var protectedResponse = await _client.GetAsync("/api/auth/me");
+        protectedResponse.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 }

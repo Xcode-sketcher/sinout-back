@@ -1,16 +1,19 @@
 using APISinout.Models;
+using MongoDB.Bson;
 
 namespace APISinout.Tests.Fixtures;
 
 public static class HistoryFixtures
 {
-    public static HistoryRecord CreateValidHistoryRecord(string? id = null, int userId = 1)
+    public static HistoryRecord CreateValidHistoryRecord(string? id = null, string? userId = null, string? patientId = null)
     {
+        var uid = userId ?? ObjectId.GenerateNewId().ToString();
+        var pid = patientId ?? ObjectId.GenerateNewId().ToString();
         return new HistoryRecord
         {
-            Id = id ?? MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
-            UserId = userId,
-            PatientName = "João Silva",
+            Id = id ?? ObjectId.GenerateNewId().ToString(),
+            UserId = uid,
+            PatientId = pid,
             Timestamp = DateTime.UtcNow,
             EmotionsDetected = new Dictionary<string, double>
             {
@@ -25,16 +28,16 @@ public static class HistoryFixtures
         };
     }
 
-    public static HistoryRecordResponse CreateValidHistoryRecordResponse(string? id = null, int userId = 1)
+    public static HistoryRecordResponse CreateValidHistoryRecordResponse(string? id = null, string? userId = null, string? patientId = null)
     {
-        return new HistoryRecordResponse(CreateValidHistoryRecord(id, userId));
+        return new HistoryRecordResponse(CreateValidHistoryRecord(id, userId, patientId));
     }
 
-    public static PatientStatistics CreateValidPatientStatistics(int userId = 1)
+    public static PatientStatistics CreateValidPatientStatistics(string? patientId = null)
     {
         return new PatientStatistics
         {
-            PatientId = userId,
+            PatientId = patientId ?? ObjectId.GenerateNewId().ToString(),
             PatientName = "João Silva",
             StartPeriod = DateTime.UtcNow.AddHours(-24),
             EndPeriod = DateTime.UtcNow,
@@ -68,7 +71,7 @@ public static class HistoryFixtures
     {
         return new HistoryFilter
         {
-            PatientId = 1,
+            PatientId = ObjectId.GenerateNewId().ToString(),
             StartDate = DateTime.UtcNow.AddDays(-1),
             EndDate = DateTime.UtcNow,
             DominantEmotion = "happy",
@@ -78,22 +81,23 @@ public static class HistoryFixtures
         };
     }
 
-    public static APISinout.Controllers.CuidadorEmotionRequest CreateValidCuidadorEmotionRequest(int cuidadorId = 1)
+    public static APISinout.Controllers.CuidadorEmotionRequest CreateValidCuidadorEmotionRequest(string? cuidadorId = null)
     {
         return new APISinout.Controllers.CuidadorEmotionRequest
         {
-            CuidadorId = cuidadorId,
-            PatientName = "João Silva",
-            EmotionsDetected = new Dictionary<string, double>
+            cuidadorId = cuidadorId ?? ObjectId.GenerateNewId().ToString(),
+            patientId = ObjectId.GenerateNewId().ToString(),
+            patientName = "João Silva",
+            emotionsDetected = new Dictionary<string, double>
             {
                 { "happy", 0.8 },
                 { "sad", 0.1 },
                 { "neutral", 0.1 }
             },
-            DominantEmotion = "happy",
-            Age = "45",
-            Gender = "M",
-            Timestamp = DateTime.UtcNow
+            dominantEmotion = "happy",
+            age = "45",
+            gender = "M",
+            timestamp = DateTime.UtcNow
         };
     }
 }

@@ -60,7 +60,7 @@ public class JwtHelperTests
     public void GenerateToken_ShouldIncludeUserIdClaim()
     {
         // Arrange
-        var user = UserFixtures.CreateValidUser(123);
+        var user = UserFixtures.CreateValidUser("123");
 
         // Act
         var token = JwtHelper.GenerateToken(user, _configuration);
@@ -128,23 +128,7 @@ public class JwtHelperTests
         jwtToken.ValidTo.Should().BeCloseTo(expectedExpiration, TimeSpan.FromMinutes(1));
     }
 
-    [Fact]
-    public void GenerateToken_ForAdminUser_ShouldIncludeAdminRole()
-    {
-        // Arrange
-        var adminUser = UserFixtures.CreateAdminUser();
-
-        // Act
-        var token = JwtHelper.GenerateToken(adminUser, _configuration);
-
-        // Assert
-        var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(token);
-        
-        var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "role");
-        roleClaim.Should().NotBeNull();
-        roleClaim!.Value.Should().Be("Admin");
-    }
+    // Removido GenerateToken_ForAdminUser_ShouldIncludeAdminRole pois role Admin foi descontinuada
 
     [Fact]
     public void GenerateToken_ShouldBeValidJwtFormat()
@@ -167,8 +151,8 @@ public class JwtHelperTests
     public void GenerateToken_WithDifferentUsers_ShouldGenerateDifferentTokens()
     {
         // Arrange
-        var user1 = UserFixtures.CreateValidUser(1);
-        var user2 = UserFixtures.CreateValidUser(2);
+        var user1 = UserFixtures.CreateValidUser("1");
+        var user2 = UserFixtures.CreateValidUser("2");
 
         // Act
         var token1 = JwtHelper.GenerateToken(user1, _configuration);

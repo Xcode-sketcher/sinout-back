@@ -9,7 +9,7 @@ public interface IUserService
     Task<IEnumerable<User>> GetAllAsync();
 
     /// <summary>Obtém um usuário pelo ID</summary>
-    Task<User> GetByIdAsync(int id);
+    Task<User> GetByIdAsync(string id);
 
     /// <summary>Obtém um usuário pelo email</summary>
     Task<User> GetByEmailAsync(string email);
@@ -18,11 +18,8 @@ public interface IUserService
     Task<User> CreateUserAsync(CreateUserRequest request, string createdBy);
 
     /// <summary>Atualiza um usuário</summary>
-    Task UpdateUserAsync(int id, UpdateUserRequest request);
+    Task UpdateUserAsync(string id, UpdateUserRequest request);
 
     /// <summary>Deleta um usuário</summary>
-    Task DeleteUserAsync(int id);
-
-    /// <summary>Atualiza o nome do paciente de um usuário</summary>
-    Task UpdatePatientNameAsync(int userId, string patientName);
+    Task DeleteUserAsync(string id);
 }

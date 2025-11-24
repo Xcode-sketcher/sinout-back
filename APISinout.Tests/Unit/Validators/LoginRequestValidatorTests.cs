@@ -24,7 +24,7 @@ public class LoginRequestValidatorTests
     [Fact]
     public async Task Validate_WithValidRequest_ShouldPass()
     {
-        // Arrange
+        // Arrange - Configura requisição de login válida
         var request = UserFixtures.CreateValidLoginRequest();
 
         // Act
@@ -37,7 +37,7 @@ public class LoginRequestValidatorTests
     [Fact]
     public async Task Validate_WithEmptyEmail_ShouldFail()
     {
-        // Arrange
+        // Arrange - Configura requisição com email vazio
         var request = UserFixtures.CreateValidLoginRequest();
         request.Email = "";
 
@@ -52,7 +52,7 @@ public class LoginRequestValidatorTests
     [Fact]
     public async Task Validate_WithInvalidEmail_ShouldFail()
     {
-        // Arrange
+        // Arrange - Configura requisição com email inválido
         var request = UserFixtures.CreateValidLoginRequest();
         request.Email = "invalid-email";
 
@@ -67,7 +67,7 @@ public class LoginRequestValidatorTests
     [Fact]
     public async Task Validate_WithEmptyPassword_ShouldFail()
     {
-        // Arrange
+        // Arrange - Configura requisição com senha vazia
         var request = UserFixtures.CreateValidLoginRequest();
         request.Password = "";
 

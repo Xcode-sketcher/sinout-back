@@ -12,10 +12,6 @@ public class User
     [BsonRepresentation(BsonType.ObjectId)]
     public string? Id { get; set; }
 
-    // ID numérico sequencial para facilidade de uso.
-    [BsonElement("id_usuario")]
-    public int UserId { get; set; }
-
     // Nome do usuário.
     [BsonElement("nome")]
     public string? Name { get; set; }
@@ -27,10 +23,6 @@ public class User
     // Data de cadastro do usuário.
     [BsonElement("data_cadastro")]
     public DateTime DataCadastro { get; set; }
-
-    // Indica se o usuário está ativo.
-    [BsonElement("status")]
-    public bool Status { get; set; }
 
     // Papel do usuário: Admin ou Cuidador.
     [BsonElement("cargo")]
@@ -55,10 +47,6 @@ public class User
     // Data da última atualização.
     [BsonElement("data_atualizacao")]
     public DateTime? UpdatedAt { get; set; }
-
-    // Nome do paciente associado (1:1 cuidador-paciente).
-    [BsonElement("nome_paciente")]
-    public string? PatientName { get; set; }
 
     // Número de tentativas de login falhadas.
     [BsonElement("failed_login_attempts")]

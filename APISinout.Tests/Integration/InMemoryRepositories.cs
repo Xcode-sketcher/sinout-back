@@ -1,15 +1,15 @@
 using System.Collections.Concurrent;
 using APISinout.Data;
 using APISinout.Models;
+using MongoDB.Bson;
 
 namespace APISinout.Tests.Integration;
 
 public class InMemoryUserRepository : IUserRepository
 {
-    private readonly ConcurrentDictionary<int, User> _users = new();
-    private int _nextId = 1;
+    private readonly ConcurrentDictionary<string, User> _users = new();
 
-    public Task<User?> GetByIdAsync(int id)
+    public Task<User?> GetByIdAsync(string id)
     {
         _users.TryGetValue(id, out var user);
         return Task.FromResult(user);
@@ -23,20 +23,16 @@ public class InMemoryUserRepository : IUserRepository
 
     public Task CreateUserAsync(User user)
     {
-        if (user.UserId == 0)
+        if (string.IsNullOrEmpty(user.Id))
         {
-            user.UserId = _nextId++;
-        }
-        else if (user.UserId >= _nextId)
-        {
-            _nextId = user.UserId + 1;
+            user.Id = ObjectId.GenerateNewId().ToString();
         }
         
-        _users[user.UserId] = user;
+        _users[user.Id] = user;
         return Task.CompletedTask;
     }
 
-    public Task UpdateUserAsync(int id, User user)
+    public Task UpdateUserAsync(string id, User user)
     {
         if (_users.ContainsKey(id))
         {
@@ -45,7 +41,7 @@ public class InMemoryUserRepository : IUserRepository
         return Task.CompletedTask;
     }
 
-    public Task DeleteUserAsync(int id)
+    public Task DeleteUserAsync(string id)
     {
         _users.TryRemove(id, out _);
         return Task.CompletedTask;
@@ -55,61 +51,41 @@ public class InMemoryUserRepository : IUserRepository
     {
         return Task.FromResult(_users.Values.ToList());
     }
-
-    public Task<int> GetNextUserIdAsync()
-    {
-        return Task.FromResult(_nextId++);
-    }
-
-    public Task UpdatePatientNameAsync(int userId, string patientName)
-    {
-        if (_users.TryGetValue(userId, out var user))
-        {
-            user.PatientName = patientName;
-            user.UpdatedAt = DateTime.UtcNow;
-        }
-        return Task.CompletedTask;
-    }
 }
 
 public class InMemoryPatientRepository : IPatientRepository
 {
-    private readonly ConcurrentDictionary<int, Patient> _patients = new();
-    private int _nextId = 1;
+    private readonly ConcurrentDictionary<string, Patient> _patients = new();
 
-    public Task<Patient?> GetByIdAsync(int id)
+    public Task<Patient?> GetByIdAsync(string id)
     {
         _patients.TryGetValue(id, out var patient);
         return Task.FromResult(patient);
     }
 
-    public Task<List<Patient>> GetByCuidadorIdAsync(int cuidadorId)
+    public Task<List<Patient>> GetByCuidadorIdAsync(string cuidadorId)
     {
-        var patients = _patients.Values.Where(p => p.CuidadorId == cuidadorId && p.Status).ToList();
+        var patients = _patients.Values.Where(p => p.CuidadorId == cuidadorId).ToList();
         return Task.FromResult(patients);
     }
 
     public Task<List<Patient>> GetAllAsync()
     {
-        var patients = _patients.Values.Where(p => p.Status).ToList();
+        var patients = _patients.Values.ToList();
         return Task.FromResult(patients);
     }
 
     public Task CreatePatientAsync(Patient patient)
     {
-        if (patient.Id == 0)
+        if (string.IsNullOrEmpty(patient.Id))
         {
-            patient.Id = _nextId++;
-        }
-        else if (patient.Id >= _nextId)
-        {
-            _nextId = patient.Id + 1;
+            patient.Id = ObjectId.GenerateNewId().ToString();
         }
         _patients[patient.Id] = patient;
         return Task.CompletedTask;
     }
 
-    public Task UpdatePatientAsync(int id, Patient patient)
+    public Task UpdatePatientAsync(string id, Patient patient)
     {
         if (_patients.ContainsKey(id))
         {
@@ -118,21 +94,13 @@ public class InMemoryPatientRepository : IPatientRepository
         return Task.CompletedTask;
     }
 
-    public Task DeletePatientAsync(int id)
+    public Task DeletePatientAsync(string id)
     {
-        if (_patients.TryGetValue(id, out var patient))
-        {
-            patient.Status = false;
-        }
+        _patients.TryRemove(id, out _);
         return Task.CompletedTask;
     }
 
-    public Task<int> GetNextPatientIdAsync()
-    {
-        return Task.FromResult(_nextId++);
-    }
-
-    public Task<bool> ExistsAsync(int id)
+    public Task<bool> ExistsAsync(string id)
     {
         return Task.FromResult(_patients.ContainsKey(id));
     }
@@ -148,7 +116,7 @@ public class InMemoryEmotionMappingRepository : IEmotionMappingRepository
         return Task.FromResult(mapping);
     }
 
-    public Task<List<EmotionMapping>> GetByUserIdAsync(int userId)
+    public Task<List<EmotionMapping>> GetByUserIdAsync(string userId)
     {
         var mappings = _mappings.Values
             .Where(m => m.UserId == userId)
@@ -158,7 +126,7 @@ public class InMemoryEmotionMappingRepository : IEmotionMappingRepository
         return Task.FromResult(mappings);
     }
 
-    public Task<List<EmotionMapping>> GetActiveByUserIdAsync(int userId)
+    public Task<List<EmotionMapping>> GetActiveByUserIdAsync(string userId)
     {
         var mappings = _mappings.Values
             .Where(m => m.UserId == userId && m.Active)
@@ -168,7 +136,7 @@ public class InMemoryEmotionMappingRepository : IEmotionMappingRepository
         return Task.FromResult(mappings);
     }
 
-    public Task<List<EmotionMapping>> GetByUserAndEmotionAsync(int userId, string emotion)
+    public Task<List<EmotionMapping>> GetByUserAndEmotionAsync(string userId, string emotion)
     {
         var mappings = _mappings.Values
             .Where(m => m.UserId == userId && m.Emotion == emotion && m.Active)
@@ -206,7 +174,7 @@ public class InMemoryEmotionMappingRepository : IEmotionMappingRepository
         return Task.CompletedTask;
     }
 
-    public Task<int> CountByUserAndEmotionAsync(int userId, string emotion)
+    public Task<int> CountByUserAndEmotionAsync(string userId, string emotion)
     {
         var count = _mappings.Values.Count(m => m.UserId == userId && m.Emotion == emotion && m.Active);
         return Task.FromResult(count);
@@ -228,11 +196,11 @@ public class InMemoryHistoryRepository : IHistoryRepository
         return Task.FromResult(record);
     }
 
-    public Task<List<HistoryRecord>> GetByUserIdAsync(int userId, int hours = 24)
+    public Task<List<HistoryRecord>> GetByPatientIdAsync(string patientId, int hours = 24)
     {
         var cutoffTime = DateTime.UtcNow.AddHours(-hours);
         var records = _history.Values
-            .Where(h => h.UserId == userId && h.Timestamp >= cutoffTime)
+            .Where(h => h.PatientId == patientId && h.Timestamp >= cutoffTime)
             .OrderByDescending(h => h.Timestamp)
             .ToList();
         return Task.FromResult(records);
@@ -242,8 +210,11 @@ public class InMemoryHistoryRepository : IHistoryRepository
     {
         var query = _history.Values.AsQueryable();
 
-        if (filter.PatientId.HasValue)
-            query = query.Where(h => h.UserId == filter.PatientId.Value);
+        if (!string.IsNullOrEmpty(filter.PatientId))
+            query = query.Where(h => h.PatientId == filter.PatientId);
+
+        if (!string.IsNullOrEmpty(filter.CuidadorId))
+            query = query.Where(h => h.UserId == filter.CuidadorId);
 
         if (filter.StartDate.HasValue)
             query = query.Where(h => h.Timestamp >= filter.StartDate.Value);
@@ -297,16 +268,16 @@ public class InMemoryHistoryRepository : IHistoryRepository
         return Task.CompletedTask;
     }
 
-    public Task<PatientStatistics> GetUserStatisticsAsync(int userId, int hours = 24)
+    public Task<PatientStatistics> GetPatientStatisticsAsync(string patientId, int hours = 24)
     {
         var cutoffTime = DateTime.UtcNow.AddHours(-hours);
         var records = _history.Values
-            .Where(h => h.UserId == userId && h.Timestamp >= cutoffTime)
+            .Where(h => h.PatientId == patientId && h.Timestamp >= cutoffTime)
             .ToList();
 
         var stats = new PatientStatistics
         {
-            PatientId = userId,
+            PatientId = patientId,
             StartPeriod = cutoffTime,
             EndPeriod = DateTime.UtcNow,
             TotalAnalyses = records.Count,
@@ -388,7 +359,7 @@ public class InMemoryPasswordResetRepository : IPasswordResetRepository
         return Task.FromResult(resetToken);
     }
 
-    public Task<PasswordResetToken?> GetActiveTokenByUserIdAsync(int userId)
+    public Task<PasswordResetToken?> GetActiveTokenByUserIdAsync(string userId)
     {
         var resetToken = _tokens.Values
             .Where(t => t.UserId == userId && !t.Used && t.ExpiresAt > DateTime.UtcNow)

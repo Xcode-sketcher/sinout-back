@@ -33,25 +33,26 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task CreateMappingAsync_ValidRequest_CreatesMapping()
     {
-        // Arrange
+        // Arrange - Configura usuário válido e requisição de mapeamento
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
-            UserId = 1,
+            UserId = userId,
             Emotion = "happy",
             IntensityLevel = "high",
             MinPercentage = 80.0,
             Message = "Quero água",
             Priority = 1
         };
-        var user = new User { UserId = 1, Name = "Test User", Role = "Cuidador" };
+        var user = new User { Id = userId, Name = "Test User", Role = "Cuidador" };
 
-        _userRepoMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(user);
-        _mappingRepoMock.Setup(x => x.CountByUserAndEmotionAsync(1, "happy")).ReturnsAsync(0);
-        _mappingRepoMock.Setup(x => x.GetByUserAndEmotionAsync(1, "happy")).ReturnsAsync(new List<EmotionMapping>());
+        _userRepoMock.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(user);
+        _mappingRepoMock.Setup(x => x.CountByUserAndEmotionAsync(userId, "happy")).ReturnsAsync(0);
+        _mappingRepoMock.Setup(x => x.GetByUserAndEmotionAsync(userId, "happy")).ReturnsAsync(new List<EmotionMapping>());
         _mappingRepoMock.Setup(x => x.CreateMappingAsync(It.IsAny<EmotionMapping>())).Returns(Task.CompletedTask);
 
         // Act
-        var result = await _service.CreateMappingAsync(request, 1, "Cuidador");
+        var result = await _service.CreateMappingAsync(request, userId, "Cuidador");
 
         // Assert
         result.Should().NotBeNull();
@@ -64,10 +65,11 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task CreateMappingAsync_InvalidEmotion_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura requisição com emoção inválida
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
-            UserId = 1,
+            UserId = userId,
             Emotion = "invalid",
             IntensityLevel = "high",
             MinPercentage = 80.0,
@@ -77,16 +79,17 @@ public class EmotionMappingServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Cuidador"));
+            _service.CreateMappingAsync(request, userId, "Cuidador"));
     }
 
     [Fact]
     public async Task CreateMappingAsync_InvalidIntensityLevel_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura requisição com nível de intensidade inválido
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
-            UserId = 1,
+            UserId = userId,
             Emotion = "happy",
             IntensityLevel = "invalid",
             MinPercentage = 80.0,
@@ -96,16 +99,17 @@ public class EmotionMappingServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Cuidador"));
+            _service.CreateMappingAsync(request, userId, "Cuidador"));
     }
 
     [Fact]
     public async Task CreateMappingAsync_InvalidMinPercentage_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura requisição com porcentagem mínima inválida
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
-            UserId = 1,
+            UserId = userId,
             Emotion = "happy",
             IntensityLevel = "high",
             MinPercentage = 150.0, // Invalid - must be 0-100
@@ -115,16 +119,17 @@ public class EmotionMappingServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Cuidador"));
+            _service.CreateMappingAsync(request, userId, "Cuidador"));
     }
 
     [Fact]
     public async Task CreateMappingAsync_EmptyMessage_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura requisição com mensagem vazia
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
-            UserId = 1,
+            UserId = userId,
             Emotion = "happy",
             IntensityLevel = "high",
             MinPercentage = 80.0,
@@ -134,17 +139,18 @@ public class EmotionMappingServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Cuidador"));
+            _service.CreateMappingAsync(request, userId, "Cuidador"));
     }
 
     [Fact]
     public async Task CreateMappingAsync_MessageTooLong_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura requisição com mensagem muito longa
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var longMessage = new string('a', 201); // 201 caracteres
         var request = new EmotionMappingRequest
         {
-            UserId = 1,
+            UserId = userId,
             Emotion = "happy",
             IntensityLevel = "high",
             MinPercentage = 80.0,
@@ -154,16 +160,17 @@ public class EmotionMappingServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Cuidador"));
+            _service.CreateMappingAsync(request, userId, "Cuidador"));
     }
 
     [Fact]
     public async Task CreateMappingAsync_InvalidPriority_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura requisição com prioridade inválida
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
-            UserId = 1,
+            UserId = userId,
             Emotion = "happy",
             IntensityLevel = "high",
             MinPercentage = 80.0,
@@ -173,39 +180,41 @@ public class EmotionMappingServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Cuidador"));
+            _service.CreateMappingAsync(request, userId, "Cuidador"));
     }
 
     [Fact]
     public async Task CreateMappingAsync_ExceedsLimitOf2_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura requisição que excede limite de 2 mapeamentos por emoção
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
-            UserId = 1,
+            UserId = userId,
             Emotion = "happy",
             IntensityLevel = "high",
             MinPercentage = 80.0,
             Message = "Test",
             Priority = 1
         };
-        var user = new User { UserId = 1, Name = "Test User", Role = "Cuidador" };
+        var user = new User { Id = userId, Name = "Test User", Role = "Cuidador" };
 
-        _userRepoMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(user);
-        _mappingRepoMock.Setup(x => x.CountByUserAndEmotionAsync(1, "happy")).ReturnsAsync(2); // Já tem 2
+        _userRepoMock.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(user);
+        _mappingRepoMock.Setup(x => x.CountByUserAndEmotionAsync(userId, "happy")).ReturnsAsync(2); // Já tem 2
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Cuidador"));
+            _service.CreateMappingAsync(request, userId, "Cuidador"));
     }
 
     [Fact]
     public async Task CreateMappingAsync_DuplicatePriority_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura requisição com prioridade duplicada para mesma emoção
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
-            UserId = 1,
+            UserId = userId,
             Emotion = "happy",
             IntensityLevel = "high",
             MinPercentage = 80.0,
@@ -215,32 +224,34 @@ public class EmotionMappingServiceTests
         var existingMapping = new EmotionMapping
         {
             Id = "existing-id",
-            UserId = 1,
+            UserId = userId,
             Emotion = "happy",
             IntensityLevel = "moderate",
             MinPercentage = 50.0,
             Message = "Existing",
             Priority = 1
         };
-        var user = new User { UserId = 1, Name = "Test User", Role = "Cuidador" };
+        var user = new User { Id = userId, Name = "Test User", Role = "Cuidador" };
 
-        _userRepoMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(user);
-        _mappingRepoMock.Setup(x => x.CountByUserAndEmotionAsync(1, "happy")).ReturnsAsync(1);
-        _mappingRepoMock.Setup(x => x.GetByUserAndEmotionAsync(1, "happy"))
+        _userRepoMock.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(user);
+        _mappingRepoMock.Setup(x => x.CountByUserAndEmotionAsync(userId, "happy")).ReturnsAsync(1);
+        _mappingRepoMock.Setup(x => x.GetByUserAndEmotionAsync(userId, "happy"))
             .ReturnsAsync(new List<EmotionMapping> { existingMapping });
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Cuidador"));
+            _service.CreateMappingAsync(request, userId, "Cuidador"));
     }
 
     [Fact]
     public async Task CreateMappingAsync_AccessDenied_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura tentativa de criação para outro usuário sem permissão
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var otherUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
-            UserId = 2, // Trying to create for another user
+            UserId = otherUserId, // Trying to create for another user
             Emotion = "happy",
             IntensityLevel = "high",
             MinPercentage = 80.0,
@@ -248,57 +259,61 @@ public class EmotionMappingServiceTests
             Priority = 1
         };
 
-        // Act & Assert - Cuidador trying to create for another user
+        // Act & Assert - Cuidador trying to create for outra pessoa
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Cuidador"));
+            _service.CreateMappingAsync(request, userId, "Cuidador"));
     }
     [Fact]
     public async Task CreateMappingAsync_AdminCanCreateForOtherUsers()
     {
-        // Arrange
+        // Arrange - Configura admin criando mapeamento para outro usuário
+        var adminId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var targetUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
-            UserId = 2, // Admin creating for another user
+            UserId = targetUserId, // Admin creating for another user
             Emotion = "happy",
             IntensityLevel = "high",
             MinPercentage = 80.0,
             Message = "Admin created",
             Priority = 1
         };
-        var user = new User { UserId = 2, Name = "Other User", Role = "Cuidador" };
+        var user = new User { Id = targetUserId, Name = "Other User", Role = "Cuidador" };
 
-        _userRepoMock.Setup(x => x.GetByIdAsync(2)).ReturnsAsync(user);
-        _mappingRepoMock.Setup(x => x.CountByUserAndEmotionAsync(2, "happy")).ReturnsAsync(0);
-        _mappingRepoMock.Setup(x => x.GetByUserAndEmotionAsync(2, "happy")).ReturnsAsync(new List<EmotionMapping>());
+        _userRepoMock.Setup(x => x.GetByIdAsync(targetUserId)).ReturnsAsync(user);
+        _mappingRepoMock.Setup(x => x.CountByUserAndEmotionAsync(targetUserId, "happy")).ReturnsAsync(0);
+        _mappingRepoMock.Setup(x => x.GetByUserAndEmotionAsync(targetUserId, "happy")).ReturnsAsync(new List<EmotionMapping>());
         _mappingRepoMock.Setup(x => x.CreateMappingAsync(It.IsAny<EmotionMapping>())).Returns(Task.CompletedTask);
 
         // Act
-        var result = await _service.CreateMappingAsync(request, 1, "Admin");
+        var result = await _service.CreateMappingAsync(request, adminId, "Admin");
 
         // Assert
         result.Should().NotBeNull();
-        result.UserId.Should().Be(2);
+        result.UserId.Should().Be(targetUserId);
         _mappingRepoMock.Verify(x => x.CreateMappingAsync(It.IsAny<EmotionMapping>()), Times.Once);
     }
     [Fact]
     public async Task CreateMappingAsync_UserNotFound_ThrowsException()
     {
-        // Arange
+        // Arrange - Configura requisição para usuário inexistente
+        var adminId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var invalidUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
-            UserId = 999,
+            UserId = invalidUserId,
             Emotion = "happy",
             IntensityLevel = "high",
             MinPercentage = 80.0,
             Message = "Test",
             Priority = 1
         };
-        _userRepoMock.Setup(x => x.GetByIdAsync(999)).ReturnsAsync((User?)null);
+        _userRepoMock.Setup(x => x.GetByIdAsync(invalidUserId)).ReturnsAsync((User?)null);
 
     
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.CreateMappingAsync(request, 1, "Admin"));
+            _service.CreateMappingAsync(request, adminId, "Admin"));
 
     }
 
@@ -309,9 +324,9 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task GetMappingsByUserAsync_AccessDenied_ThrowsException()
     {
-        // Arrange
-        var userId = 1;
-        var currentUserId = 2;
+        // Arrange - Configura tentativa de acesso negado a mapeamentos de outro usuário
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var currentUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var currentUserRole = "Cuidador";
 
         // Act & Assert
@@ -322,9 +337,9 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task GetMappingsByUserAsync_UserNotFound_ThrowsException()
     {
-        // Arrange
-        var userId = 1;
-        var currentUserId = 1;
+        // Arrange - Configura busca de mapeamentos para usuário inexistente
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var currentUserId = userId;
         var currentUserRole = "Cuidador";
 
         _userRepoMock.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync((User?)null);
@@ -341,38 +356,42 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task UpdateMappingAsync_MappingNotFound_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura tentativa de atualização de mapeamento inexistente
         var id = "invalid-id";
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest();
         
         _mappingRepoMock.Setup(x => x.GetByIdAsync(id)).ReturnsAsync((EmotionMapping?)null);
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.UpdateMappingAsync(id, request, 1, "Cuidador"));
+            _service.UpdateMappingAsync(id, request, userId, "Cuidador"));
     }
 
     [Fact]
     public async Task UpdateMappingAsync_AccessDenied_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura tentativa de atualização sem permissão de acesso
         var id = "mapping-id";
-        var mapping = new EmotionMapping { Id = id, UserId = 1 };
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var otherUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var mapping = new EmotionMapping { Id = id, UserId = userId };
         var request = new EmotionMappingRequest();
         
         _mappingRepoMock.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(mapping);
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.UpdateMappingAsync(id, request, 2, "Cuidador"));
+            _service.UpdateMappingAsync(id, request, otherUserId, "Cuidador"));
     }
 
     [Fact]
     public async Task UpdateMappingAsync_ValidRequest_UpdatesMapping()
     {
-        // Arrange
+        // Arrange - Configura atualização válida de mapeamento existente
         var id = "mapping-id";
-        var mapping = new EmotionMapping { Id = id, UserId = 1, Emotion = "sad" };
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var mapping = new EmotionMapping { Id = id, UserId = userId, Emotion = "sad" };
         var request = new EmotionMappingRequest
         {
             Emotion = "happy",
@@ -381,14 +400,14 @@ public class EmotionMappingServiceTests
             Message = "Updated Message",
             Priority = 1
         };
-        var user = new User { UserId = 1, Name = "Test User" };
+        var user = new User { Id = userId, Name = "Test User" };
 
         _mappingRepoMock.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(mapping);
         _mappingRepoMock.Setup(x => x.UpdateMappingAsync(id, It.IsAny<EmotionMapping>())).Returns(Task.CompletedTask);
-        _userRepoMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(user);
+        _userRepoMock.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(user);
 
         // Act
-        var result = await _service.UpdateMappingAsync(id, request, 1, "Cuidador");
+        var result = await _service.UpdateMappingAsync(id, request, userId, "Cuidador");
 
         // Assert
         result.Should().NotBeNull();
@@ -404,42 +423,46 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task DeleteMappingAsync_MappingNotFound_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura tentativa de exclusão de mapeamento inexistente
         var id = "invalid-id";
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         
         _mappingRepoMock.Setup(x => x.GetByIdAsync(id)).ReturnsAsync((EmotionMapping?)null);
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.DeleteMappingAsync(id, 1, "Cuidador"));
+            _service.DeleteMappingAsync(id, userId, "Cuidador"));
     }
 
     [Fact]
     public async Task DeleteMappingAsync_AccessDenied_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura tentativa de exclusão sem permissão de acesso
         var id = "mapping-id";
-        var mapping = new EmotionMapping { Id = id, UserId = 1 };
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var otherUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var mapping = new EmotionMapping { Id = id, UserId = userId };
         
         _mappingRepoMock.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(mapping);
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.DeleteMappingAsync(id, 2, "Cuidador"));
+            _service.DeleteMappingAsync(id, otherUserId, "Cuidador"));
     }
 
     [Fact]
     public async Task DeleteMappingAsync_ValidRequest_DeletesMapping()
     {
-        // Arrange
+        // Arrange - Configura exclusão válida de mapeamento existente
         var id = "mapping-id";
-        var mapping = new EmotionMapping { Id = id, UserId = 1 };
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var mapping = new EmotionMapping { Id = id, UserId = userId };
         
         _mappingRepoMock.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(mapping);
         _mappingRepoMock.Setup(x => x.DeleteMappingAsync(id)).Returns(Task.CompletedTask);
 
         // Act
-        await _service.DeleteMappingAsync(id, 1, "Cuidador");
+        await _service.DeleteMappingAsync(id, userId, "Cuidador");
 
         // Assert
         _mappingRepoMock.Verify(x => x.DeleteMappingAsync(id), Times.Once);
@@ -452,8 +475,8 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task FindMatchingRuleAsync_HighIntensity_Match()
     {
-        // Arrange
-        var userId = 1;
+        // Arrange - Configura busca de regra com intensidade alta que deve corresponder
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var emotion = "happy";
         var percentage = 80.0;
         var mapping = new EmotionMapping 
@@ -479,8 +502,8 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task FindMatchingRuleAsync_HighIntensity_NoMatch_LowPercentage()
     {
-        // Arrange
-        var userId = 1;
+        // Arrange - Configura busca de regra com intensidade alta que não deve corresponder por baixa porcentagem
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var emotion = "happy";
         var percentage = 40.0; // Below 50% for high intensity
         var mapping = new EmotionMapping 
@@ -505,8 +528,8 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task FindMatchingRuleAsync_ModerateIntensity_Match()
     {
-        // Arrange
-        var userId = 1;
+        // Arrange - Configura busca de regra com intensidade moderada que deve corresponder
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var emotion = "sad";
         var percentage = 40.0;
         var mapping = new EmotionMapping 
@@ -531,8 +554,8 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task FindMatchingRuleAsync_ModerateIntensity_NoMatch_HighPercentage()
     {
-        // Arrange
-        var userId = 1;
+        // Arrange - Configura busca de regra com intensidade moderada que não deve corresponder por alta porcentagem
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var emotion = "sad";
         var percentage = 60.0; // Above 50% for moderate intensity
         var mapping = new EmotionMapping 
@@ -557,8 +580,8 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task FindMatchingMessageAsync_ReturnsMessage()
     {
-        // Arrange
-        var userId = 1;
+        // Arrange - Configura busca de mensagem correspondente para emoção e porcentagem
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var emotion = "happy";
         var percentage = 80.0;
         var mapping = new EmotionMapping 

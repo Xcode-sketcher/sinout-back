@@ -22,7 +22,50 @@ public class PatientController : ControllerBase
         _patientService = patientService;
     }
 
-    // Método para criar novo paciente.
+    // Método para obter paciente por ID.
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetPatientById(string id)
+    {
+        try
+        {
+            var userId = AuthorizationHelper.GetCurrentUserId(User);
+            var userRole = AuthorizationHelper.GetCurrentUserRole(User);
+
+            var response = await _patientService.GetPatientByIdAsync(id, userId, userRole);
+            return Ok(response);
+        }
+        catch (AppException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
+
+    // Método para listar pacientes do cuidador atual.
+    [HttpGet]
+    public async Task<IActionResult> GetPatients()
+    {
+        try
+        {
+            var userId = AuthorizationHelper.GetCurrentUserId(User);
+            var userRole = AuthorizationHelper.GetCurrentUserRole(User);
+
+            if (userRole == "Admin")
+            {
+                var allPatients = await _patientService.GetAllPatientsAsync();
+                return Ok(allPatients);
+            }
+
+            // Todos os usuários são Cuidador e veem apenas seus próprios pacientes
+            var myPatients = await _patientService.GetPatientsByCuidadorAsync(userId);
+            return Ok(myPatients);
+        }
+        catch (AppException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    // Método para criar paciente.
     [HttpPost]
     public async Task<IActionResult> CreatePatient([FromBody] PatientRequest request)
     {
@@ -40,69 +83,9 @@ public class PatientController : ControllerBase
         }
     }
 
-    // Método para obter paciente por ID.
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetPatientById(int id)
-    {
-        try
-        {
-            var userId = AuthorizationHelper.GetCurrentUserId(User);
-            var userRole = AuthorizationHelper.GetCurrentUserRole(User);
-
-            var response = await _patientService.GetPatientByIdAsync(id, userId, userRole);
-            return Ok(response);
-        }
-        catch (AppException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-    }
-
-    // Método para listar pacientes.
-    [HttpGet]
-    public async Task<IActionResult> GetPatients()
-    {
-        try
-        {
-            var userId = AuthorizationHelper.GetCurrentUserId(User);
-            var userRole = AuthorizationHelper.GetCurrentUserRole(User);
-
-            if (userRole == UserRole.Admin.ToString())
-            {
-                var allPatients = await _patientService.GetAllPatientsAsync();
-                return Ok(allPatients);
-            }
-            else
-            {
-                var myPatients = await _patientService.GetPatientsByCuidadorAsync(userId);
-                return Ok(myPatients);
-            }
-        }
-        catch (AppException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
-
-    // Método para listar pacientes por cuidador (apenas admin).
-    [HttpGet("cuidador/{cuidadorId}")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> GetPatientsByCuidador(int cuidadorId)
-    {
-        try
-        {
-            var patients = await _patientService.GetPatientsByCuidadorAsync(cuidadorId);
-            return Ok(patients);
-        }
-        catch (AppException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
-
     // Método para atualizar paciente.
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdatePatient(int id, [FromBody] PatientRequest request)
+    public async Task<IActionResult> UpdatePatient(string id, [FromBody] PatientRequest request)
     {
         try
         {
@@ -118,9 +101,9 @@ public class PatientController : ControllerBase
         }
     }
 
-    // Método para deletar paciente (soft delete).
+    // Método para deletar paciente.
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeletePatient(int id)
+    public async Task<IActionResult> DeletePatient(string id)
     {
         try
         {
@@ -128,7 +111,7 @@ public class PatientController : ControllerBase
             var userRole = AuthorizationHelper.GetCurrentUserRole(User);
 
             await _patientService.DeletePatientAsync(id, userId, userRole);
-            return Ok(new { message = "Paciente desativado com sucesso" });
+            return Ok(new { message = "Paciente removido com sucesso" });
         }
         catch (AppException ex)
         {

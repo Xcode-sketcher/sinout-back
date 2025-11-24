@@ -1,9 +1,14 @@
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using APISinout.Models;
 using APISinout.Services;
 using APISinout.Helpers;
+using APISinout.Data;
+using MongoDB.Driver;
+using MongoDB.Bson;
+using System.Text.Json;
 
 namespace APISinout.Controllers;
 
@@ -15,23 +20,27 @@ namespace APISinout.Controllers;
 public class HistoryController : ControllerBase
 {
     private readonly IHistoryService _historyService;
+    private readonly IPatientRepository _patientRepository;
+    private readonly IEmotionMappingService _emotionMappingService;
 
     // Construtor que injeta o serviço de histórico.
-    public HistoryController(IHistoryService historyService)
+    public HistoryController(IHistoryService historyService, IPatientRepository patientRepository, IEmotionMappingService emotionMappingService)
     {
         _historyService = historyService;
+        _patientRepository = patientRepository;
+        _emotionMappingService = emotionMappingService;
     }
 
-    // Método para obter histórico por usuário.
-    [HttpGet("user/{userId}")]
-    public async Task<IActionResult> GetHistoryByUser(int userId, [FromQuery] int hours = 24)
+    // Método para obter histórico por paciente.
+    [HttpGet("patient/{patientId}")]
+    public async Task<IActionResult> GetHistoryByPatient(string patientId, [FromQuery] int hours = 24)
     {
         try
         {
             var currentUserId = AuthorizationHelper.GetCurrentUserId(User);
             var userRole = AuthorizationHelper.GetCurrentUserRole(User);
 
-            var history = await _historyService.GetHistoryByUserAsync(userId, currentUserId, userRole, hours);
+            var history = await _historyService.GetHistoryByPatientAsync(patientId, currentUserId, userRole, hours);
             return Ok(history);
         }
         catch (AppException ex)
@@ -40,36 +49,42 @@ public class HistoryController : ControllerBase
         }
     }
 
-    // Método para obter histórico do usuário logado.
+    // Método para obter histórico de todos os pacientes do cuidador logado.
     [HttpGet("my-history")]
-    public async Task<IActionResult> GetMyHistory([FromQuery] int hours = 24)
+    public async Task<IActionResult> GetMyHistory([FromQuery] int hours = 24, [FromQuery] string? patientId = null)
     {
         try
         {
             var userId = AuthorizationHelper.GetCurrentUserId(User);
             var userRole = AuthorizationHelper.GetCurrentUserRole(User);
 
-            Console.WriteLine($"[DEBUG] UserId extraído: {userId}, Role: {userRole}");
+            // Usa o filtro para pegar tudo do cuidador
+            var filter = new HistoryFilter 
+            { 
+                CuidadorId = userId,
+                StartDate = DateTime.UtcNow.AddHours(-hours)
+            };
 
-            var history = await _historyService.GetHistoryByUserAsync(userId, userId, userRole, hours);
-            Console.WriteLine($"[DEBUG] Histórico recuperado: {history.Count} registros");
-            if( history.Count == 0 )
+            if (!string.IsNullOrEmpty(patientId))
             {
-                return NotFound("Histórico não encontrado");
+                filter.PatientId = patientId;
             }
-            if (hours < 24) {
-                return BadRequest("Histórico deve ter pelo menos 24 horas");
+
+            var history = await _historyService.GetHistoryByFilterAsync(filter, userId, userRole);
+            
+            if (history.Count == 0)
+            {
+                return Ok(new List<HistoryRecordResponse>()); // Retorna lista vazia em vez de 404
             }
+            
             return Ok(history);
         }
         catch (AppException ex)
         {
-            Console.WriteLine($"[DEBUG] ❌ AppException: {ex.Message}");
             return BadRequest(new { message = ex.Message });
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[DEBUG] ❌ Exception: {ex.Message}");
             return StatusCode(500, new { message = "Erro interno", error = ex.Message });
         }
     }
@@ -92,16 +107,16 @@ public class HistoryController : ControllerBase
         }
     }
 
-    // Método para obter estatísticas por usuário.
-    [HttpGet("statistics/user/{userId}")]
-    public async Task<IActionResult> GetUserStatistics(int userId, [FromQuery] int hours = 24)
+    // Método para obter estatísticas por paciente.
+    [HttpGet("statistics/patient/{patientId}")]
+    public async Task<IActionResult> GetPatientStatistics(string patientId, [FromQuery] int hours = 24)
     {
         try
         {
             var currentUserId = AuthorizationHelper.GetCurrentUserId(User);
             var userRole = AuthorizationHelper.GetCurrentUserRole(User);
 
-            var stats = await _historyService.GetUserStatisticsAsync(userId, currentUserId, userRole, hours);
+            var stats = await _historyService.GetPatientStatisticsAsync(patientId, currentUserId, userRole, hours);
             return Ok(stats);
         }
         catch (AppException ex)
@@ -110,54 +125,8 @@ public class HistoryController : ControllerBase
         }
     }
 
-    // Método para obter estatísticas do usuário logado.
-    [HttpGet("statistics/my-stats")]
-    public async Task<IActionResult> GetMyStatistics([FromQuery] int hours = 24)
-    {
-        try
-        {
-            Console.WriteLine($"[DEBUG] GetMyStatistics chamado, hours={hours}");
-
-            var userId = AuthorizationHelper.GetCurrentUserId(User);
-            var userRole = AuthorizationHelper.GetCurrentUserRole(User);
-
-            Console.WriteLine($"[DEBUG] UserId: {userId}, Role: {userRole}");
-
-            var stats = await _historyService.GetUserStatisticsAsync(userId, userId, userRole, hours);
-            Console.WriteLine($"[DEBUG] Estatísticas recuperadas");
-            if(stats.TotalAnalyses == 0) {
-                return NotFound("Estatísticas não encontradas");
-            }
-            if(hours < 24) {
-                return BadRequest("Estatísticas devem ter pelo menos 24 horas");
-            }
-            return Ok(stats);
-        }
-        catch (AppException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "Erro interno", error = ex.Message });
-        }
-    }
-
-    // Método para limpar histórico antigo (apenas admin).
-    [HttpDelete("cleanup")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> CleanupOldHistory([FromQuery] int hours = 24)
-    {
-        try
-        {
-            await _historyService.CleanOldHistoryAsync(hours);
-            return Ok(new { message = $"Histórico anterior a {hours} horas foi limpo com sucesso" });
-        }
-        catch (AppException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
+    // CleanupOldHistory endpoint removed - should be implemented as background job/scheduled task
+    // Old endpoint was Admin-only and shouldn't be exposed via API for security
 
     // Método para salvar emoção detectada.
     [HttpPost("cuidador-emotion")]
@@ -166,78 +135,157 @@ public class HistoryController : ControllerBase
     {
         try
         {
-            if (request != null)
+            Console.WriteLine("═══════════════════════════════════════════════════════");
+            Console.WriteLine("🎯 RECEBENDO REQUISIÇÃO DE EMOÇÃO");
+            Console.WriteLine("═══════════════════════════════════════════════════════");
+            
+            if (request == null)
             {
-                Console.WriteLine($"  CuidadorId: {request.CuidadorId}");
-                Console.WriteLine($"  PatientName: {request.PatientName}");
-                Console.WriteLine($"  DominantEmotion: {request.DominantEmotion}");
-                Console.WriteLine($"  EmotionsDetected: {request.EmotionsDetected?.Count ?? 0} emoções");
-                Console.WriteLine($"  Timestamp: {request.Timestamp}");
+                Console.WriteLine("❌ Request é NULL!");
+                return BadRequest(new { sucesso = false, message = "Request vazio ou formato inválido" });
             }
 
-            if (request == null || request.CuidadorId == 0)
+            Console.WriteLine($"📥 CuidadorId: {request.cuidadorId}");
+            Console.WriteLine($"📥 PatientId: {request.patientId}");
+            Console.WriteLine($"📥 DominantEmotion: {request.dominantEmotion}");
+            Console.WriteLine($"📥 EmotionsDetected count: {request.emotionsDetected?.Count ?? 0}");
+            
+            if (request.emotionsDetected != null && request.emotionsDetected.Count > 0)
             {
-                return BadRequest(new { sucesso = false, message = "Request vazio ou formato inválido - verifique o JSON" });
+                Console.WriteLine("📊 Emotions recebidas:");
+                foreach (var kvp in request.emotionsDetected)
+                {
+                    Console.WriteLine($"   - {kvp.Key}: {kvp.Value:F2}%");
+                }
+            }
+            else
+            {
+                Console.WriteLine("⚠️ EmotionsDetected está vazio ou null!");
+            }
+
+            // Ensure emotionsDetected is not null or empty
+            if (request.emotionsDetected == null || request.emotionsDetected.Count == 0)
+            {
+                Console.WriteLine($"⚠️ Aplicando fallback: {request.dominantEmotion ?? "neutral"} = 1.0");
+                request.emotionsDetected = new Dictionary<string, double> { { request.dominantEmotion ?? "neutral", 1.0 } };
+            }
+
+            if (string.IsNullOrEmpty(request.cuidadorId))
+            {
+                return BadRequest(new { sucesso = false, message = "Request vazio ou formato inválido" });
             }
 
             var userId = AuthorizationHelper.GetCurrentUserId(User);
             var userRole = AuthorizationHelper.GetCurrentUserRole(User);
 
-            if (request.CuidadorId != userId && userRole != "Admin")
+            if (request.cuidadorId != userId && userRole != "Admin")
             {
                 return Forbid();
             }
 
-            var emotionMappingService = HttpContext.RequestServices.GetService<IEmotionMappingService>();
+            // Resolver PatientId
+            string patientId = string.Empty;
+            string? reqPatientId = request.patientId;
+            if (reqPatientId != null && MongoDB.Bson.ObjectId.TryParse(reqPatientId, out ObjectId _))
+            {
+                patientId = reqPatientId;
+            }
+            else
+            {
+                // Se não tem ID válido, cria um "Paciente Padrão" ou usa o primeiro paciente do usuário
+                var patients = await _patientRepository.GetByCuidadorIdAsync(userId);
+                var defaultPatient = patients.FirstOrDefault();
+                
+                if (defaultPatient != null)
+                {
+                    patientId = defaultPatient.Id;
+                }
+                else
+                {
+                    var newPatient = new Patient
+                    {
+                        Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
+                        Name = "Paciente Padrão",
+                        CuidadorId = userId,
+                        DataCadastro = DateTime.UtcNow
+                    };
+                    await _patientRepository.CreatePatientAsync(newPatient);
+                    patientId = newPatient.Id;
+                }
+            }
+
+            // Validação final do PatientId
+            if (!MongoDB.Bson.ObjectId.TryParse(patientId, out _))
+            {
+                 patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+            }
+
+            // Validação do UserId
+            if (!MongoDB.Bson.ObjectId.TryParse(userId, out _))
+            {
+                return BadRequest(new { sucesso = false, message = "ID do usuário inválido para gravação" });
+            }
+
             string? triggeredMessage = null;
             string? triggeredRuleId = null;
 
-            if (!string.IsNullOrEmpty(request.DominantEmotion) && request.EmotionsDetected != null)
+            if (!string.IsNullOrEmpty(request.dominantEmotion) && request.emotionsDetected != null)
             {
-                var percentage = request.EmotionsDetected.GetValueOrDefault(request.DominantEmotion, 0);
+                var percentage = request.emotionsDetected.GetValueOrDefault(request.dominantEmotion, 0);
 
-                if (emotionMappingService != null)
-                {
-                    var ruleResult = await emotionMappingService.FindMatchingRuleAsync(
-                        userId,
-                        request.DominantEmotion,
-                        percentage
-                    );
-                    triggeredMessage = ruleResult.message;
-                    triggeredRuleId = ruleResult.ruleId;
-                }
+                var ruleResult = await _emotionMappingService.FindMatchingRuleAsync(
+                    userId,
+                    request.dominantEmotion,
+                    percentage
+                );
+                triggeredMessage = ruleResult.message;
+                triggeredRuleId = ruleResult.ruleId;
             }
 
             var historyRecord = new HistoryRecord
             {
                 UserId = userId,
-                PatientName = request.PatientName ?? "Paciente",
-                Timestamp = request.Timestamp ?? DateTime.UtcNow,
-                EmotionsDetected = request.EmotionsDetected,
-                DominantEmotion = request.DominantEmotion,
-                DominantPercentage = request.EmotionsDetected?.GetValueOrDefault(request.DominantEmotion ?? "", 0) ?? 0,
+                PatientId = patientId,
+                Timestamp = request.timestamp ?? DateTime.UtcNow,
+                EmotionsDetected = request.emotionsDetected,
+                DominantEmotion = request.dominantEmotion,
+                DominantPercentage = request.emotionsDetected?.GetValueOrDefault(request.dominantEmotion ?? "", 0) ?? 0,
                 MessageTriggered = triggeredMessage,
                 TriggeredRuleId = triggeredRuleId
             };
 
+            Console.WriteLine("💾 Salvando no MongoDB...");
+            Console.WriteLine($"   UserId: {historyRecord.UserId}");
+            Console.WriteLine($"   PatientId: {historyRecord.PatientId}");
+            Console.WriteLine($"   DominantEmotion: {historyRecord.DominantEmotion}");
+            Console.WriteLine($"   EmotionsDetected count: {historyRecord.EmotionsDetected?.Count ?? 0}");
+
             await _historyService.CreateHistoryRecordAsync(historyRecord);
+
+            Console.WriteLine("✅ Emoção salva com sucesso!");
+            Console.WriteLine("═══════════════════════════════════════════════════════\n");
 
             return Ok(new
             {
                 sucesso = true,
                 message = "Emoção registrada com sucesso",
-                cuidadorId = request.CuidadorId,
-                dominantEmotion = request.DominantEmotion,
+                cuidadorId = request.cuidadorId,
+                patientId = patientId,
+                dominantEmotion = request.dominantEmotion,
+                emotionsCount = historyRecord.EmotionsDetected?.Count ?? 0,
                 suggestedMessage = triggeredMessage,
                 timestamp = historyRecord.Timestamp
             });
         }
         catch (AppException ex)
         {
+            Console.WriteLine($"❌ AppException: {ex.Message}");
             return BadRequest(new { message = ex.Message });
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"💥 Exception crítica: {ex.Message}");
+            Console.WriteLine($"StackTrace: {ex.StackTrace}");
             return StatusCode(500, new { message = "Erro interno ao salvar emoção", error = ex.Message });
         }
     }
@@ -246,11 +294,12 @@ public class HistoryController : ControllerBase
 // Modelo para requisição de emoção do cuidador.
 public class CuidadorEmotionRequest
 {
-    public int CuidadorId { get; set; }
-    public string? PatientName { get; set; }
-    public Dictionary<string, double>? EmotionsDetected { get; set; }
-    public string? DominantEmotion { get; set; }
-    public string? Age { get; set; }
-    public string? Gender { get; set; }
-    public DateTime? Timestamp { get; set; }
+    public string? cuidadorId { get; set; }
+    public string? patientId { get; set; }
+    public string? patientName { get; set; }
+    public Dictionary<string, double>? emotionsDetected { get; set; }
+    public string? dominantEmotion { get; set; }
+    public string? age { get; set; }
+    public string? gender { get; set; }
+    public DateTime? timestamp { get; set; }
 }

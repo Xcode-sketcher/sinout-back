@@ -33,7 +33,7 @@ public class EmotionMappingControllerTests
         // Configurar usuário admin para testes
         _adminUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, "1"),
+            new Claim(ClaimTypes.NameIdentifier, MongoDB.Bson.ObjectId.GenerateNewId().ToString()),
             new Claim(ClaimTypes.Email, "admin@test.com"),
             new Claim(ClaimTypes.Role, "Admin")
         }));
@@ -41,7 +41,7 @@ public class EmotionMappingControllerTests
         // Configurar usuário regular para testes
         _regularUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, "2"),
+            new Claim(ClaimTypes.NameIdentifier, MongoDB.Bson.ObjectId.GenerateNewId().ToString()),
             new Claim(ClaimTypes.Email, "user@test.com"),
             new Claim(ClaimTypes.Role, "Cuidador")
         }));
@@ -55,14 +55,15 @@ public class EmotionMappingControllerTests
     public async Task CreateMapping_WithValidData_ShouldReturnCreated()
     {
         // Arrange - Configurar usuário regular e dados válidos
+        var userId = _regularUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _regularUser }
         };
 
         var request = EmotionMappingFixtures.CreateValidEmotionMappingRequest();
-        var expectedResponse = EmotionMappingFixtures.CreateValidEmotionMappingResponse(null, 2);
-        _mockEmotionMappingService.Setup(s => s.CreateMappingAsync(request, 2, "Cuidador")).ReturnsAsync(expectedResponse);
+        var expectedResponse = EmotionMappingFixtures.CreateValidEmotionMappingResponse(null, userId);
+        _mockEmotionMappingService.Setup(s => s.CreateMappingAsync(request, userId, "Cuidador")).ReturnsAsync(expectedResponse);
 
         // Act - Executar método CreateMapping
         var result = await _controller.CreateMapping(request);
@@ -70,7 +71,7 @@ public class EmotionMappingControllerTests
         // Assert - Verificar se retornou Created com mapeamento criado
         var createdResult = result.Should().BeOfType<CreatedAtActionResult>().Subject;
         createdResult.ActionName.Should().Be(nameof(EmotionMappingController.GetMappingsByUser));
-        createdResult.RouteValues.Should().ContainKey("userId").WhoseValue.Should().Be(2);
+        createdResult.RouteValues.Should().ContainKey("userId").WhoseValue.Should().Be(userId);
 
         var response = createdResult.Value.Should().BeOfType<EmotionMappingResponse>().Subject;
         response.Emotion.Should().Be("happy");
@@ -81,13 +82,14 @@ public class EmotionMappingControllerTests
     public async Task CreateMapping_WithInvalidData_ShouldReturnBadRequest()
     {
         // Arrange - Configurar usuário regular e serviço que lança exceção
+        var userId = _regularUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _regularUser }
         };
 
         var request = new EmotionMappingRequest();
-        _mockEmotionMappingService.Setup(s => s.CreateMappingAsync(request, 2, "Cuidador"))
+        _mockEmotionMappingService.Setup(s => s.CreateMappingAsync(request, userId, "Cuidador"))
             .ThrowsAsync(new AppException("Dados inválidos"));
 
         // Act - Executar método CreateMapping
@@ -102,17 +104,18 @@ public class EmotionMappingControllerTests
     [Fact]
     public async Task CreateMapping_WithUserIdZero_ShouldUseCurrentUserId()
     {
-        // Arrange - Configurar usuário regular e request com UserId = 0
+        // Arrange - Configurar usuário regular e request com UserId = null
+        var userId = _regularUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _regularUser }
         };
 
         var request = EmotionMappingFixtures.CreateValidEmotionMappingRequest();
-        request.UserId = 0; // Simular UserId = 0, deve usar o ID do usuário atual (2)
+        request.UserId = null; // Simular UserId nulo, deve usar o ID do usuário atual
 
-        var expectedResponse = EmotionMappingFixtures.CreateValidEmotionMappingResponse(null, 2);
-        _mockEmotionMappingService.Setup(s => s.CreateMappingAsync(It.Is<EmotionMappingRequest>(r => r.UserId == 2), 2, "Cuidador"))
+        var expectedResponse = EmotionMappingFixtures.CreateValidEmotionMappingResponse(null, userId);
+        _mockEmotionMappingService.Setup(s => s.CreateMappingAsync(It.Is<EmotionMappingRequest>(r => r.UserId == userId), userId, "Cuidador"))
             .ReturnsAsync(expectedResponse);
 
         // Act - Executar método CreateMapping
@@ -121,7 +124,7 @@ public class EmotionMappingControllerTests
         // Assert - Verificar se UserId foi definido como o ID do usuário atual
         var createdResult = result.Should().BeOfType<CreatedAtActionResult>().Subject;
         var response = createdResult.Value.Should().BeOfType<EmotionMappingResponse>().Subject;
-        response.UserId.Should().Be(2);
+        response.UserId.Should().Be(userId);
     }
 
     [Fact]
@@ -152,6 +155,9 @@ public class EmotionMappingControllerTests
     public async Task GetMappingsByUser_WithValidUserId_ShouldReturnMappings()
     {
         // Arrange - Configurar usuário admin e lista de mapeamentos mock
+        var adminId = _adminUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        var targetUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _adminUser }
@@ -159,14 +165,14 @@ public class EmotionMappingControllerTests
 
         var mappings = new List<EmotionMappingResponse>
         {
-            EmotionMappingFixtures.CreateValidEmotionMappingResponse("mapping1", 1),
-            EmotionMappingFixtures.CreateValidEmotionMappingResponse("mapping2", 1)
+            EmotionMappingFixtures.CreateValidEmotionMappingResponse("mapping1", targetUserId),
+            EmotionMappingFixtures.CreateValidEmotionMappingResponse("mapping2", targetUserId)
         };
 
-        _mockEmotionMappingService.Setup(s => s.GetMappingsByUserAsync(1, 1, "Admin")).ReturnsAsync(mappings);
+        _mockEmotionMappingService.Setup(s => s.GetMappingsByUserAsync(targetUserId, adminId, "Admin")).ReturnsAsync(mappings);
 
         // Act - Executar método GetMappingsByUser
-        var result = await _controller.GetMappingsByUser(1);
+        var result = await _controller.GetMappingsByUser(targetUserId);
 
         // Assert - Verificar se retornou Ok com lista de mapeamentos
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
@@ -179,16 +185,19 @@ public class EmotionMappingControllerTests
     public async Task GetMappingsByUser_WithInvalidUserId_ShouldReturnBadRequest()
     {
         // Arrange - Configurar usuário admin e serviço que lança exceção
+        var adminId = _adminUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        var invalidUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _adminUser }
         };
 
-        _mockEmotionMappingService.Setup(s => s.GetMappingsByUserAsync(999, 1, "Admin"))
+        _mockEmotionMappingService.Setup(s => s.GetMappingsByUserAsync(invalidUserId, adminId, "Admin"))
             .ThrowsAsync(new AppException("Usuário não encontrado"));
 
         // Act - Executar método GetMappingsByUser
-        var result = await _controller.GetMappingsByUser(999);
+        var result = await _controller.GetMappingsByUser(invalidUserId);
 
         // Assert - Verificar se retornou BadRequest com mensagem de erro
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
@@ -204,6 +213,8 @@ public class EmotionMappingControllerTests
     public async Task GetMyMappings_WithValidUser_ShouldReturnUserMappings()
     {
         // Arrange - Configurar usuário regular e seus mapeamentos
+        var userId = _regularUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _regularUser }
@@ -211,11 +222,11 @@ public class EmotionMappingControllerTests
 
         var mappings = new List<EmotionMappingResponse>
         {
-            EmotionMappingFixtures.CreateValidEmotionMappingResponse("mapping1", 2),
-            EmotionMappingFixtures.CreateValidEmotionMappingResponse("mapping2", 2)
+            EmotionMappingFixtures.CreateValidEmotionMappingResponse("mapping1", userId),
+            EmotionMappingFixtures.CreateValidEmotionMappingResponse("mapping2", userId)
         };
 
-        _mockEmotionMappingService.Setup(s => s.GetMappingsByUserAsync(2, 2, "Cuidador")).ReturnsAsync(mappings);
+        _mockEmotionMappingService.Setup(s => s.GetMappingsByUserAsync(userId, userId, "Cuidador")).ReturnsAsync(mappings);
 
         // Act - Executar método GetMyMappings
         var result = await _controller.GetMyMappings();
@@ -224,19 +235,21 @@ public class EmotionMappingControllerTests
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         var responseMappings = okResult.Value.Should().BeAssignableTo<IEnumerable<EmotionMappingResponse>>().Subject;
         responseMappings.Should().HaveCount(2);
-        responseMappings.All(m => m.UserId == 2).Should().BeTrue();
+        responseMappings.All(m => m.UserId == userId).Should().BeTrue();
     }
 
     [Fact]
     public async Task GetMyMappings_WithInvalidUser_ShouldReturnBadRequest()
     {
         // Arrange - Configurar usuário regular e serviço que lança exceção
+        var userId = _regularUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _regularUser }
         };
 
-        _mockEmotionMappingService.Setup(s => s.GetMappingsByUserAsync(2, 2, "Cuidador"))
+        _mockEmotionMappingService.Setup(s => s.GetMappingsByUserAsync(userId, userId, "Cuidador"))
             .ThrowsAsync(new AppException("Erro ao buscar mapeamentos"));
 
         // Act - Executar método GetMyMappings
@@ -256,6 +269,8 @@ public class EmotionMappingControllerTests
     public async Task UpdateMapping_WithValidData_ShouldReturnSuccessResponse()
     {
         // Arrange - Configurar usuário regular e dados válidos
+        var userId = _regularUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _regularUser }
@@ -263,10 +278,10 @@ public class EmotionMappingControllerTests
 
         var request = EmotionMappingFixtures.CreateValidEmotionMappingRequest();
         request.Message = "Mensagem atualizada";
-        var expectedResponse = EmotionMappingFixtures.CreateValidEmotionMappingResponse("mapping1", 2);
+        var expectedResponse = EmotionMappingFixtures.CreateValidEmotionMappingResponse("mapping1", userId);
         expectedResponse.Message = "Mensagem atualizada";
 
-        _mockEmotionMappingService.Setup(s => s.UpdateMappingAsync("mapping1", request, 2, "Cuidador")).ReturnsAsync(expectedResponse);
+        _mockEmotionMappingService.Setup(s => s.UpdateMappingAsync("mapping1", request, userId, "Cuidador")).ReturnsAsync(expectedResponse);
 
         // Act - Executar método UpdateMapping
         var result = await _controller.UpdateMapping("mapping1", request);
@@ -282,13 +297,15 @@ public class EmotionMappingControllerTests
     public async Task UpdateMapping_WithInvalidData_ShouldReturnBadRequest()
     {
         // Arrange - Configurar usuário regular e serviço que lança exceção
+        var userId = _regularUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _regularUser }
         };
 
         var request = new EmotionMappingRequest();
-        _mockEmotionMappingService.Setup(s => s.UpdateMappingAsync("mapping1", request, 2, "Cuidador"))
+        _mockEmotionMappingService.Setup(s => s.UpdateMappingAsync("mapping1", request, userId, "Cuidador"))
             .ThrowsAsync(new AppException("Dados inválidos"));
 
         // Act - Executar método UpdateMapping
@@ -308,12 +325,14 @@ public class EmotionMappingControllerTests
     public async Task DeleteMapping_WithValidId_ShouldReturnSuccessMessage()
     {
         // Arrange - Configurar usuário regular
+        var userId = _regularUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _regularUser }
         };
 
-        _mockEmotionMappingService.Setup(s => s.DeleteMappingAsync("mapping1", 2, "Cuidador")).Returns(Task.CompletedTask);
+        _mockEmotionMappingService.Setup(s => s.DeleteMappingAsync("mapping1", userId, "Cuidador")).Returns(Task.CompletedTask);
 
         // Act - Executar método DeleteMapping
         var result = await _controller.DeleteMapping("mapping1");
@@ -328,12 +347,14 @@ public class EmotionMappingControllerTests
     public async Task DeleteMapping_WithInvalidId_ShouldReturnBadRequest()
     {
         // Arrange - Configurar usuário regular e serviço que lança exceção
+        var userId = _regularUser.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _regularUser }
         };
 
-        _mockEmotionMappingService.Setup(s => s.DeleteMappingAsync("invalid-id", 2, "Cuidador"))
+        _mockEmotionMappingService.Setup(s => s.DeleteMappingAsync("invalid-id", userId, "Cuidador"))
             .ThrowsAsync(new AppException("Mapeamento não encontrado"));
 
         // Act - Executar método DeleteMapping

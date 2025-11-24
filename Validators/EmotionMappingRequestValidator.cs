@@ -12,7 +12,8 @@ public class EmotionMappingRequestValidator : AbstractValidator<EmotionMappingRe
     public EmotionMappingRequestValidator()
     {
         RuleFor(x => x.UserId)
-            .GreaterThanOrEqualTo(0).WithMessage("ID do usuário inválido");
+            .Must(id => string.IsNullOrEmpty(id) || MongoDB.Bson.ObjectId.TryParse(id, out _))
+            .WithMessage("ID do usuário inválido");
 
         RuleFor(x => x.Emotion)
             .NotEmpty().WithMessage("Emoção é obrigatória")

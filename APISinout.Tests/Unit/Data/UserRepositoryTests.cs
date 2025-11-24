@@ -18,14 +18,12 @@ namespace APISinout.Tests.Unit.Data;
 public class UserRepositoryTests
 {
     private readonly Mock<IMongoCollection<User>> _usersMock;
-    private readonly Mock<IMongoCollection<Counter>> _countersMock;
     private readonly UserRepository _repository;
 
     public UserRepositoryTests()
     {
         _usersMock = new Mock<IMongoCollection<User>>();
-        _countersMock = new Mock<IMongoCollection<Counter>>();
-        _repository = new UserRepository(_usersMock.Object, _countersMock.Object);
+        _repository = new UserRepository(_usersMock.Object);
     }
 
     #region GetByIdAsync Tests
@@ -34,8 +32,8 @@ public class UserRepositoryTests
     public async Task GetByIdAsync_ShouldReturnUser_WhenExists()
     {
         // Arrange - Configura usuário existente no mock
-        var userId = 1;
-        var expectedUser = new User { UserId = userId, Name = "Test User", Email = "test@example.com" };
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var expectedUser = new User { Id = userId, Name = "Test User", Email = "test@example.com" };
         var mockCursor = new Mock<IAsyncCursor<User>>();
         mockCursor.Setup(c => c.Current).Returns(new List<User> { expectedUser });
         mockCursor.SetupSequence(c => c.MoveNextAsync(It.IsAny<CancellationToken>()))
@@ -53,7 +51,7 @@ public class UserRepositoryTests
 
         // Assert - Verifica se usuário correto foi retornado
         Assert.NotNull(result);
-        Assert.Equal(expectedUser.UserId, result.UserId);
+        Assert.Equal(expectedUser.Id, result.Id);
         Assert.Equal(expectedUser.Name, result.Name);
         Assert.Equal(expectedUser.Email, result.Email);
     }
@@ -74,7 +72,7 @@ public class UserRepositoryTests
             .ReturnsAsync(mockCursor.Object);
 
         // Act - Executa busca por ID inexistente
-        var result = await _repository.GetByIdAsync(999);
+        var result = await _repository.GetByIdAsync(MongoDB.Bson.ObjectId.GenerateNewId().ToString());
 
         // Assert - Verifica se null foi retornado
         Assert.Null(result);
@@ -89,7 +87,7 @@ public class UserRepositoryTests
     {
         // Arrange - Configura usuário existente por email
         var email = "test@example.com";
-        var expectedUser = new User { UserId = 1, Name = "Test User", Email = email };
+        var expectedUser = new User { Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(), Name = "Test User", Email = email };
         var mockCursor = new Mock<IAsyncCursor<User>>();
         mockCursor.Setup(c => c.Current).Returns(new List<User> { expectedUser });
         mockCursor.SetupSequence(c => c.MoveNextAsync(It.IsAny<CancellationToken>()))
@@ -143,8 +141,8 @@ public class UserRepositoryTests
         // Arrange - Configura lista de usuários para retorno
         var users = new List<User>
         {
-            new User { UserId = 1, Name = "User 1", Email = "user1@example.com" },
-            new User { UserId = 2, Name = "User 2", Email = "user2@example.com" }
+            new User { Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(), Name = "User 1", Email = "user1@example.com" },
+            new User { Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(), Name = "User 2", Email = "user2@example.com" }
         };
 
         var mockCursor = new Mock<IAsyncCursor<User>>();
@@ -165,8 +163,8 @@ public class UserRepositoryTests
         // Assert - Verifica se todos os usuários foram retornados
         Assert.NotNull(result);
         Assert.Equal(2, result.Count);
-        Assert.Equal(users[0].UserId, result[0].UserId);
-        Assert.Equal(users[1].UserId, result[1].UserId);
+        Assert.Equal(users[0].Id, result[0].Id);
+        Assert.Equal(users[1].Id, result[1].Id);
     }
 
     #endregion
@@ -177,7 +175,7 @@ public class UserRepositoryTests
     public async Task CreateUserAsync_ShouldCallInsertOne()
     {
         // Arrange - Configura novo usuário para criação
-        var user = new User { UserId = 1, Name = "New User", Email = "new@example.com" };
+        var user = new User { Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(), Name = "New User", Email = "new@example.com" };
 
         // Act - Executa criação do usuário
         await _repository.CreateUserAsync(user);
@@ -194,12 +192,11 @@ public class UserRepositoryTests
     public async Task UpdateUserAsync_ShouldCallUpdateOne()
     {
         // Arrange - Configura dados para atualização de usuário
-        var userId = 1;
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var user = new User
         {
             Name = "Updated User",
             Email = "updated@example.com",
-            Status = true,
             Role = "Cuidador",
             Phone = "123456789",
             PasswordHash = "hashedpassword",
@@ -226,77 +223,13 @@ public class UserRepositoryTests
     public async Task DeleteUserAsync_ShouldCallDeleteOne()
     {
         // Arrange - Configura ID do usuário para exclusão
-        var userId = 1;
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
 
         // Act - Executa exclusão do usuário
         await _repository.DeleteUserAsync(userId);
 
         // Assert - Verifica se DeleteOneAsync foi chamado corretamente
         _usersMock.Verify(u => u.DeleteOneAsync(It.IsAny<FilterDefinition<User>>(), default), Times.Once);
-    }
-
-    #endregion
-
-    #region GetNextUserIdAsync Tests
-
-    [Fact]
-    public async Task GetNextUserIdAsync_ShouldReturnNextId()
-    {
-        // Arrange - Configura contador para geração de próximo ID
-        var counter = new Counter { Id = "user", Seq = 5 };
-
-        _countersMock.Setup(c => c.FindOneAndUpdateAsync(
-            It.IsAny<FilterDefinition<Counter>>(),
-            It.IsAny<UpdateDefinition<Counter>>(),
-            It.IsAny<FindOneAndUpdateOptions<Counter, Counter>>(),
-            default))
-            .ReturnsAsync(counter);
-
-        // Act - Executa obtenção do próximo ID de usuário
-        var result = await _repository.GetNextUserIdAsync();
-
-        // Assert - Verifica se o próximo ID foi retornado corretamente
-        Assert.Equal(5, result);
-    }
-
-    [Fact]
-    public async Task GetNextUserIdAsync_ShouldReturnOne_WhenCounterNotExists()
-    {
-        // Arrange - Configura contador nulo (primeira vez)
-        _countersMock.Setup(c => c.FindOneAndUpdateAsync(
-            It.IsAny<FilterDefinition<Counter>>(),
-            It.IsAny<UpdateDefinition<Counter>>(),
-            It.IsAny<FindOneAndUpdateOptions<Counter, Counter>>(),
-            default))
-            .ReturnsAsync((Counter?)null);
-
-        // Act - Executa obtenção do próximo ID quando contador não existe
-        var result = await _repository.GetNextUserIdAsync();
-
-        // Assert - Verifica se retorna 1 como padrão
-        Assert.Equal(1, result);
-    }
-
-    #endregion
-
-    #region UpdatePatientNameAsync Tests
-
-    [Fact]
-    public async Task UpdatePatientNameAsync_ShouldCallUpdateOne()
-    {
-        // Arrange - Configura dados para atualização do nome do paciente
-        var userId = 1;
-        var patientName = "Updated Patient Name";
-
-        // Act - Executa atualização do nome do paciente
-        await _repository.UpdatePatientNameAsync(userId, patientName);
-
-        // Assert - Verifica se UpdateOneAsync foi chamado corretamente
-        _usersMock.Verify(u => u.UpdateOneAsync(
-            It.IsAny<FilterDefinition<User>>(),
-            It.IsAny<UpdateDefinition<User>>(),
-            It.IsAny<UpdateOptions>(),
-            default), Times.Once);
     }
 
     #endregion

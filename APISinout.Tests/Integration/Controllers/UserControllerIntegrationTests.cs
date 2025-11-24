@@ -21,7 +21,7 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
         _client = factory.CreateClient();
     }
 
-    private async Task<string> GetCuidadorToken()
+    private async Task SetupCuidadorAuth()
     {
         var cuidadorEmail = $"cuidador{Guid.NewGuid()}@test.com";
         var cuidadorPassword = "Cuidador@123";
@@ -43,44 +43,18 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
             Password = cuidadorPassword
         };
 
-        var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
-        var authResponse = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
-        authResponse.Should().NotBeNull();
-        return authResponse!.Token ?? throw new InvalidOperationException("Token not found");
+        await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
     }
 
     // Teste de admin removido
 
-    [Fact]
-    public async Task GetAll_AsCuidador_ShouldReturn403Forbidden()
-    {
-        // Arrange
-        var token = await GetCuidadorToken();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        // Act
-        var response = await _client.GetAsync("/api/users");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
-
-    [Fact]
-    public async Task GetAll_WithoutAuth_ShouldReturn401Unauthorized()
-    {
-        // Act
-        var response = await _client.GetAsync("/api/users");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
 
     [Fact]
     public async Task GetCurrentUser_WithValidToken_ShouldReturn200WithUserData()
     {
-        // Arrange
-        var token = await GetCuidadorToken();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        // Arrange - Configura autenticação de cuidador
+        await SetupCuidadorAuth();
+
 
         // Act
         var response = await _client.GetAsync("/api/users/me");
@@ -102,84 +76,4 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    // Teste de admin removido
-
-    [Fact]
-    public async Task CreateUser_AsCuidador_ShouldReturn403Forbidden()
-    {
-        // Arrange
-        var token = await GetCuidadorToken();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        var request = new CreateUserRequest
-        {
-            Name = "New User",
-            Email = $"newuser{Guid.NewGuid()}@test.com",
-            Password = "NewUser@123",
-            Role = "Cuidador"
-        };
-
-        // Act
-        var response = await _client.PostAsJsonAsync("/api/users", request);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
-
-    [Fact]
-    public async Task UpdatePatientName_WithValidData_ShouldReturn200OK()
-    {
-        // Arrange
-        var token = await GetCuidadorToken();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        var request = new UpdatePatientNameRequest
-        {
-            PatientName = "Updated Patient Name"
-        };
-
-        // Act
-        var response = await _client.PostAsJsonAsync("/api/users/update-patient-name", request);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var content = await response.Content.ReadAsStringAsync();
-        content.Should().NotBeNullOrEmpty();
-    }
-
-    [Fact]
-    public async Task UpdatePatientName_WithoutAuth_ShouldReturn401Unauthorized()
-    {
-        // Arrange
-        var request = new UpdatePatientNameRequest
-        {
-            PatientName = "Updated Patient Name"
-        };
-
-        // Act
-        var response = await _client.PostAsJsonAsync("/api/users/update-patient-name", request);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    // Teste de admin removido
-
-    [Fact]
-    public async Task GetCuidadores_AsCuidador_ShouldReturn403Forbidden()
-    {
-        // Arrange
-        var token = await GetCuidadorToken();
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        // Act
-        var response = await _client.GetAsync("/api/users/cuidadores");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
-
-    // Teste de admin removido
-
-    // Teste de admin removido
 }

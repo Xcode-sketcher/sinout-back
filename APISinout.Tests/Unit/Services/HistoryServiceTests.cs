@@ -19,71 +19,77 @@ public class HistoryServiceTests
 {
     private readonly Mock<IHistoryRepository> _historyRepoMock;
     private readonly Mock<IUserRepository> _userRepoMock;
+    private readonly Mock<IPatientRepository> _patientRepoMock;
     private readonly HistoryService _service;
 
     public HistoryServiceTests()
     {
         _historyRepoMock = new Mock<IHistoryRepository>();
         _userRepoMock = new Mock<IUserRepository>();
-        _service = new HistoryService(_historyRepoMock.Object, _userRepoMock.Object);
+        _patientRepoMock = new Mock<IPatientRepository>();
+        _service = new HistoryService(_historyRepoMock.Object, _userRepoMock.Object, _patientRepoMock.Object);
     }
 
-    #region GetHistoryByUserAsync Tests
+    #region GetHistoryByPatientAsync Tests
 
     [Fact]
-    public async Task GetHistoryByUserAsync_AsOwner_ReturnsHistory()
+    public async Task GetHistoryByPatientAsync_AsOwner_ReturnsHistory()
     {
         // Arrange
-        var userId = 1;
+        var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var records = new List<HistoryRecord>
         {
             new HistoryRecord
             {
                 Id = "1",
                 UserId = userId,
+                PatientId = patientId,
                 DominantEmotion = "happy",
                 DominantPercentage = 85.0,
                 Timestamp = DateTime.UtcNow
             }
         };
-        var user = new User { UserId = userId, Name = "Test User", Role = "Cuidador" };
+        var patient = new Patient { Id = patientId, Name = "Test Patient", CuidadorId = userId };
 
-        _userRepoMock.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(user);
-        _historyRepoMock.Setup(x => x.GetByUserIdAsync(userId, 24)).ReturnsAsync(records);
+        _patientRepoMock.Setup(x => x.GetByIdAsync(patientId)).ReturnsAsync(patient);
+        _historyRepoMock.Setup(x => x.GetByPatientIdAsync(patientId, 24)).ReturnsAsync(records);
 
         // Act
-        var result = await _service.GetHistoryByUserAsync(userId, userId, "Cuidador", 24);
+        var result = await _service.GetHistoryByPatientAsync(patientId, userId, "Cuidador", 24);
 
         // Assert
         result.Should().HaveCount(1);
         result[0].DominantEmotion.Should().Be("happy");
-        result[0].PatientName.Should().Be("Test User");
+        result[0].PatientName.Should().Be("Test Patient");
     }
 
     [Fact]
-    public async Task GetHistoryByUserAsync_AsAdmin_ReturnsHistory()
+    public async Task GetHistoryByPatientAsync_AsAdmin_ReturnsHistory()
     {
         // Arrange
-        var userId = 2;
-        var adminId = 1;
+        var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var adminId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var records = new List<HistoryRecord>
         {
             new HistoryRecord
             {
                 Id = "1",
                 UserId = userId,
+                PatientId = patientId,
                 DominantEmotion = "sad",
                 DominantPercentage = 75.0,
                 Timestamp = DateTime.UtcNow
             }
         };
-        var user = new User { UserId = userId, Name = "Other User", Role = "Cuidador" };
+        var patient = new Patient { Id = patientId, Name = "Test Patient", CuidadorId = userId };
 
-        _userRepoMock.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(user);
-        _historyRepoMock.Setup(x => x.GetByUserIdAsync(userId, 24)).ReturnsAsync(records);
+        _patientRepoMock.Setup(x => x.GetByIdAsync(patientId)).ReturnsAsync(patient);
+        _historyRepoMock.Setup(x => x.GetByPatientIdAsync(patientId, 24)).ReturnsAsync(records);
 
         // Act
-        var result = await _service.GetHistoryByUserAsync(userId, adminId, "Admin", 24);
+        var result = await _service.GetHistoryByPatientAsync(patientId, adminId, "Admin", 24);
 
         // Assert
         result.Should().HaveCount(1);
@@ -91,26 +97,32 @@ public class HistoryServiceTests
     }
 
     [Fact]
-    public async Task GetHistoryByUserAsync_AccessDenied_ThrowsException()
+    public async Task GetHistoryByPatientAsync_AccessDenied_ThrowsException()
     {
         // Arrange
-        var userId = 2;
-        var currentUserId = 1;
+        var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var currentUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString(); // Outro usuário
+        var patient = new Patient { Id = patientId, Name = "Test Patient", CuidadorId = userId };
+
+        _patientRepoMock.Setup(x => x.GetByIdAsync(patientId)).ReturnsAsync(patient);
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.GetHistoryByUserAsync(userId, currentUserId, "Cuidador", 24));
+            _service.GetHistoryByPatientAsync(patientId, currentUserId, "Cuidador", 24));
     }
-    [Fact]
-    public async Task GetHistoryByUserAsync_UserNotFound_ThrowsException()
-    {
-        // Given
-        var userId = 999;
-        _userRepoMock.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync((User?)null);
 
-        // Act & Assert
+    [Fact]
+    public async Task GetHistoryByPatientAsync_PatientNotFound_ThrowsException()
+    {
+        // Arrange - Configura paciente não encontrado
+        var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var adminId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        _patientRepoMock.Setup(x => x.GetByIdAsync(patientId)).ReturnsAsync((Patient?)null);
+
+        // Act & Assert - Verifica se lança exceção
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.GetHistoryByUserAsync(userId, 1, "Admin", 24));
+            _service.GetHistoryByPatientAsync(patientId, adminId, "Admin", 24));
     }
     #endregion
 
@@ -120,76 +132,82 @@ public class HistoryServiceTests
     public async Task GetHistoryByFilterAsync_AsAdmin_ReturnsFilteredRecords()
     {
         // Arrange
-        var filter = new HistoryFilter { PatientId = 1 };
+        var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var adminId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var filter = new HistoryFilter { PatientId = patientId };
         var records = new List<HistoryRecord>
         {
-            new HistoryRecord { Id = "1", UserId = 1, DominantEmotion = "happy" }
+            new HistoryRecord { Id = "1", UserId = userId, PatientId = patientId, DominantEmotion = "happy" }
         };
-        var user = new User { UserId = 1, Name = "Test User" };
-
+        
         _historyRepoMock.Setup(x => x.GetByFilterAsync(filter)).ReturnsAsync(records);
-        _userRepoMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(user);
 
         // Act
-        var result = await _service.GetHistoryByFilterAsync(filter, 2, "Admin");
+        var result = await _service.GetHistoryByFilterAsync(filter, adminId, "Admin");
 
         // Assert
         result.Should().HaveCount(1);
-        result[0].PatientName.Should().Be("Test User");
+        result[0].PatientId.Should().Be(patientId);
     }
 
     [Fact]
     public async Task GetHistoryByFilterAsync_AsCuidador_RestrictsToOwnHistory()
     {
         // Arrange
-        var filter = new HistoryFilter { PatientId = 999 }; // Tenta buscar outro
-        var userId = 1;
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var filter = new HistoryFilter { PatientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString() }; // Tenta buscar outro
         var records = new List<HistoryRecord>();
 
-        _historyRepoMock.Setup(x => x.GetByFilterAsync(It.Is<HistoryFilter>(f => f.PatientId == userId)))
+        _historyRepoMock.Setup(x => x.GetByFilterAsync(It.Is<HistoryFilter>(f => f.CuidadorId == userId)))
             .ReturnsAsync(records);
 
         // Act
         await _service.GetHistoryByFilterAsync(filter, userId, "Cuidador");
 
         // Assert
-        _historyRepoMock.Verify(x => x.GetByFilterAsync(It.Is<HistoryFilter>(f => f.PatientId == userId)), Times.Once);
+        _historyRepoMock.Verify(x => x.GetByFilterAsync(It.Is<HistoryFilter>(f => f.CuidadorId == userId)), Times.Once);
     }
 
     #endregion
 
-    #region GetUserStatisticsAsync Tests
+    #region GetPatientStatisticsAsync Tests
 
     [Fact]
-    public async Task GetUserStatisticsAsync_AsOwner_ReturnsStatistics()
+    public async Task GetPatientStatisticsAsync_AsOwner_ReturnsStatistics()
     {
         // Arrange
-        var userId = 1;
+        var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var stats = new PatientStatistics { TotalAnalyses = 10, MostFrequentEmotion = "happy" };
-        var user = new User { UserId = userId, Name = "Test User" };
+        var patient = new Patient { Id = patientId, Name = "Test Patient", CuidadorId = userId };
 
-        _userRepoMock.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(user);
-        _historyRepoMock.Setup(x => x.GetUserStatisticsAsync(userId, 24)).ReturnsAsync(stats);
+        _patientRepoMock.Setup(x => x.GetByIdAsync(patientId)).ReturnsAsync(patient);
+        _historyRepoMock.Setup(x => x.GetPatientStatisticsAsync(patientId, 24)).ReturnsAsync(stats);
 
         // Act
-        var result = await _service.GetUserStatisticsAsync(userId, userId, "Cuidador", 24);
+        var result = await _service.GetPatientStatisticsAsync(patientId, userId, "Cuidador", 24);
 
         // Assert
         result.Should().NotBeNull();
-        result.PatientName.Should().Be("Test User");
+        result.PatientName.Should().Be("Test Patient");
         result.TotalAnalyses.Should().Be(10);
     }
 
     [Fact]
-    public async Task GetUserStatisticsAsync_AccessDenied_ThrowsException()
+    public async Task GetPatientStatisticsAsync_AccessDenied_ThrowsException()
     {
         // Arrange
-        var userId = 2;
-        var currentUserId = 1;
+        var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var currentUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString(); // Outro usuário
+        var patient = new Patient { Id = patientId, Name = "Test Patient", CuidadorId = userId };
+
+        _patientRepoMock.Setup(x => x.GetByIdAsync(patientId)).ReturnsAsync(patient);
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() =>
-            _service.GetUserStatisticsAsync(userId, currentUserId, "Cuidador", 24));
+            _service.GetPatientStatisticsAsync(patientId, currentUserId, "Cuidador", 24));
     }
 
     #endregion
@@ -213,7 +231,7 @@ public class HistoryServiceTests
     public async Task CreateHistoryRecordAsync_ShouldCallRepositoryCreate()
     {
         // Arrange
-        var record = new HistoryRecord { UserId = 1, DominantEmotion = "happy" };
+        var record = new HistoryRecord { UserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString(), DominantEmotion = "happy" };
 
         // Act
         await _service.CreateHistoryRecordAsync(record);
