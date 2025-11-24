@@ -1,4 +1,10 @@
-// Tests for MongoDbContext initialization and collection access.
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+
+// ============================================================
+// 🗄️ TESTES DO MONGODBCONTEXT - CONTEXTO DO BANCO DE DADOS
+// ============================================================
+// Valida a inicialização do contexto MongoDB, configuração de mapeamentos
+// Bson e acesso às coleções de dados.
 
 using Xunit;
 using Moq;
@@ -34,7 +40,7 @@ public class MongoDbContextTests
         var registeredClassMapsField = classMapType.GetField("_registeredClassMaps", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         if (registeredClassMapsField != null)
         {
-            var registeredClassMaps = (System.Collections.IDictionary)registeredClassMapsField.GetValue(null);
+            var registeredClassMaps = (System.Collections.IDictionary)registeredClassMapsField.GetValue(null)!;
             if (registeredClassMaps != null && registeredClassMaps.Contains(typeof(User)))
             {
                 registeredClassMaps.Remove(typeof(User));
@@ -47,7 +53,7 @@ public class MongoDbContextTests
         if (configureMappingsMethod != null)
         {
             // Create context instance without calling constructor
-            var contextInstance = System.Runtime.Serialization.FormatterServices.GetUninitializedObject(contextType);
+            var contextInstance = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(contextType);
             configureMappingsMethod.Invoke(contextInstance, null);
         }
 
@@ -77,25 +83,24 @@ public class MongoDbContextTests
         // Ensure BsonClassMap is registered
         if (!BsonClassMap.IsClassMapRegistered(typeof(User)))
         {
-
             BsonClassMap.RegisterClassMap<User>(cm =>
             {
-                cm.MapIdProperty(u => u.Id);
-                cm.MapProperty(u => u.Name).SetElementName("nome");
-                cm.MapProperty(u => u.Email).SetElementName("email");
+                cm.MapIdProperty(u => u.Id!);
+                cm.MapProperty(u => u.Name!).SetElementName("nome");
+                cm.MapProperty(u => u.Email!).SetElementName("email");
                 cm.MapProperty(u => u.DataCadastro).SetElementName("data_cadastro");
-                cm.MapProperty(u => u.Role).SetElementName("cargo");
-                cm.MapProperty(u => u.PasswordHash).SetElementName("password_hash");
-                cm.MapProperty(u => u.CreatedBy).SetElementName("criado_por");
+                cm.MapProperty(u => u.Role!).SetElementName("cargo");
+                cm.MapProperty(u => u.PasswordHash!).SetElementName("password_hash");
+                cm.MapProperty(u => u.CreatedBy!).SetElementName("criado_por");
                 cm.MapProperty(u => u.LastLogin).SetElementName("ultimo_acesso");
-                cm.MapProperty(u => u.Phone).SetElementName("telefone");
+                cm.MapProperty(u => u.Phone!).SetElementName("telefone");
                 cm.MapProperty(u => u.UpdatedAt).SetElementName("data_atualizacao");
                 cm.SetIgnoreExtraElements(true);
             });
         }
 
         // Act - Chama ConfigureMappings quando já está registrado
-        var contextInstance = System.Runtime.Serialization.FormatterServices.GetUninitializedObject(contextType);
+        var contextInstance = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(contextType);
         configureMappingsMethod.Invoke(contextInstance, null);
 
         // Assert - Verifica que ainda está registrado
@@ -114,7 +119,7 @@ public class MongoDbContextTests
         var registeredClassMapsField = classMapType.GetField("_registeredClassMaps", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         if (registeredClassMapsField != null)
         {
-            var registeredClassMaps = (System.Collections.IDictionary)registeredClassMapsField.GetValue(null);
+            var registeredClassMaps = (System.Collections.IDictionary)registeredClassMapsField.GetValue(null)!;
             if (registeredClassMaps != null && registeredClassMaps.Contains(typeof(User)))
             {
                 registeredClassMaps.Remove(typeof(User));

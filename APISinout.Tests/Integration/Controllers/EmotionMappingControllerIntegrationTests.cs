@@ -49,7 +49,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         // Get current user info using cookies
         var userResponse = await httpClient.GetFromJsonAsync<UserResponse>("/api/users/me");
         userResponse.Should().NotBeNull();
-        return userResponse!.UserId;
+        return userResponse!.UserId!;
     }
 
     [Fact]

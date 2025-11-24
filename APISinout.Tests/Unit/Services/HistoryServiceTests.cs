@@ -115,12 +115,12 @@ public class HistoryServiceTests
     [Fact]
     public async Task GetHistoryByPatientAsync_PatientNotFound_ThrowsException()
     {
-        // Given
+        // Arrange - Configura paciente não encontrado
         var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var adminId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         _patientRepoMock.Setup(x => x.GetByIdAsync(patientId)).ReturnsAsync((Patient?)null);
 
-        // Act & Assert
+        // Act & Assert - Verifica se lança exceção
         await Assert.ThrowsAsync<AppException>(() =>
             _service.GetHistoryByPatientAsync(patientId, adminId, "Admin", 24));
     }

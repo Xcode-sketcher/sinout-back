@@ -27,8 +27,14 @@ public class PatientService : IPatientService
         if (patient.CuidadorId != currentUserId && currentUserRole != "Admin")
             throw new AppException("Acesso negado");
 
-        var cuidador = await _userRepository.GetByIdAsync(patient.CuidadorId);
-        return new PatientResponse(patient, cuidador?.Name);
+        string? cuidadorName = null;
+        if (!string.IsNullOrEmpty(patient.CuidadorId))
+        {
+            var cuidador = await _userRepository.GetByIdAsync(patient.CuidadorId);
+            cuidadorName = cuidador?.Name;
+        }
+
+        return new PatientResponse(patient, cuidadorName);
     }
 
     // Obtém os pacientes de um cuidador.
@@ -48,8 +54,13 @@ public class PatientService : IPatientService
 
         foreach (var patient in patients)
         {
-            var cuidador = await _userRepository.GetByIdAsync(patient.CuidadorId!);
-            responses.Add(new PatientResponse(patient, cuidador?.Name));
+            string? cuidadorName = null;
+            if (!string.IsNullOrEmpty(patient.CuidadorId))
+            {
+                var cuidador = await _userRepository.GetByIdAsync(patient.CuidadorId);
+                cuidadorName = cuidador?.Name;
+            }
+            responses.Add(new PatientResponse(patient, cuidadorName));
         }
 
         return responses;
@@ -87,8 +98,13 @@ public class PatientService : IPatientService
 
         await _patientRepository.UpdatePatientAsync(id, patient);
 
-        var cuidador = await _userRepository.GetByIdAsync(patient.CuidadorId);
-        return new PatientResponse(patient, cuidador?.Name);
+        string? cuidadorName = null;
+        if (!string.IsNullOrEmpty(patient.CuidadorId))
+        {
+            var cuidador = await _userRepository.GetByIdAsync(patient.CuidadorId);
+            cuidadorName = cuidador?.Name;
+        }
+        return new PatientResponse(patient, cuidadorName);
     }
 
     // Exclui um paciente.

@@ -92,8 +92,15 @@ public class EmotionMappingService : IEmotionMappingService
         if (user == null)
             throw new AppException("Usuário não encontrado");
 
-        // Não verificar limite nem prioridade duplicada - permitir múltiplas regras
-        // O sistema de prioridade OrderByDescending cuidará de qual regra aplicar
+        // Verificar limite de 2 mapeamentos por emoção
+        var count = await _mappingRepository.CountByUserAndEmotionAsync(userId, request.Emotion.ToLower());
+        if (count >= 2)
+            throw new AppException($"Limite de 2 mapeamentos para a emoção '{request.Emotion}' atingido.");
+
+        // Verificar prioridade duplicada
+        var existingMappings = await _mappingRepository.GetByUserAndEmotionAsync(userId, request.Emotion.ToLower());
+        if (existingMappings.Any(m => m.Priority == request.Priority))
+            throw new AppException($"Já existe um mapeamento com prioridade {request.Priority} para a emoção '{request.Emotion}'.");
 
         var mapping = new EmotionMapping
         {
@@ -168,8 +175,13 @@ public class EmotionMappingService : IEmotionMappingService
 
         await _mappingRepository.UpdateMappingAsync(id, mapping);
 
-        var user = await _userRepository.GetByIdAsync(mapping.UserId);
-        return new EmotionMappingResponse(mapping, user?.Name);
+        string? userName = null;
+        if (!string.IsNullOrEmpty(mapping.UserId))
+        {
+            var user = await _userRepository.GetByIdAsync(mapping.UserId);
+            userName = user?.Name;
+        }
+        return new EmotionMappingResponse(mapping, userName);
     }
 
     /// <summary>
@@ -218,7 +230,7 @@ public class EmotionMappingService : IEmotionMappingService
                 {
                     // Inferior/Moderate: <= minPercentage (igual ou abaixo)
                     intensityMatch = percentage <= 50;
-                    percentageMatch = percentage <= m.MinPercentage;
+                    percentageMatch = percentage >= m.MinPercentage;
                 }
                 
                 var matches = percentageMatch && intensityMatch;

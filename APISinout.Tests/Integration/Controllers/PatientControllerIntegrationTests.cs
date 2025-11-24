@@ -46,16 +46,16 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
 
         await httpClient.PostAsJsonAsync("/api/auth/login", loginRequest);
 
-        // Get current user info using cookies
+        // Obter informações do usuário atual usando cookies
         var userResponse = await httpClient.GetFromJsonAsync<UserResponse>("/api/users/me");
         userResponse.Should().NotBeNull();
-        return userResponse!.UserId;
+        return userResponse!.UserId!;
     }
 
     [Fact]
     public async Task CreatePatient_AsCuidador_ShouldReturn201Created()
     {
-        // Arrange
+        // Arrange - Configura usuário cuidador válido
         var userId = await GetCuidadorUserId();
 
 
@@ -81,7 +81,7 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
     [Fact]
     public async Task CreatePatient_WithoutAuth_ShouldReturn401Unauthorized()
     {
-        // Arrange
+        // Arrange - Configura requisição sem autenticação
         var request = new PatientRequest
         {
             Name = "Unauthorized Patient",
@@ -98,11 +98,11 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
     [Fact]
     public async Task GetPatients_AsCuidador_ShouldReturnOnlyOwnPatients()
     {
-        // Arrange
+        // Arrange - Configura usuário cuidador válido
         var userId = await GetCuidadorUserId();
 
 
-        // Create a patient for this cuidador
+        // Criar um paciente para este cuidador
         var createRequest = new PatientRequest
         {
             Name = "Own Patient",

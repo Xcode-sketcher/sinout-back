@@ -1,3 +1,4 @@
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
 using Xunit;
 using Moq;
 using MongoDB.Driver;
@@ -199,8 +200,9 @@ namespace APISinout.Tests.Unit.Data
             var result = await _repository.GetByFilterAsync(filter);
 
             // Assert
+            Assert.NotNull(result);
             Assert.Single(result);
-            Assert.Equal("happy", result[0]!.DominantEmotion!);
+            Assert.Equal("happy", result!.First().DominantEmotion);
         }
 
         [Fact]

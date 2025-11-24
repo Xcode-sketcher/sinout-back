@@ -48,14 +48,11 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
 
     // Teste de admin removido
 
-    // GetAll_AsCuidador_ShouldReturn403Forbidden removed as route /api/users no longer exists
-
-    // GetAll_WithoutAuth_ShouldReturn401Unauthorized removed as route /api/users no longer exists
 
     [Fact]
     public async Task GetCurrentUser_WithValidToken_ShouldReturn200WithUserData()
     {
-        // Arrange
+        // Arrange - Configura autenticação de cuidador
         await SetupCuidadorAuth();
 
 
@@ -79,17 +76,4 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    // Teste de admin removido
-
-    // CreateUser_AsCuidador_ShouldReturn403Forbidden removed as route /api/users no longer exists
-
-    // UpdatePatientName endpoint was removed - patient management now handled through Patient repository
-
-    // Teste de admin removido
-
-    // GetCuidadores_AsCuidador_ShouldReturn403Forbidden removed as route /api/users/cuidadores no longer exists
-
-    // Teste de admin removido
-
-    // Teste de admin removido
 }

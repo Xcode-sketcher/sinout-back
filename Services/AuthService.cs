@@ -149,12 +149,8 @@ public class AuthService : IAuthService
     }
 
     // Método para obter usuário por ID
-    public async Task<User> GetUserByIdAsync(string userId)
+    public async Task<User?> GetUserByIdAsync(string userId)
     {
-        var user = await _userRepository.GetByIdAsync(userId);
-        if (user == null)
-            throw new AppException("Usuário não encontrado");
-        
-        return user;
+        return await _userRepository.GetByIdAsync(userId);
     }
 }

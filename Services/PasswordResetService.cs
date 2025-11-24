@@ -87,7 +87,7 @@ public class PasswordResetService : IPasswordResetService
 
         var resetToken = new PasswordResetToken
         {
-            UserId = user.Id, // ID do usuário
+            UserId = user.Id!, // ID do usuário
             Email = user.Email,
             Token = code,
             CreatedAt = DateTime.UtcNow,
@@ -137,7 +137,7 @@ public class PasswordResetService : IPasswordResetService
         }
 
         // Verificar se há token ativo recente (menos de 5 minutos)
-        var existingToken = await _resetRepository.GetActiveTokenByUserIdAsync(user.Id);
+        var existingToken = await _resetRepository.GetActiveTokenByUserIdAsync(user.Id!);
         if (existingToken != null && existingToken.CreatedAt > DateTime.UtcNow.AddMinutes(-5))
         {
             var waitTime = 5 - (DateTime.UtcNow - existingToken.CreatedAt).TotalMinutes;
@@ -155,7 +155,7 @@ public class PasswordResetService : IPasswordResetService
 
         var resetToken = new PasswordResetToken
         {
-            UserId = user.Id,
+            UserId = user.Id!,
             Email = user.Email,
             Token = code,
             CreatedAt = DateTime.UtcNow,
@@ -199,14 +199,14 @@ public class PasswordResetService : IPasswordResetService
         if (resetToken == null)
             throw new AppException("Token inválido ou expirado");
 
-        var user = await _userRepository.GetByIdAsync(resetToken.UserId);
+        var user = await _userRepository.GetByIdAsync(resetToken.UserId!);
         if (user == null)
             throw new AppException("Usuário não encontrado");
 
         // Atualizar senha
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         user.UpdatedAt = DateTime.UtcNow;
-        await _userRepository.UpdateUserAsync(user.Id, user);
+        await _userRepository.UpdateUserAsync(user.Id!, user);
 
         // Marcar token como usado
         await _resetRepository.MarkAsUsedAsync(resetToken.Id!);
@@ -255,7 +255,7 @@ public class PasswordResetService : IPasswordResetService
         // Atualizar senha
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         user.UpdatedAt = DateTime.UtcNow;
-        await _userRepository.UpdateUserAsync(user.Id, user);
+        await _userRepository.UpdateUserAsync(user.Id!, user);
 
         // Enviar notificação de senha alterada
         try

@@ -1,3 +1,4 @@
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
@@ -141,7 +142,7 @@ public class HistoryController : ControllerBase
             if (request == null)
             {
                 Console.WriteLine("❌ Request é NULL!");
-                return BadRequest(new { sucesso = false, message = "Request vazio" });
+                return BadRequest(new { sucesso = false, message = "Request vazio ou formato inválido" });
             }
 
             Console.WriteLine($"📥 CuidadorId: {request.cuidadorId}");
@@ -171,7 +172,7 @@ public class HistoryController : ControllerBase
 
             if (string.IsNullOrEmpty(request.cuidadorId))
             {
-                return BadRequest(new { sucesso = false, message = "cuidadorId é obrigatório" });
+                return BadRequest(new { sucesso = false, message = "Request vazio ou formato inválido" });
             }
 
             var userId = AuthorizationHelper.GetCurrentUserId(User);
@@ -184,9 +185,10 @@ public class HistoryController : ControllerBase
 
             // Resolver PatientId
             string patientId = string.Empty;
-            if (!string.IsNullOrEmpty(request.patientId) && MongoDB.Bson.ObjectId.TryParse(request.patientId, out _))
+            string? reqPatientId = request.patientId;
+            if (reqPatientId != null && MongoDB.Bson.ObjectId.TryParse(reqPatientId, out ObjectId _))
             {
-                patientId = request.patientId;
+                patientId = reqPatientId;
             }
             else
             {

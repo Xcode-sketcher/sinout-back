@@ -29,15 +29,15 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
-            // Remove existing IEmailService registration if present
+            // Remover registro existente de IEmailService se presente
             var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IEmailService));
             if (descriptor != null)
                 services.Remove(descriptor);
 
-            // Add a Noop implementation that does nothing (and logs) to avoid sending emails during tests
+            // Adicionar implementação Noop que não faz nada (e registra logs) para evitar envio de emails durante testes
             services.AddSingleton<IEmailService, NoopEmailService>();
 
-            // Remove MongoDbContext and Repositories to avoid real database connection
+            // Remover MongoDbContext e Repositories para evitar conexão com banco de dados real
             RemoveService<MongoDbContext>(services);
             RemoveService<IUserRepository>(services);
             RemoveService<IPatientRepository>(services);
@@ -45,7 +45,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             RemoveService<IHistoryRepository>(services);
             RemoveService<IPasswordResetRepository>(services);
 
-            // Add In-Memory Repositories
+            // Adicionar Repositories em memória
             services.AddSingleton<IUserRepository, InMemoryUserRepository>();
             services.AddSingleton<IPatientRepository, InMemoryPatientRepository>();
             services.AddSingleton<IEmotionMappingRepository, InMemoryEmotionMappingRepository>();

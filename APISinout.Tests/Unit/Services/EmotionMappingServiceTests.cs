@@ -33,7 +33,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task CreateMappingAsync_ValidRequest_CreatesMapping()
     {
-        // Arrange
+        // Arrange - Configura usuário válido e requisição de mapeamento
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
@@ -65,7 +65,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task CreateMappingAsync_InvalidEmotion_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura requisição com emoção inválida
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
@@ -85,7 +85,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task CreateMappingAsync_InvalidIntensityLevel_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura requisição com nível de intensidade inválido
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
@@ -105,7 +105,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task CreateMappingAsync_InvalidMinPercentage_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura requisição com porcentagem mínima inválida
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
@@ -125,7 +125,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task CreateMappingAsync_EmptyMessage_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura requisição com mensagem vazia
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
@@ -145,7 +145,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task CreateMappingAsync_MessageTooLong_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura requisição com mensagem muito longa
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var longMessage = new string('a', 201); // 201 caracteres
         var request = new EmotionMappingRequest
@@ -166,7 +166,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task CreateMappingAsync_InvalidPriority_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura requisição com prioridade inválida
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
@@ -186,7 +186,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task CreateMappingAsync_ExceedsLimitOf2_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura requisição que excede limite de 2 mapeamentos por emoção
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
@@ -210,7 +210,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task CreateMappingAsync_DuplicatePriority_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura requisição com prioridade duplicada para mesma emoção
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
         {
@@ -246,7 +246,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task CreateMappingAsync_AccessDenied_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura tentativa de criação para outro usuário sem permissão
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var otherUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
@@ -266,7 +266,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task CreateMappingAsync_AdminCanCreateForOtherUsers()
     {
-        // Arrange
+        // Arrange - Configura admin criando mapeamento para outro usuário
         var adminId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var targetUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
@@ -296,7 +296,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task CreateMappingAsync_UserNotFound_ThrowsException()
     {
-        // Arange
+        // Arrange - Configura requisição para usuário inexistente
         var adminId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var invalidUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest
@@ -324,7 +324,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task GetMappingsByUserAsync_AccessDenied_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura tentativa de acesso negado a mapeamentos de outro usuário
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var currentUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var currentUserRole = "Cuidador";
@@ -337,7 +337,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task GetMappingsByUserAsync_UserNotFound_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura busca de mapeamentos para usuário inexistente
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var currentUserId = userId;
         var currentUserRole = "Cuidador";
@@ -356,7 +356,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task UpdateMappingAsync_MappingNotFound_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura tentativa de atualização de mapeamento inexistente
         var id = "invalid-id";
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = new EmotionMappingRequest();
@@ -371,7 +371,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task UpdateMappingAsync_AccessDenied_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura tentativa de atualização sem permissão de acesso
         var id = "mapping-id";
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var otherUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
@@ -388,7 +388,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task UpdateMappingAsync_ValidRequest_UpdatesMapping()
     {
-        // Arrange
+        // Arrange - Configura atualização válida de mapeamento existente
         var id = "mapping-id";
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var mapping = new EmotionMapping { Id = id, UserId = userId, Emotion = "sad" };
@@ -423,7 +423,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task DeleteMappingAsync_MappingNotFound_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura tentativa de exclusão de mapeamento inexistente
         var id = "invalid-id";
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         
@@ -437,7 +437,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task DeleteMappingAsync_AccessDenied_ThrowsException()
     {
-        // Arrange
+        // Arrange - Configura tentativa de exclusão sem permissão de acesso
         var id = "mapping-id";
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var otherUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
@@ -453,7 +453,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task DeleteMappingAsync_ValidRequest_DeletesMapping()
     {
-        // Arrange
+        // Arrange - Configura exclusão válida de mapeamento existente
         var id = "mapping-id";
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var mapping = new EmotionMapping { Id = id, UserId = userId };
@@ -475,7 +475,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task FindMatchingRuleAsync_HighIntensity_Match()
     {
-        // Arrange
+        // Arrange - Configura busca de regra com intensidade alta que deve corresponder
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var emotion = "happy";
         var percentage = 80.0;
@@ -502,7 +502,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task FindMatchingRuleAsync_HighIntensity_NoMatch_LowPercentage()
     {
-        // Arrange
+        // Arrange - Configura busca de regra com intensidade alta que não deve corresponder por baixa porcentagem
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var emotion = "happy";
         var percentage = 40.0; // Below 50% for high intensity
@@ -528,7 +528,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task FindMatchingRuleAsync_ModerateIntensity_Match()
     {
-        // Arrange
+        // Arrange - Configura busca de regra com intensidade moderada que deve corresponder
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var emotion = "sad";
         var percentage = 40.0;
@@ -554,7 +554,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task FindMatchingRuleAsync_ModerateIntensity_NoMatch_HighPercentage()
     {
-        // Arrange
+        // Arrange - Configura busca de regra com intensidade moderada que não deve corresponder por alta porcentagem
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var emotion = "sad";
         var percentage = 60.0; // Above 50% for moderate intensity
@@ -580,7 +580,7 @@ public class EmotionMappingServiceTests
     [Fact]
     public async Task FindMatchingMessageAsync_ReturnsMessage()
     {
-        // Arrange
+        // Arrange - Configura busca de mensagem correspondente para emoção e porcentagem
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var emotion = "happy";
         var percentage = 80.0;

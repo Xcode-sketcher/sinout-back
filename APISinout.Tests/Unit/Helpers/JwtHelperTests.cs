@@ -128,7 +128,7 @@ public class JwtHelperTests
         jwtToken.ValidTo.Should().BeCloseTo(expectedExpiration, TimeSpan.FromMinutes(1));
     }
 
-    // Removed GenerateToken_ForAdminUser_ShouldIncludeAdminRole as Admin role is deprecated
+    // Removido GenerateToken_ForAdminUser_ShouldIncludeAdminRole pois role Admin foi descontinuada
 
     [Fact]
     public void GenerateToken_ShouldBeValidJwtFormat()
