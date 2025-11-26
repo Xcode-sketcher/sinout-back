@@ -14,7 +14,8 @@ public class MongoDbContext
     // Construtor que inicializa a conexão com o MongoDB.
     public MongoDbContext(IConfiguration config)
     {
-        var client = new MongoClient(config["MongoDb:ConnectionString"]);
+        var connectionString = config["MongoDb:ConnectionString"] ?? config.GetConnectionString("MongoDb");
+        var client = new MongoClient(connectionString);
         _database = client.GetDatabase(config["MongoDb:DatabaseName"]);
 
         ConfigureMappings();

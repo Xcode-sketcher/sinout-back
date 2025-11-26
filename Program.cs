@@ -23,7 +23,7 @@ using System.Threading.RateLimiting;
 var builder = WebApplication.CreateBuilder(args);
 
 // Configuração da URL do servidor
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+var port = builder.Configuration["PORT"] ?? "8080";
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 // Configuração dos serviços
@@ -32,7 +32,6 @@ builder.Services.AddControllers()
     .AddJsonOptions(options => 
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        // Removed PropertyNameCaseInsensitive for strict camelCase compliance
     });
 
 // Contexto do MongoDB
