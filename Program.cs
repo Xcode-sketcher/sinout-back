@@ -103,7 +103,13 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.SetIsOriginAllowed(origin => origin.StartsWith("http://localhost"))
+        policy.SetIsOriginAllowed(origin => 
+                origin.StartsWith("http://localhost") || 
+                origin.Contains("vercel.app") || 
+                origin.Contains("netlify.app") ||
+                origin.Contains("onrender.com") ||
+                origin.Contains("azurecontainerapps.io") ||
+                origin.Contains("azurestaticapps.net"))
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
