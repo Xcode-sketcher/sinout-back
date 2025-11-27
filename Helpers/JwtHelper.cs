@@ -11,7 +11,7 @@ namespace APISinout.Helpers;
 public static class JwtHelper
 {
     // Gera um token JWT para o usuário.
-    public static string GenerateToken(User user, IConfiguration config)
+    public static string GenerateToken(User user, IConfiguration config, Microsoft.Extensions.Logging.ILogger? logger = null)
     {
         if (string.IsNullOrEmpty(user.Email))
             throw new ArgumentException("Email do usuário não pode ser null ou vazio");
@@ -31,8 +31,12 @@ public static class JwtHelper
         claims.Add(new Claim("email", user.Email));
         claims.Add(new Claim("role", user.Role));
 
+        var jwtKey = config["Jwt:Key"];
+        if (string.IsNullOrEmpty(jwtKey))
+            throw new ArgumentException("Jwt:Key não configurada");
+
         var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(config["Jwt:Key"]!));
+            Encoding.UTF8.GetBytes(jwtKey));
 
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -43,6 +47,8 @@ public static class JwtHelper
             expires: DateTime.Now.AddHours(1),
             signingCredentials: creds
         );
+
+        logger?.LogDebug("JwtHelper: token gerado para userId={UserId}", user.Id);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
