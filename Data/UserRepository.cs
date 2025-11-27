@@ -1,5 +1,6 @@
 using MongoDB.Driver;
 using APISinout.Models;
+using Microsoft.Extensions.Logging;
 
 namespace APISinout.Data;
 
@@ -18,17 +19,20 @@ public interface IUserRepository
 public class UserRepository : IUserRepository
 {
     private readonly IMongoCollection<User> _users;
+    private readonly ILogger<UserRepository>? _logger;
 
     // Construtor que injeta o contexto do MongoDB.
-    public UserRepository(MongoDbContext context)
+    public UserRepository(MongoDbContext context, ILogger<UserRepository>? logger = null)
     {
         _users = context.Users;
+        _logger = logger;
     }
 
     // Construtor para testes - permite injeção direta das coleções.
-    public UserRepository(IMongoCollection<User> usersCollection)
+    public UserRepository(IMongoCollection<User> usersCollection, ILogger<UserRepository>? logger = null)
     {
         _users = usersCollection;
+        _logger = logger;
     }
 
     // Obtém usuário por ID.
@@ -46,7 +50,9 @@ public class UserRepository : IUserRepository
     // Cria um novo usuário.
     public async Task CreateUserAsync(User user)
     {
+        _logger?.LogDebug("Creating user (no sensitive info). Email={Email}", user.Email);
         await _users.InsertOneAsync(user);
+        _logger?.LogInformation("User created: Id={UserId}", user.Id);
     }
 
 
@@ -63,12 +69,14 @@ public class UserRepository : IUserRepository
             .Set(u => u.LastLogin, user.LastLogin)
             .Set(u => u.UpdatedAt, user.UpdatedAt);
         await _users.UpdateOneAsync(filter, update);
+        _logger?.LogInformation("User updated: Id={UserId}", userId);
     }
 
     // Remove um usuário.
     public async Task DeleteUserAsync(string userId)
     {
         await _users.DeleteOneAsync(u => u.Id == userId);
+        _logger?.LogInformation("User deleted: Id={UserId}", userId);
     }
 
     // Lista todos os usuários.
