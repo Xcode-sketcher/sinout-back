@@ -75,7 +75,6 @@ public class AuthController : ControllerBase
         {
             var response = await _authService.LoginAsync(request);
             SetTokenCookie(response.Token);
-            response.Token = null;
             return Ok(response);
         }
         catch (AppException ex)
