@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using APISinout.Models;
 using APISinout.Services;
+using Microsoft.Extensions.Logging;
 using APISinout.Helpers;
 
 namespace APISinout.Controllers;
@@ -15,11 +16,13 @@ namespace APISinout.Controllers;
 public class PatientController : ControllerBase
 {
     private readonly IPatientService _patientService;
+    private readonly ILogger<PatientController> _logger;
 
     // Construtor que injeta o serviço de pacientes.
-    public PatientController(IPatientService patientService)
+    public PatientController(IPatientService patientService, ILogger<PatientController> logger)
     {
         _patientService = patientService;
+        _logger = logger;
     }
 
     // Método para obter paciente por ID.
@@ -36,6 +39,7 @@ public class PatientController : ControllerBase
         }
         catch (AppException ex)
         {
+            _logger.LogWarning("PatientController.GetPatientById: {Message}", ex.Message);
             return NotFound(new { message = ex.Message });
         }
     }
@@ -61,6 +65,7 @@ public class PatientController : ControllerBase
         }
         catch (AppException ex)
         {
+            _logger.LogWarning("PatientController.GetPatients: {Message}", ex.Message);
             return BadRequest(new { message = ex.Message });
         }
     }
@@ -79,6 +84,7 @@ public class PatientController : ControllerBase
         }
         catch (AppException ex)
         {
+            _logger.LogWarning("PatientController.CreatePatient: {Message}", ex.Message);
             return BadRequest(new { message = ex.Message });
         }
     }
@@ -97,6 +103,7 @@ public class PatientController : ControllerBase
         }
         catch (AppException ex)
         {
+            _logger.LogWarning("PatientController.UpdatePatient: {Message}", ex.Message);
             return BadRequest(new { message = ex.Message });
         }
     }
@@ -115,6 +122,7 @@ public class PatientController : ControllerBase
         }
         catch (AppException ex)
         {
+            _logger.LogWarning("PatientController.DeletePatient: {Message}", ex.Message);
             return BadRequest(new { message = ex.Message });
         }
     }

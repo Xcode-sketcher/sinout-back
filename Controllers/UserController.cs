@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using APISinout.Models;
 using APISinout.Services;
+using Microsoft.Extensions.Logging;
 using APISinout.Helpers;
 
 namespace APISinout.Controllers;
@@ -15,12 +16,14 @@ public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IPatientService _patientService;
+    private readonly ILogger<UserController> _logger;
 
     // Construtor que injeta o serviço de usuários e pacientes.
-    public UserController(IUserService userService, IPatientService patientService)
+    public UserController(IUserService userService, IPatientService patientService, ILogger<UserController> logger)
     {
         _userService = userService;
         _patientService = patientService;
+        _logger = logger;
     }
 
     // Método para obter perfil do usuário logado.
@@ -32,7 +35,6 @@ public class UserController : ControllerBase
             var userId = AuthorizationHelper.GetCurrentUserId(User);
             var user = await _userService.GetByIdAsync(userId);
             
-            // Buscar paciente associado ao cuidador
             // Buscar paciente associado ao cuidador
             string? patientId = null;
             string? patientName = null;
@@ -55,6 +57,7 @@ public class UserController : ControllerBase
         }
         catch (AppException ex)
         {
+            _logger.LogWarning("UserController.GetCurrentUser: {Message}", ex.Message);
             return NotFound(new { message = ex.Message });
         }
     }

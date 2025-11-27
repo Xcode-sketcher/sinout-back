@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using APISinout.Models;
 using APISinout.Services;
+using Microsoft.Extensions.Logging;
 using APISinout.Helpers;
 
 namespace APISinout.Controllers;
@@ -15,11 +16,13 @@ namespace APISinout.Controllers;
 public class EmotionMappingController : ControllerBase
 {
     private readonly IEmotionMappingService _mappingService;
+    private readonly ILogger<EmotionMappingController> _logger;
 
     // Construtor que injeta o serviço de mapeamento.
-    public EmotionMappingController(IEmotionMappingService mappingService)
+    public EmotionMappingController(IEmotionMappingService mappingService, ILogger<EmotionMappingController> logger)
     {
         _mappingService = mappingService;
+        _logger = logger;
     }
 
     // Método para criar novo mapeamento.
@@ -35,10 +38,12 @@ public class EmotionMappingController : ControllerBase
                 request.UserId = userId;
 
             var response = await _mappingService.CreateMappingAsync(request, userId, userRole);
+            _logger.LogInformation("Emotion mapping created for user {UserId}", response.UserId);
             return CreatedAtAction(nameof(GetMappingsByUser), new { userId = response.UserId }, response);
         }
         catch (AppException ex)
         {
+            _logger.LogWarning("EmotionMappingController: AppException - {Message}", ex.Message);
             return BadRequest(new { message = ex.Message });
         }
     }
@@ -57,6 +62,7 @@ public class EmotionMappingController : ControllerBase
         }
         catch (AppException ex)
         {
+            _logger.LogWarning("EmotionMappingController: AppException - {Message}", ex.Message);
             return BadRequest(new { message = ex.Message });
         }
     }
@@ -75,6 +81,7 @@ public class EmotionMappingController : ControllerBase
         }
         catch (AppException ex)
         {
+            _logger.LogWarning("EmotionMappingController: AppException - {Message}", ex.Message);
             return BadRequest(new { message = ex.Message });
         }
     }
@@ -93,6 +100,7 @@ public class EmotionMappingController : ControllerBase
         }
         catch (AppException ex)
         {
+            _logger.LogWarning("EmotionMappingController: AppException - {Message}", ex.Message);
             return BadRequest(new { message = ex.Message });
         }
     }
@@ -111,6 +119,7 @@ public class EmotionMappingController : ControllerBase
         }
         catch (AppException ex)
         {
+            _logger.LogWarning("EmotionMappingController: AppException - {Message}", ex.Message);
             return BadRequest(new { message = ex.Message });
         }
     }

@@ -6,6 +6,7 @@ using APISinout.Services;
 using APISinout.Helpers;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Threading.Tasks;
@@ -24,6 +25,7 @@ public class AuthController : ControllerBase
     private readonly IValidator<LoginRequest> _loginValidator;
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _env;
+    private readonly ILogger<AuthController> _logger;
 
     // Construtor que injeta os serviços necessários.
     public AuthController(
@@ -32,7 +34,8 @@ public class AuthController : ControllerBase
         IValidator<RegisterRequest> registerValidator,
         IValidator<LoginRequest> loginValidator,
         IConfiguration configuration,
-        IWebHostEnvironment env)
+        IWebHostEnvironment env,
+        ILogger<AuthController> logger)
     {
         _authService = authService;
         _passwordResetService = passwordResetService;
@@ -40,6 +43,7 @@ public class AuthController : ControllerBase
         _loginValidator = loginValidator;
         _configuration = configuration;
         _env = env;
+        _logger = logger;
     }
 
     // Método para registro de usuário.
@@ -59,6 +63,7 @@ public class AuthController : ControllerBase
         }
         catch (AppException ex)
         {
+            _logger.LogWarning("AuthController.Register: AppException - {Message}", ex.Message);
             return BadRequest(new { message = ex.Message });
         }
     }
@@ -79,6 +84,7 @@ public class AuthController : ControllerBase
         }
         catch (AppException ex)
         {
+            _logger.LogWarning("AuthController.Login: AppException - {Message}", ex.Message);
             return Unauthorized(new { message = ex.Message });
         }
     }
@@ -94,6 +100,7 @@ public class AuthController : ControllerBase
         }
         catch (AppException ex)
         {
+            _logger.LogWarning("AuthController.ForgotPassword: AppException - {Message}", ex.Message);
             return BadRequest(new { message = ex.Message });
         }
     }
@@ -109,6 +116,7 @@ public class AuthController : ControllerBase
         }
         catch (AppException ex)
         {
+            _logger.LogWarning("AuthController.ResendResetCode: AppException - {Message}", ex.Message);
             return BadRequest(new { message = ex.Message });
         }
     }
@@ -124,6 +132,7 @@ public class AuthController : ControllerBase
         }
         catch (AppException ex)
         {
+            _logger.LogWarning("AuthController.ResetPassword: AppException - {Message}", ex.Message);
             return BadRequest(new { message = ex.Message });
         }
     }
@@ -141,6 +150,7 @@ public class AuthController : ControllerBase
         }
         catch (AppException ex)
         {
+            _logger.LogWarning("AuthController.ChangePassword: AppException - {Message}", ex.Message);
             return BadRequest(new { message = ex.Message });
         }
     }
@@ -169,6 +179,7 @@ public class AuthController : ControllerBase
         }
         catch (AppException ex)
         {
+            _logger.LogWarning("AuthController.GetCurrentUser: AppException - {Message}", ex.Message);
             return Unauthorized(new { message = ex.Message });
         }
     }

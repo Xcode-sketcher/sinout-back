@@ -1,5 +1,6 @@
 using MongoDB.Driver;
 using APISinout.Models;
+using Microsoft.Extensions.Logging;
 
 namespace APISinout.Data;
 
@@ -21,17 +22,20 @@ public interface IEmotionMappingRepository
 public class EmotionMappingRepository : IEmotionMappingRepository
 {
     private readonly IMongoCollection<EmotionMapping> _mappings;
+    private readonly ILogger<EmotionMappingRepository>? _logger;
 
     // Construtor que injeta o contexto do MongoDB.
-    public EmotionMappingRepository(MongoDbContext context)
+    public EmotionMappingRepository(MongoDbContext context, ILogger<EmotionMappingRepository>? logger = null)
     {
         _mappings = context.EmotionMappings;
+        _logger = logger;
     }
 
     // Construtor para testes - permite injeção direta da coleção.
-    public EmotionMappingRepository(IMongoCollection<EmotionMapping> mappingsCollection)
+    public EmotionMappingRepository(IMongoCollection<EmotionMapping> mappingsCollection, ILogger<EmotionMappingRepository>? logger = null)
     {
         _mappings = mappingsCollection;
+        _logger = logger;
     }
 
     // Obtém mapeamento por ID.
@@ -69,7 +73,9 @@ public class EmotionMappingRepository : IEmotionMappingRepository
     // Cria um novo mapeamento.
     public async Task CreateMappingAsync(EmotionMapping mapping)
     {
+        _logger?.LogDebug("Creating emotion mapping (no sensitive content). UserId={UserId}", mapping.UserId);
         await _mappings.InsertOneAsync(mapping);
+        _logger?.LogInformation("Emotion mapping created: Id={MappingId}", mapping.Id);
     }
 
     // Atualiza um mapeamento existente.
@@ -86,6 +92,7 @@ public class EmotionMappingRepository : IEmotionMappingRepository
             .Set(m => m.UpdatedAt, DateTime.UtcNow);
 
         await _mappings.UpdateOneAsync(filter, update);
+        _logger?.LogInformation("Emotion mapping updated: Id={MappingId}", id);
     }
 
     // Remove um mapeamento (soft delete).
@@ -98,6 +105,7 @@ public class EmotionMappingRepository : IEmotionMappingRepository
             .Set(m => m.UpdatedAt, DateTime.UtcNow);
 
         await _mappings.UpdateOneAsync(filter, update);
+        _logger?.LogInformation("Emotion mapping soft-deleted: Id={MappingId}", id);
     }
 
     // Conta mapeamentos por usuário e emoção.

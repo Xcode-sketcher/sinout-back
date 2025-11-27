@@ -71,7 +71,7 @@ public class EmailService : IEmailService
         catch (Exception ex)
         {
             _logger.LogError(ex, "[EmailService] Erro ao enviar email de reset para {Email}", toEmail);
-            throw new Exception($"Erro ao enviar email: {ex.Message}");
+            throw new Exception("Erro ao enviar email");
         }
     }
 

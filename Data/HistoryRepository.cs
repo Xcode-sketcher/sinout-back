@@ -1,5 +1,6 @@
 using MongoDB.Driver;
 using APISinout.Models;
+using Microsoft.Extensions.Logging;
 
 namespace APISinout.Data;
 
@@ -18,17 +19,20 @@ public interface IHistoryRepository
 public class HistoryRepository : IHistoryRepository
 {
     private readonly IMongoCollection<HistoryRecord> _history;
+    private readonly ILogger<HistoryRepository>? _logger;
 
     // Construtor que injeta o contexto do MongoDB.
-    public HistoryRepository(MongoDbContext context)
+    public HistoryRepository(MongoDbContext context, ILogger<HistoryRepository> logger)
     {
         _history = context.HistoryRecords;
+        _logger = logger;
     }
 
     // Construtor para testes unitários.
-    public HistoryRepository(IMongoCollection<HistoryRecord> historyCollection)
+    public HistoryRepository(IMongoCollection<HistoryRecord> historyCollection, ILogger<HistoryRepository>? logger = null)
     {
         _history = historyCollection;
+        _logger = logger;
     }
 
     // Obtém registro de histórico por ID.
@@ -87,16 +91,9 @@ public class HistoryRepository : IHistoryRepository
     // Cria um novo registro de histórico.
     public async Task CreateRecordAsync(HistoryRecord record)
     {
-        Console.WriteLine("💾 HistoryRepository.CreateRecordAsync");
-        Console.WriteLine($"   EmotionsDetected: {record.EmotionsDetected?.Count ?? 0} emotions");
-        if (record.EmotionsDetected != null)
-        {
-            foreach (var kvp in record.EmotionsDetected)
-                Console.WriteLine($"      {kvp.Key}: {kvp.Value}");
-        }
-        
+        _logger?.LogDebug("CreateRecordAsync called. EmotionsCount={Count}", record.EmotionsDetected?.Count ?? 0);
         await _history.InsertOneAsync(record);
-        Console.WriteLine("✅ Registro inserido no MongoDB com sucesso!");
+        _logger?.LogInformation("History record created (no sensitive details logged)");
     }
 
     // Remove registros antigos de histórico.

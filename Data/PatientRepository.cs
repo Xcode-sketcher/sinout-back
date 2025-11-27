@@ -1,5 +1,6 @@
 using MongoDB.Driver;
 using APISinout.Models;
+using Microsoft.Extensions.Logging;
 
 namespace APISinout.Data;
 
@@ -19,17 +20,20 @@ public interface IPatientRepository
 public class PatientRepository : IPatientRepository
 {
     private readonly IMongoCollection<Patient> _patients;
+    private readonly ILogger<PatientRepository>? _logger;
 
     // Construtor que injeta o contexto do MongoDB.
-    public PatientRepository(MongoDbContext context)
+    public PatientRepository(MongoDbContext context, ILogger<PatientRepository>? logger = null)
     {
         _patients = context.Patients;
+        _logger = logger;
     }
 
     // Construtor para testes (injeta coleções diretamente).
-    public PatientRepository(IMongoCollection<Patient> patientsCollection)
+    public PatientRepository(IMongoCollection<Patient> patientsCollection, ILogger<PatientRepository>? logger = null)
     {
         _patients = patientsCollection;
+        _logger = logger;
     }
 
     // Obtém paciente por ID.
@@ -53,7 +57,9 @@ public class PatientRepository : IPatientRepository
     // Cria um novo paciente.
     public async Task CreatePatientAsync(Patient patient)
     {
+        _logger?.LogDebug("Creating patient (no sensitive info). CuidadorId={CuidadorId}", patient.CuidadorId);
         await _patients.InsertOneAsync(patient);
+        _logger?.LogInformation("Patient created: Id={PatientId}", patient.Id);
     }
 
     // Atualiza um paciente existente.
@@ -67,6 +73,7 @@ public class PatientRepository : IPatientRepository
             .Set(p => p.ProfilePhoto, patient.ProfilePhoto);
 
         await _patients.UpdateOneAsync(filter, update);
+        _logger?.LogInformation("Patient updated: Id={PatientId}", id);
     }
 
     // Remove um paciente.
@@ -74,6 +81,7 @@ public class PatientRepository : IPatientRepository
     {
         var filter = Builders<Patient>.Filter.Eq(p => p.Id, id);
         await _patients.DeleteOneAsync(filter);
+        _logger?.LogInformation("Patient deleted: Id={PatientId}", id);
     }
 
     // Verifica se o paciente existe.
