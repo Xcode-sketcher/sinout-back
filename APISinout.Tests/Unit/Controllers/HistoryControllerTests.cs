@@ -25,6 +25,7 @@ public class HistoryControllerTests
     private readonly Mock<IHistoryService> _mockHistoryService;
     private readonly Mock<IPatientRepository> _mockPatientRepository;
     private readonly Mock<IEmotionMappingService> _mockEmotionMappingService;
+    private readonly Mock<Microsoft.Extensions.Logging.ILogger<HistoryController>> _loggerMock;
     private readonly HistoryController _controller;
     private readonly ClaimsPrincipal _adminUser;
     private readonly ClaimsPrincipal _regularUser;
@@ -34,6 +35,7 @@ public class HistoryControllerTests
         _mockHistoryService = new Mock<IHistoryService>();
         _mockPatientRepository = new Mock<IPatientRepository>();
         _mockEmotionMappingService = new Mock<IEmotionMappingService>();
+        _loggerMock = new Mock<Microsoft.Extensions.Logging.ILogger<HistoryController>>();
 
         // Configurar usuário admin para testes
         _adminUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
@@ -51,7 +53,7 @@ public class HistoryControllerTests
             new Claim(ClaimTypes.Role, "Cuidador")
         }));
 
-        _controller = new HistoryController(_mockHistoryService.Object, _mockPatientRepository.Object, _mockEmotionMappingService.Object);
+        _controller = new HistoryController(_mockHistoryService.Object, _mockPatientRepository.Object, _mockEmotionMappingService.Object, _loggerMock.Object);
     }
 
     #region GetHistoryByPatient Tests

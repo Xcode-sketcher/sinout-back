@@ -2,24 +2,24 @@ using APISinout.Models;
 
 namespace APISinout.Services;
 
-/// <summary>Interface para o serviço de usuários</summary>
+// Interface para o serviço de usuários
 public interface IUserService
 {
-    /// <summary>Obtém todos os usuários</summary>
+    // Obtém todos os usuários
     Task<IEnumerable<User>> GetAllAsync();
 
-    /// <summary>Obtém um usuário pelo ID</summary>
+    // Obtém um usuário pelo ID
     Task<User> GetByIdAsync(string id);
 
-    /// <summary>Obtém um usuário pelo email</summary>
+    // Obtém um usuário pelo email
     Task<User> GetByEmailAsync(string email);
 
-    /// <summary>Cria um novo usuário</summary>
+    // Cria um novo usuário
     Task<User> CreateUserAsync(CreateUserRequest request, string createdBy);
 
-    /// <summary>Atualiza um usuário</summary>
+    // Atualiza um usuário
     Task UpdateUserAsync(string id, UpdateUserRequest request);
 
-    /// <summary>Deleta um usuário</summary>
+    // Deleta um usuário
     Task DeleteUserAsync(string id);
 }

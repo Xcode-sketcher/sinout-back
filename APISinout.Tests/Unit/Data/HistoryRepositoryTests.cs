@@ -30,10 +30,10 @@ namespace APISinout.Tests.Unit.Data
             // Arrange - Configura registro para teste de inserção
             var record = new HistoryRecord { Id = "1", UserId = "user-id-1", DominantEmotion = "happy" };
 
-            // Act
+            // Act - Executa a ação sob teste
             await _repository.CreateRecordAsync(record);
 
-            // Assert
+            // Assert - Verifica o resultado esperado
             _mockCollection.Verify(c => c.InsertOneAsync(record, null, default), Times.Once);
         }
 
@@ -50,10 +50,10 @@ namespace APISinout.Tests.Unit.Data
                 default))
                 .ReturnsAsync(mockCursor.Object);
 
-            // Act
+            // Act - Executa a ação sob teste
             var result = await _repository.GetByIdAsync("1");
 
-            // Assert
+            // Assert - Verifica o resultado esperado
             Assert.NotNull(result);
             Assert.Equal("1", result.Id);
         }
@@ -70,10 +70,10 @@ namespace APISinout.Tests.Unit.Data
                 default))
                 .ReturnsAsync(mockCursor.Object);
 
-            // Act
+            // Act - Executa a ação sob teste
             var result = await _repository.GetByIdAsync("999");
 
-            // Assert
+            // Assert - Verifica o resultado esperado
             Assert.Null(result);
         }
 
@@ -95,10 +95,10 @@ namespace APISinout.Tests.Unit.Data
                 default))
                 .ReturnsAsync(mockCursor.Object);
 
-            // Act
+            // Act - Executa a ação sob teste
             var result = await _repository.GetByPatientIdAsync(patientId);
 
-            // Assert
+            // Assert - Verifica o resultado esperado
             Assert.Equal(2, result.Count);
         }
 
@@ -107,10 +107,10 @@ namespace APISinout.Tests.Unit.Data
         {
             // Arrange - Configura cenário para exclusão de registros antigos
 
-            // Act
+            // Act - Executa a ação sob teste
             await _repository.DeleteOldRecordsAsync(24);
 
-            // Assert
+            // Assert - Verifica o resultado esperado
             _mockCollection.Verify(c => c.DeleteManyAsync(
                 It.IsAny<FilterDefinition<HistoryRecord>>(),
                 default), Times.Once);
@@ -159,10 +159,10 @@ namespace APISinout.Tests.Unit.Data
                 default))
                 .ReturnsAsync(mockCursor.Object);
 
-            // Act
+            // Act - Executa a ação sob teste
             var stats = await _repository.GetPatientStatisticsAsync(patientId);
 
-            // Assert
+            // Assert - Verifica o resultado esperado
             Assert.Equal(patientId, stats.PatientId);
             Assert.Equal(3, stats.TotalAnalyses);
             Assert.Equal("happy", stats.MostFrequentEmotion);
@@ -196,10 +196,10 @@ namespace APISinout.Tests.Unit.Data
                 default))
                 .ReturnsAsync(mockCursor.Object);
 
-            // Act
+            // Act - Executa a ação sob teste
             var result = await _repository.GetByFilterAsync(filter);
 
-            // Assert
+            // Assert - Verifica o resultado esperado
             Assert.NotNull(result);
             Assert.Single(result);
             Assert.Equal("happy", result!.First().DominantEmotion);
@@ -230,10 +230,10 @@ namespace APISinout.Tests.Unit.Data
                 default))
                 .ReturnsAsync(mockCursor.Object);
 
-            // Act
+            // Act - Executa a ação sob teste
             var result = await _repository.GetByFilterAsync(filter);
 
-            // Assert
+            // Assert - Verifica o resultado esperado
             Assert.Single(result);
         }
 

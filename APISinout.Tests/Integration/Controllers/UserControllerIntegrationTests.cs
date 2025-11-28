@@ -56,10 +56,10 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
         await SetupCuidadorAuth();
 
 
-        // Act
+        // Act - Executa a requisição para recuperar usuário atual
         var response = await _client.GetAsync("/api/users/me");
 
-        // Assert
+        // Assert - Verifica status e conteúdo da resposta
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var user = await response.Content.ReadFromJsonAsync<UserResponse>();
         user.Should().NotBeNull();
@@ -69,10 +69,10 @@ public class UserControllerIntegrationTests : IClassFixture<TestWebApplicationFa
     [Fact]
     public async Task GetCurrentUser_WithoutAuth_ShouldReturn401Unauthorized()
     {
-        // Act
+        // Act - Executa a requisição sem autenticação
         var response = await _client.GetAsync("/api/users/me");
 
-        // Assert
+        // Assert - Verifica que retorna Unauthorized
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 

@@ -1,4 +1,6 @@
 using APISinout.Data;
+using Microsoft.Extensions.Logging;
+using APISinout.Helpers;
 using APISinout.Models;
 
 namespace APISinout.Services;
@@ -6,10 +8,12 @@ namespace APISinout.Services;
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
+    private readonly ILogger<UserService>? _logger;
 
-    public UserService(IUserRepository userRepository)
+    public UserService(IUserRepository userRepository, ILogger<UserService>? logger = null)
     {
         _userRepository = userRepository;
+        _logger = logger;
     }
 
     // Método para listar todos os usuários
@@ -22,7 +26,11 @@ public class UserService : IUserService
     public async Task<User> GetByIdAsync(string id)
     {
         var user = await _userRepository.GetByIdAsync(id);
-        if (user == null) throw new Exception("User not found");
+        if (user == null)
+        {
+            _logger?.LogWarning("UserService.GetByIdAsync: user not found. Id={UserId}", id);
+            throw new AppException("Usuário não encontrado");
+        }
         return user;
     }
 
@@ -30,7 +38,11 @@ public class UserService : IUserService
     public async Task<User> GetByEmailAsync(string email)
     {
         var user = await _userRepository.GetByEmailAsync(email);
-        if (user == null) throw new Exception("User not found");
+        if (user == null)
+        {
+            _logger?.LogWarning("UserService.GetByEmailAsync: user not found. Email={Email}", email);
+            throw new AppException("Usuário não encontrado");
+        }
         return user;
     }
 

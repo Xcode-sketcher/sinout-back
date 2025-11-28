@@ -1,9 +1,3 @@
-// ============================================================
-// 📊 TESTES DO HISTORYSERVICE - HISTÓRICO E ESTATÍSTICAS
-// ============================================================
-// Valida a lógica de negócio de histórico de análises,
-// incluindo validações de permissões e geração de estatísticas.
-
 using Xunit;
 using FluentAssertions;
 using Moq;
@@ -35,7 +29,7 @@ public class HistoryServiceTests
     [Fact]
     public async Task GetHistoryByPatientAsync_AsOwner_ReturnsHistory()
     {
-        // Arrange
+        // Arrange - Prepara dados e mocks para o teste
         var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var records = new List<HistoryRecord>
@@ -55,10 +49,10 @@ public class HistoryServiceTests
         _patientRepoMock.Setup(x => x.GetByIdAsync(patientId)).ReturnsAsync(patient);
         _historyRepoMock.Setup(x => x.GetByPatientIdAsync(patientId, 24)).ReturnsAsync(records);
 
-        // Act
+        // Act - Executa a ação sob teste
         var result = await _service.GetHistoryByPatientAsync(patientId, userId, "Cuidador", 24);
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         result.Should().HaveCount(1);
         result[0].DominantEmotion.Should().Be("happy");
         result[0].PatientName.Should().Be("Test Patient");
@@ -67,7 +61,7 @@ public class HistoryServiceTests
     [Fact]
     public async Task GetHistoryByPatientAsync_AsAdmin_ReturnsHistory()
     {
-        // Arrange
+        // Arrange - Prepara dados e mocks para o teste
         var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var adminId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
@@ -88,10 +82,10 @@ public class HistoryServiceTests
         _patientRepoMock.Setup(x => x.GetByIdAsync(patientId)).ReturnsAsync(patient);
         _historyRepoMock.Setup(x => x.GetByPatientIdAsync(patientId, 24)).ReturnsAsync(records);
 
-        // Act
+        // Act - Executa a ação sob teste
         var result = await _service.GetHistoryByPatientAsync(patientId, adminId, "Admin", 24);
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         result.Should().HaveCount(1);
         result[0].DominantEmotion.Should().Be("sad");
     }
@@ -99,7 +93,7 @@ public class HistoryServiceTests
     [Fact]
     public async Task GetHistoryByPatientAsync_AccessDenied_ThrowsException()
     {
-        // Arrange
+        // Arrange - Preparar dados e mocks para o teste
         var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var currentUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString(); // Outro usuário
@@ -115,12 +109,12 @@ public class HistoryServiceTests
     [Fact]
     public async Task GetHistoryByPatientAsync_PatientNotFound_ThrowsException()
     {
-        // Arrange - Configura paciente não encontrado
+        // Arrange - Configura paciente não encontrado para reproduzir a condição
         var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var adminId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         _patientRepoMock.Setup(x => x.GetByIdAsync(patientId)).ReturnsAsync((Patient?)null);
 
-        // Act & Assert - Verifica se lança exceção
+        // Act & Assert - Executa ação e verifica se lança exceção
         await Assert.ThrowsAsync<AppException>(() =>
             _service.GetHistoryByPatientAsync(patientId, adminId, "Admin", 24));
     }
@@ -131,7 +125,7 @@ public class HistoryServiceTests
     [Fact]
     public async Task GetHistoryByFilterAsync_AsAdmin_ReturnsFilteredRecords()
     {
-        // Arrange
+        // Arrange - Prepara dados e mocks para o teste
         var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var adminId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
@@ -143,10 +137,10 @@ public class HistoryServiceTests
         
         _historyRepoMock.Setup(x => x.GetByFilterAsync(filter)).ReturnsAsync(records);
 
-        // Act
+        // Act - Executa a ação sob teste
         var result = await _service.GetHistoryByFilterAsync(filter, adminId, "Admin");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         result.Should().HaveCount(1);
         result[0].PatientId.Should().Be(patientId);
     }
@@ -154,7 +148,7 @@ public class HistoryServiceTests
     [Fact]
     public async Task GetHistoryByFilterAsync_AsCuidador_RestrictsToOwnHistory()
     {
-        // Arrange
+        // Arrange - Prepara dados e mocks para o teste
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var filter = new HistoryFilter { PatientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString() }; // Tenta buscar outro
         var records = new List<HistoryRecord>();
@@ -162,10 +156,10 @@ public class HistoryServiceTests
         _historyRepoMock.Setup(x => x.GetByFilterAsync(It.Is<HistoryFilter>(f => f.CuidadorId == userId)))
             .ReturnsAsync(records);
 
-        // Act
+        // Act - Executa a ação sob teste
         await _service.GetHistoryByFilterAsync(filter, userId, "Cuidador");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         _historyRepoMock.Verify(x => x.GetByFilterAsync(It.Is<HistoryFilter>(f => f.CuidadorId == userId)), Times.Once);
     }
 
@@ -176,7 +170,7 @@ public class HistoryServiceTests
     [Fact]
     public async Task GetPatientStatisticsAsync_AsOwner_ReturnsStatistics()
     {
-        // Arrange
+        // Arrange - Prepara dados e mocks para o teste
         var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var stats = new PatientStatistics { TotalAnalyses = 10, MostFrequentEmotion = "happy" };
@@ -185,10 +179,10 @@ public class HistoryServiceTests
         _patientRepoMock.Setup(x => x.GetByIdAsync(patientId)).ReturnsAsync(patient);
         _historyRepoMock.Setup(x => x.GetPatientStatisticsAsync(patientId, 24)).ReturnsAsync(stats);
 
-        // Act
+        // Act - Executa a ação sob teste
         var result = await _service.GetPatientStatisticsAsync(patientId, userId, "Cuidador", 24);
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         result.Should().NotBeNull();
         result.PatientName.Should().Be("Test Patient");
         result.TotalAnalyses.Should().Be(10);
@@ -197,7 +191,7 @@ public class HistoryServiceTests
     [Fact]
     public async Task GetPatientStatisticsAsync_AccessDenied_ThrowsException()
     {
-        // Arrange
+        // Arrange - Prepara dados e mocks para o teste
         var patientId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var currentUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString(); // Outro usuário
@@ -217,26 +211,26 @@ public class HistoryServiceTests
     [Fact]
     public async Task CleanOldHistoryAsync_ShouldCallRepositoryDelete()
     {
-        // Arrange
+        // Arrange - Preparar dados e mocks para o teste
         var hours = 48;
 
-        // Act
+        // Act - Executa a ação sob teste
         await _service.CleanOldHistoryAsync(hours);
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         _historyRepoMock.Verify(x => x.DeleteOldRecordsAsync(hours), Times.Once);
     }
 
     [Fact]
     public async Task CreateHistoryRecordAsync_ShouldCallRepositoryCreate()
     {
-        // Arrange
+        // Arrange - Preparar dados e mocks para o teste
         var record = new HistoryRecord { UserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString(), DominantEmotion = "happy" };
 
-        // Act
+        // Act - Executa a ação sob teste
         await _service.CreateHistoryRecordAsync(record);
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         _historyRepoMock.Verify(x => x.CreateRecordAsync(record), Times.Once);
     }
 

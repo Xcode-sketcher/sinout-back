@@ -1,4 +1,5 @@
 using MongoDB.Driver;
+using Microsoft.Extensions.Logging;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson;
 using APISinout.Models;
@@ -10,13 +11,29 @@ namespace APISinout.Data;
 public class MongoDbContext
 {
     private readonly IMongoDatabase _database;
+    private readonly ILogger<MongoDbContext>? _logger;
 
     // Construtor que inicializa a conexão com o MongoDB.
-    public MongoDbContext(IConfiguration config)
+    public MongoDbContext(IConfiguration config, ILogger<MongoDbContext>? logger = null)
     {
+        _logger = logger;
         var connectionString = config["MongoDb:ConnectionString"] ?? config.GetConnectionString("MongoDb");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            _logger?.LogWarning("MongoDbContext: Connection string is not configured.");
+            throw new InvalidOperationException("MongoDB connection string is not configured.");
+        }
+
+        var databaseName = config["MongoDb:DatabaseName"];
+        if (string.IsNullOrWhiteSpace(databaseName))
+        {
+            _logger?.LogError("MongoDbContext: Database name is not configured (MongoDb:DatabaseName).");
+            throw new InvalidOperationException("MongoDB database name (MongoDb:DatabaseName) is not configured.");
+        }
+
         var client = new MongoClient(connectionString);
-        _database = client.GetDatabase(config["MongoDb:DatabaseName"]);
+        _database = client.GetDatabase(databaseName);
+        _logger?.LogInformation("MongoDbContext connected to database.");
 
         ConfigureMappings();
     }

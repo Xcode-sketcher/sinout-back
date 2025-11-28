@@ -69,10 +69,10 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
         };
         await _client.PostAsJsonAsync("/api/history/cuidador-emotion", request);
 
-        // Act
+        // Act - Executa a requisição para recuperar histórico
         var response = await _client.GetAsync("/api/history/my-history?hours=24");
 
-        // Assert
+        // Assert - Verifica o status e conteúdo da resposta
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var history = await response.Content.ReadFromJsonAsync<List<HistoryRecord>>();
         history.Should().NotBeNull();
@@ -81,10 +81,10 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
     [Fact]
     public async Task GetMyHistory_WithoutAuth_ShouldReturn401Unauthorized()
     {
-        // Act
+        // Act - Executa a requisição sem autenticação
         var response = await _client.GetAsync("/api/history/my-history?hours=24");
 
-        // Assert
+        // Assert - Verifica que retorna Unauthorized
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -106,10 +106,10 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
         };
         await _client.PostAsJsonAsync("/api/history/cuidador-emotion", request);
 
-        // Act
+        // Act - Executa a requisição com horas customizadas
         var response = await _client.GetAsync("/api/history/my-history?hours=48");
 
-        // Assert
+        // Assert - Verifica o status e o conteúdo da resposta
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var history = await response.Content.ReadFromJsonAsync<List<HistoryRecord>>();
         history.Should().NotBeNull();
@@ -135,12 +135,12 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
         };
         await _client.PostAsJsonAsync("/api/history/cuidador-emotion", request);
 
-        // Act
+        // Act - Executa a requisição para buscar histórico de paciente
         // Nota: Este endpoint espera patientId, retornará NotFound para userId
         // Pulando este teste pois precisamos refatorar para obter patientId da resposta de emoção
         var response = await _client.GetAsync("/api/history/my-history?hours=24");
 
-        // Assert
+        // Assert - Verifica o status e o conteúdo da resposta
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var history = await response.Content.ReadFromJsonAsync<List<HistoryRecord>>();
         history.Should().NotBeNull();
@@ -173,12 +173,12 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
         };
         await _client.PostAsJsonAsync("/api/history/cuidador-emotion", request);
 
-        // Act
+        // Act - Executa a requisição para obter estatísticas do paciente
         // Nota: Endpoint mudou de /user/{userId} para /patient/{patientId}
         // Pulando teste pois precisamos de patientId da resposta de emoção
         var response = await _client.GetAsync("/api/history/my-history?hours=24");
 
-        // Assert
+        // Assert - Verifica o status e o conteúdo da resposta
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var stats = await response.Content.ReadFromJsonAsync<object>();
         stats.Should().NotBeNull();
@@ -205,10 +205,10 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
             endDate = DateTime.UtcNow
         };
 
-        // Act
+        // Act - Executa a requisição para buscar histórico por filtro
         var response = await _client.PostAsJsonAsync("/api/history/filter", filter);
 
-        // Assert
+        // Assert - Verifica que retorna os registros filtrados
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var history = await response.Content.ReadFromJsonAsync<List<HistoryRecord>>();
         history.Should().NotBeNull();
@@ -225,10 +225,10 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
             endDate = DateTime.UtcNow
         };
 
-        // Act
+        // Act - Executa a requisição para salvar emoção do cuidador
         var response = await _client.PostAsJsonAsync("/api/history/filter", filter);
 
-        // Assert
+        // Assert - Verifica o status OK
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -252,10 +252,10 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
             timestamp = DateTime.UtcNow
         };
 
-        // Act
+        // Act - Executa a requisição com payload inválido
         var response = await _client.PostAsJsonAsync("/api/history/cuidador-emotion", request);
 
-        // Assert
+        // Assert - Verifica que retorna BadRequest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
@@ -271,10 +271,10 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
             cuidadorId = ""
         };
 
-        // Act
+        // Act - Executa a requisição como outro usuário
         var response = await _client.PostAsJsonAsync("/api/history/cuidador-emotion", request);
 
-        // Assert
+        // Assert - Verifica que retorna Forbidden
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
@@ -293,10 +293,10 @@ public class HistoryControllerIntegrationTests : IClassFixture<TestWebApplicatio
             emotionsDetected = new Dictionary<string, double> { { "happy", 0.9 } }
         };
 
-        // Act
+        // Act - Executa a requisição de deleção
         var response = await _client.PostAsJsonAsync("/api/history/cuidador-emotion", request);
 
-        // Assert
+        // Assert - Verifica que o registro foi deletado e não pode ser consultado
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 }

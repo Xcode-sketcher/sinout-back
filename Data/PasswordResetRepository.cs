@@ -1,5 +1,6 @@
 using MongoDB.Driver;
 using APISinout.Models;
+using Microsoft.Extensions.Logging;
 
 namespace APISinout.Data;
 
@@ -17,17 +18,20 @@ public interface IPasswordResetRepository
 public class PasswordResetRepository : IPasswordResetRepository
 {
     private readonly IMongoCollection<PasswordResetToken> _tokens;
+    private readonly ILogger<PasswordResetRepository>? _logger;
 
     // Construtor que injeta o contexto do MongoDB.
-    public PasswordResetRepository(MongoDbContext context)
+    public PasswordResetRepository(MongoDbContext context, ILogger<PasswordResetRepository>? logger = null)
     {
         _tokens = context.PasswordResetTokens;
+        _logger = logger;
     }
 
     // Construtor para testes - permite injeção direta da coleção.
-    public PasswordResetRepository(IMongoCollection<PasswordResetToken> tokensCollection)
+    public PasswordResetRepository(IMongoCollection<PasswordResetToken> tokensCollection, ILogger<PasswordResetRepository>? logger = null)
     {
         _tokens = tokensCollection;
+        _logger = logger;
     }
 
     // Obtém token de reset por token.
@@ -48,7 +52,9 @@ public class PasswordResetRepository : IPasswordResetRepository
     // Cria um novo token de reset.
     public async Task CreateTokenAsync(PasswordResetToken resetToken)
     {
+        _logger?.LogDebug("Creating password reset token (no token printed). UserId={UserId}", resetToken.UserId);
         await _tokens.InsertOneAsync(resetToken);
+        _logger?.LogInformation("Password reset token created for userId={UserId}", resetToken.UserId);
     }
 
     // Marca token como usado.
@@ -60,6 +66,7 @@ public class PasswordResetRepository : IPasswordResetRepository
             .Set(t => t.UsedAt, DateTime.UtcNow);
 
         await _tokens.UpdateOneAsync(filter, update);
+        _logger?.LogInformation("Password reset token marked as used: Id={TokenId}", id);
     }
 
     // Remove tokens expirados.

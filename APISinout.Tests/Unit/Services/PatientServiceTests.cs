@@ -1,9 +1,3 @@
-// ============================================================
-// 👶 TESTES DO PATIENTSERVICE - GESTÃO DE PACIENTES
-// ============================================================
-// Valida a lógica de negócio de CRUD de pacientes,
-// incluindo validações de dados e regras de autorização.
-
 using Xunit;
 using Moq;
 using FluentAssertions;
@@ -44,10 +38,10 @@ public class PatientServiceTests
         _mockPatientRepository.Setup(x => x.CreatePatientAsync(It.IsAny<Patient>())).Returns(Task.CompletedTask);
         _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(UserFixtures.CreateValidUser(cuidadorId));
 
-        // Act
+        // Act - Executa a ação sob teste
         var result = await _patientService.CreatePatientAsync(request, cuidadorId, "Cuidador");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         result.Should().NotBeNull();
         result.Name.Should().Be(request.Name);
         result.CuidadorId.Should().Be(cuidadorId);
@@ -70,10 +64,10 @@ public class PatientServiceTests
         _mockPatientRepository.Setup(x => x.CreatePatientAsync(It.IsAny<Patient>())).Returns(Task.CompletedTask);
         _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(cuidador);
 
-        // Act
+        // Act - Executa a ação sob teste
         var result = await _patientService.CreatePatientAsync(request, adminId, "Admin");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         result.Should().NotBeNull();
         result.CuidadorId.Should().Be(cuidadorId);
         
@@ -89,10 +83,10 @@ public class PatientServiceTests
         var adminId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var request = PatientFixtures.CreateValidPatientRequest(null);
 
-        // Act
+        // Act - Executa a ação sob teste
         var act = async () => await _patientService.CreatePatientAsync(request, adminId, "Admin");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         await act.Should().ThrowAsync<AppException>()
             .WithMessage("Administrador deve especificar o cuidador");
     }
@@ -107,10 +101,10 @@ public class PatientServiceTests
         
         _mockUserRepository.Setup(x => x.GetByIdAsync(invalidCuidadorId)).ReturnsAsync((User?)null);
 
-        // Act
+        // Act - Executa a ação sob teste
         var act = async () => await _patientService.CreatePatientAsync(request, adminId, "Admin");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         await act.Should().ThrowAsync<AppException>()
             .WithMessage("Cuidador inválido");
     }
@@ -123,10 +117,10 @@ public class PatientServiceTests
         request.Name = "";
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
 
-        // Act
+        // Act - Executa a ação sob teste
         var act = async () => await _patientService.CreatePatientAsync(request, userId, "Cuidador");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         await act.Should().ThrowAsync<AppException>()
             .WithMessage("Nome do paciente é obrigatório");
     }
@@ -138,10 +132,10 @@ public class PatientServiceTests
         var request = PatientFixtures.CreateValidPatientRequest();
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         
-        // Act
+        // Act - Executa a ação sob teste
         var act = async () => await _patientService.CreatePatientAsync(request, userId, "User");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         await act.Should().ThrowAsync<AppException>()
             .WithMessage("Apenas Cuidadores podem cadastrar pacientes");
     }
@@ -161,10 +155,10 @@ public class PatientServiceTests
         _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id!)).ReturnsAsync(patient);
         _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(cuidador);
 
-        // Act
+        // Act - Executa a ação sob teste
         var result = await _patientService.GetPatientByIdAsync(patient.Id!, cuidadorId, "Cuidador");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         result.Should().NotBeNull();
         result.Id.Should().Be(patient.Id);
         result.CuidadorName.Should().Be(cuidador.Name);
@@ -182,10 +176,10 @@ public class PatientServiceTests
         _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id!)).ReturnsAsync(patient);
         _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(cuidador);
 
-        // Act
+        // Act - Executa a ação sob teste
         var result = await _patientService.GetPatientByIdAsync(patient.Id!, adminId, "Admin");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         result.Should().NotBeNull();
         result.Id.Should().Be(patient.Id);
     }
@@ -200,10 +194,10 @@ public class PatientServiceTests
         
         _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id!)).ReturnsAsync(patient);
 
-        // Act
+        // Act - Executa a ação sob teste
         var act = async () => await _patientService.GetPatientByIdAsync(patient.Id!, requestingUserId, "Cuidador");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         await act.Should().ThrowAsync<AppException>()
             .WithMessage("Acesso negado");
     }
@@ -216,10 +210,10 @@ public class PatientServiceTests
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync((Patient?)null);
 
-        // Act
+        // Act - Executa a ação sob teste
         var act = async () => await _patientService.GetPatientByIdAsync(id, userId, "Cuidador");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         await act.Should().ThrowAsync<AppException>()
             .WithMessage("Paciente não encontrado");
     }
@@ -239,10 +233,10 @@ public class PatientServiceTests
         _mockPatientRepository.Setup(x => x.GetByCuidadorIdAsync(cuidadorId)).ReturnsAsync(patients);
         _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(cuidador);
 
-        // Act
+        // Act - Executa a ação sob teste
         var result = await _patientService.GetPatientsByCuidadorAsync(cuidadorId);
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         result.Should().HaveCount(3);
         result.Should().AllSatisfy(p => p.CuidadorId.Should().Be(cuidadorId));
     }
@@ -265,10 +259,10 @@ public class PatientServiceTests
         _mockPatientRepository.Setup(x => x.UpdatePatientAsync(patient.Id!, It.IsAny<Patient>())).Returns(Task.CompletedTask);
         _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(cuidador);
 
-        // Act
+        // Act - Executa a ação sob teste
         var result = await _patientService.UpdatePatientAsync(patient.Id!, request, cuidadorId, "Cuidador");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         result.Should().NotBeNull();
         result.Name.Should().Be("Nome Atualizado");
     }
@@ -282,10 +276,10 @@ public class PatientServiceTests
         var request = PatientFixtures.CreateValidPatientRequest();
         _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync((Patient?)null);
 
-        // Act
+        // Act - Executa a ação sob teste
         var act = async () => await _patientService.UpdatePatientAsync(id, request, userId, "Cuidador");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         await act.Should().ThrowAsync<AppException>()
             .WithMessage("Paciente não encontrado");
     }
@@ -302,10 +296,10 @@ public class PatientServiceTests
         
         _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(patient);
 
-        // Act
+        // Act - Executa a ação sob teste
         var act = async () => await _patientService.UpdatePatientAsync(id, request, requesterId, "Cuidador");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         await act.Should().ThrowAsync<AppException>()
             .WithMessage("Acesso negado");
     }
@@ -329,10 +323,10 @@ public class PatientServiceTests
         _mockPatientRepository.Setup(x => x.UpdatePatientAsync(id, It.IsAny<Patient>())).Returns(Task.CompletedTask);
         _mockUserRepository.Setup(x => x.GetByIdAsync(cuidadorId)).ReturnsAsync(cuidador);
 
-        // Act
+        // Act - Executa a ação sob teste
         var result = await _patientService.UpdatePatientAsync(id, request, cuidadorId, "Cuidador");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         result.Name.Should().Be("New Name");
         result.AdditionalInfo.Should().Be("New Info");
         result.ProfilePhoto.Should().Be(1);
@@ -354,10 +348,10 @@ public class PatientServiceTests
         _mockPatientRepository.Setup(x => x.UpdatePatientAsync(id, It.IsAny<Patient>())).Returns(Task.CompletedTask);
         _mockUserRepository.Setup(x => x.GetByIdAsync(newCuidadorId)).ReturnsAsync(newCuidador);
 
-        // Act
+        // Act - Executa a ação sob teste
         var result = await _patientService.UpdatePatientAsync(id, request, adminId, "Admin");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         result.CuidadorId.Should().Be(newCuidadorId);
     }
 
@@ -374,10 +368,10 @@ public class PatientServiceTests
         _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(patient);
         _mockUserRepository.Setup(x => x.GetByIdAsync(invalidCuidadorId)).ReturnsAsync((User?)null);
 
-        // Act
+        // Act - Executa a ação sob teste
         var act = async () => await _patientService.UpdatePatientAsync(id, request, adminId, "Admin");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         await act.Should().ThrowAsync<AppException>()
             .WithMessage("Cuidador inválido");
     }
@@ -396,10 +390,10 @@ public class PatientServiceTests
         _mockPatientRepository.Setup(x => x.GetByIdAsync(patient.Id!)).ReturnsAsync(patient);
         _mockPatientRepository.Setup(x => x.DeletePatientAsync(patient.Id!)).Returns(Task.CompletedTask);
 
-        // Act
+        // Act - Executa a ação sob teste
         await _patientService.DeletePatientAsync(patient.Id!, cuidadorId, "Cuidador");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         _mockPatientRepository.Verify(x => x.DeletePatientAsync(patient.Id!), Times.Once);
     }
 
@@ -411,10 +405,10 @@ public class PatientServiceTests
         var userId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync((Patient?)null);
 
-        // Act
+        // Act - Executa a ação sob teste
         var act = async () => await _patientService.DeletePatientAsync(id, userId, "Cuidador");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         await act.Should().ThrowAsync<AppException>()
             .WithMessage("Paciente não encontrado");
     }
@@ -430,10 +424,10 @@ public class PatientServiceTests
         
         _mockPatientRepository.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(patient);
 
-        // Act
+        // Act - Executa a ação sob teste
         var act = async () => await _patientService.DeletePatientAsync(id, requesterId, "Cuidador");
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         await act.Should().ThrowAsync<AppException>()
             .WithMessage("Acesso negado");
     }
@@ -458,10 +452,10 @@ public class PatientServiceTests
         _mockUserRepository.Setup(x => x.GetByIdAsync(cuidador1Id)).ReturnsAsync(cuidador1);
         _mockUserRepository.Setup(x => x.GetByIdAsync(cuidador2Id)).ReturnsAsync(cuidador2);
 
-        // Act
+        // Act - Executa a ação sob teste
         var result = await _patientService.GetAllPatientsAsync();
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         result.Should().HaveCount(2);
         result[0].Name.Should().Be("Patient 1");
         result[0].CuidadorName.Should().Be(cuidador1.Name);

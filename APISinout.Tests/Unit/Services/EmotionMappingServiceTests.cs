@@ -1,9 +1,3 @@
-// ============================================================
-// 😊 TESTES DO EMOTIONMAPPINGSERVICE - REGRAS DE EMOÇÕES
-// ============================================================
-// Valida a lógica de negócio de mapeamento de emoções,
-// incluindo validações, limites de 2 por emoção, e busca de mensagens.
-
 using Xunit;
 using FluentAssertions;
 using Moq;
@@ -51,10 +45,10 @@ public class EmotionMappingServiceTests
         _mappingRepoMock.Setup(x => x.GetByUserAndEmotionAsync(userId, "happy")).ReturnsAsync(new List<EmotionMapping>());
         _mappingRepoMock.Setup(x => x.CreateMappingAsync(It.IsAny<EmotionMapping>())).Returns(Task.CompletedTask);
 
-        // Act
+        // Act - Chama CreateMappingAsync
         var result = await _service.CreateMappingAsync(request, userId, "Cuidador");
 
-        // Assert
+        // Assert - Verifica se o mapeamento foi criado com sucesso
         result.Should().NotBeNull();
         result.Emotion.Should().Be("happy");
         result.Message.Should().Be("Quero água");
@@ -77,7 +71,7 @@ public class EmotionMappingServiceTests
             Priority = 1
         };
 
-        // Act & Assert
+        // Act & Assert - Deve lançar AppException (emoção inválida)
         await Assert.ThrowsAsync<AppException>(() =>
             _service.CreateMappingAsync(request, userId, "Cuidador"));
     }
@@ -97,7 +91,7 @@ public class EmotionMappingServiceTests
             Priority = 1
         };
 
-        // Act & Assert
+        // Act & Assert - Deve lançar AppException (nível de intensidade inválido)
         await Assert.ThrowsAsync<AppException>(() =>
             _service.CreateMappingAsync(request, userId, "Cuidador"));
     }
@@ -117,7 +111,7 @@ public class EmotionMappingServiceTests
             Priority = 1
         };
 
-        // Act & Assert
+        // Act & Assert - Deve lançar AppException (porcentagem mínima inválida)
         await Assert.ThrowsAsync<AppException>(() =>
             _service.CreateMappingAsync(request, userId, "Cuidador"));
     }
@@ -137,7 +131,7 @@ public class EmotionMappingServiceTests
             Priority = 1
         };
 
-        // Act & Assert
+        // Act & Assert - Deve lançar AppException (mensagem vazia)
         await Assert.ThrowsAsync<AppException>(() =>
             _service.CreateMappingAsync(request, userId, "Cuidador"));
     }
@@ -158,7 +152,7 @@ public class EmotionMappingServiceTests
             Priority = 1
         };
 
-        // Act & Assert
+        // Act & Assert - Deve lançar AppException (mensagem muito longa)
         await Assert.ThrowsAsync<AppException>(() =>
             _service.CreateMappingAsync(request, userId, "Cuidador"));
     }
@@ -178,7 +172,7 @@ public class EmotionMappingServiceTests
             Priority = 3 // Invalid - must be 1 or 2
         };
 
-        // Act & Assert
+        // Act & Assert - Deve lançar AppException (prioridade inválida)
         await Assert.ThrowsAsync<AppException>(() =>
             _service.CreateMappingAsync(request, userId, "Cuidador"));
     }
@@ -202,7 +196,7 @@ public class EmotionMappingServiceTests
         _userRepoMock.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(user);
         _mappingRepoMock.Setup(x => x.CountByUserAndEmotionAsync(userId, "happy")).ReturnsAsync(2); // Já tem 2
 
-        // Act & Assert
+        // Act & Assert - Deve lançar AppException (excede limite de 2 mapeamentos por emoção)
         await Assert.ThrowsAsync<AppException>(() =>
             _service.CreateMappingAsync(request, userId, "Cuidador"));
     }
@@ -238,7 +232,7 @@ public class EmotionMappingServiceTests
         _mappingRepoMock.Setup(x => x.GetByUserAndEmotionAsync(userId, "happy"))
             .ReturnsAsync(new List<EmotionMapping> { existingMapping });
 
-        // Act & Assert
+        // Act & Assert - Deve lançar AppException (prioridade duplicada para a mesma emoção)
         await Assert.ThrowsAsync<AppException>(() =>
             _service.CreateMappingAsync(request, userId, "Cuidador"));
     }
@@ -259,7 +253,7 @@ public class EmotionMappingServiceTests
             Priority = 1
         };
 
-        // Act & Assert - Cuidador trying to create for outra pessoa
+        // Act & Assert - Deve lançar AppException (cuidador tentando criar para outro usuário)
         await Assert.ThrowsAsync<AppException>(() =>
             _service.CreateMappingAsync(request, userId, "Cuidador"));
     }
@@ -285,10 +279,10 @@ public class EmotionMappingServiceTests
         _mappingRepoMock.Setup(x => x.GetByUserAndEmotionAsync(targetUserId, "happy")).ReturnsAsync(new List<EmotionMapping>());
         _mappingRepoMock.Setup(x => x.CreateMappingAsync(It.IsAny<EmotionMapping>())).Returns(Task.CompletedTask);
 
-        // Act
+        // Act - Chama CreateMappingAsync como Admin
         var result = await _service.CreateMappingAsync(request, adminId, "Admin");
 
-        // Assert
+        // Assert - Verifica se o mapeamento foi criado com sucesso para o usuário alvo
         result.Should().NotBeNull();
         result.UserId.Should().Be(targetUserId);
         _mappingRepoMock.Verify(x => x.CreateMappingAsync(It.IsAny<EmotionMapping>()), Times.Once);
@@ -311,7 +305,7 @@ public class EmotionMappingServiceTests
         _userRepoMock.Setup(x => x.GetByIdAsync(invalidUserId)).ReturnsAsync((User?)null);
 
     
-        // Act & Assert
+        // Act & Assert - Deve lançar AppException (usuário inexistente)
         await Assert.ThrowsAsync<AppException>(() =>
             _service.CreateMappingAsync(request, adminId, "Admin"));
 
@@ -329,7 +323,7 @@ public class EmotionMappingServiceTests
         var currentUserId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var currentUserRole = "Cuidador";
 
-        // Act & Assert
+        // Act & Assert - Deve lançar AppException (acesso negado)
         await Assert.ThrowsAsync<AppException>(() =>
             _service.GetMappingsByUserAsync(userId, currentUserId, currentUserRole));
     }
@@ -344,7 +338,7 @@ public class EmotionMappingServiceTests
 
         _userRepoMock.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync((User?)null);
 
-        // Act & Assert
+        // Act & Assert - Deve lançar AppException (usuário não encontrado)
         await Assert.ThrowsAsync<AppException>(() =>
             _service.GetMappingsByUserAsync(userId, currentUserId, currentUserRole));
     }
@@ -363,7 +357,7 @@ public class EmotionMappingServiceTests
         
         _mappingRepoMock.Setup(x => x.GetByIdAsync(id)).ReturnsAsync((EmotionMapping?)null);
 
-        // Act & Assert
+        // Act & Assert - Deve lançar AppException (mapeamento inexistente)
         await Assert.ThrowsAsync<AppException>(() =>
             _service.UpdateMappingAsync(id, request, userId, "Cuidador"));
     }
@@ -380,7 +374,7 @@ public class EmotionMappingServiceTests
         
         _mappingRepoMock.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(mapping);
 
-        // Act & Assert
+        // Act & Assert - Deve lançar AppException (acesso negado)
         await Assert.ThrowsAsync<AppException>(() =>
             _service.UpdateMappingAsync(id, request, otherUserId, "Cuidador"));
     }
@@ -406,10 +400,10 @@ public class EmotionMappingServiceTests
         _mappingRepoMock.Setup(x => x.UpdateMappingAsync(id, It.IsAny<EmotionMapping>())).Returns(Task.CompletedTask);
         _userRepoMock.Setup(x => x.GetByIdAsync(userId)).ReturnsAsync(user);
 
-        // Act
+        // Act - Chama FindMatchingRuleAsync
         var result = await _service.UpdateMappingAsync(id, request, userId, "Cuidador");
 
-        // Assert
+        // Assert - Verifica se a mensagem e ruleId correspondem ao mapeamento
         result.Should().NotBeNull();
         result.Emotion.Should().Be("happy");
         result.Message.Should().Be("Updated Message");
@@ -429,7 +423,7 @@ public class EmotionMappingServiceTests
         
         _mappingRepoMock.Setup(x => x.GetByIdAsync(id)).ReturnsAsync((EmotionMapping?)null);
 
-        // Act & Assert
+        // Act & Assert - Deve lançar AppException (mapeamento inexistente)
         await Assert.ThrowsAsync<AppException>(() =>
             _service.DeleteMappingAsync(id, userId, "Cuidador"));
     }
@@ -445,7 +439,7 @@ public class EmotionMappingServiceTests
         
         _mappingRepoMock.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(mapping);
 
-        // Act & Assert
+        // Act & Assert - Deve lançar AppException (acesso negado)
         await Assert.ThrowsAsync<AppException>(() =>
             _service.DeleteMappingAsync(id, otherUserId, "Cuidador"));
     }
@@ -461,10 +455,10 @@ public class EmotionMappingServiceTests
         _mappingRepoMock.Setup(x => x.GetByIdAsync(id)).ReturnsAsync(mapping);
         _mappingRepoMock.Setup(x => x.DeleteMappingAsync(id)).Returns(Task.CompletedTask);
 
-        // Act
+        // Act - Chama DeleteMappingAsync
         await _service.DeleteMappingAsync(id, userId, "Cuidador");
 
-        // Assert
+        // Assert - Verifica se DeleteMappingAsync foi chamado
         _mappingRepoMock.Verify(x => x.DeleteMappingAsync(id), Times.Once);
     }
 
@@ -491,10 +485,10 @@ public class EmotionMappingServiceTests
         _mappingRepoMock.Setup(x => x.GetByUserAndEmotionAsync(userId, emotion))
             .ReturnsAsync(new List<EmotionMapping> { mapping });
 
-        // Act
+        // Act - Chama FindMatchingRuleAsync
         var result = await _service.FindMatchingRuleAsync(userId, emotion, percentage);
 
-        // Assert
+        // Assert - Verifica se não foi encontrada mensagem (sem correspondência)
         result.message.Should().Be("High Match");
         result.ruleId.Should().Be("1");
     }
@@ -518,10 +512,10 @@ public class EmotionMappingServiceTests
         _mappingRepoMock.Setup(x => x.GetByUserAndEmotionAsync(userId, emotion))
             .ReturnsAsync(new List<EmotionMapping> { mapping });
 
-        // Act
+        // Act - Chama FindMatchingRuleAsync
         var result = await _service.FindMatchingRuleAsync(userId, emotion, percentage);
 
-        // Assert
+        // Assert - Verifica se a mensagem corresponde ao mapeamento (Moderate Match)
         result.message.Should().BeNull();
     }
 
@@ -544,10 +538,10 @@ public class EmotionMappingServiceTests
         _mappingRepoMock.Setup(x => x.GetByUserAndEmotionAsync(userId, emotion))
             .ReturnsAsync(new List<EmotionMapping> { mapping });
 
-        // Act
+        // Act - Chama FindMatchingRuleAsync
         var result = await _service.FindMatchingRuleAsync(userId, emotion, percentage);
 
-        // Assert
+        // Assert - Verifica se não foi encontrada mensagem (sem correspondência para porcentagem)
         result.message.Should().Be("Moderate Match");
     }
 
@@ -570,10 +564,10 @@ public class EmotionMappingServiceTests
         _mappingRepoMock.Setup(x => x.GetByUserAndEmotionAsync(userId, emotion))
             .ReturnsAsync(new List<EmotionMapping> { mapping });
 
-        // Act
+        // Act - Chama FindMatchingMessageAsync
         var result = await _service.FindMatchingRuleAsync(userId, emotion, percentage);
 
-        // Assert
+        // Assert - Verifica se a mensagem retornada corresponde a "High Match"
         result.message.Should().BeNull();
     }
 
@@ -596,10 +590,10 @@ public class EmotionMappingServiceTests
         _mappingRepoMock.Setup(x => x.GetByUserAndEmotionAsync(userId, emotion))
             .ReturnsAsync(new List<EmotionMapping> { mapping });
 
-        // Act
+        // Act - Chama FindMatchingMessageAsync
         var result = await _service.FindMatchingMessageAsync(userId, emotion, percentage);
 
-        // Assert
+        // Assert - Verifica se a mensagem retornada corresponde a "High Match"
         result.Should().Be("High Match");
     }
 

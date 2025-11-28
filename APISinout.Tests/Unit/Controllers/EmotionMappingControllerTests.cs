@@ -22,6 +22,7 @@ namespace APISinout.Tests.Unit.Controllers;
 public class EmotionMappingControllerTests
 {
     private readonly Mock<IEmotionMappingService> _mockEmotionMappingService;
+    private readonly Mock<Microsoft.Extensions.Logging.ILogger<EmotionMappingController>> _loggerMock;
     private readonly EmotionMappingController _controller;
     private readonly ClaimsPrincipal _adminUser;
     private readonly ClaimsPrincipal _regularUser;
@@ -29,6 +30,7 @@ public class EmotionMappingControllerTests
     public EmotionMappingControllerTests()
     {
         _mockEmotionMappingService = new Mock<IEmotionMappingService>();
+        _loggerMock = new Mock<Microsoft.Extensions.Logging.ILogger<EmotionMappingController>>();
 
         // Configurar usuário admin para testes
         _adminUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
@@ -46,7 +48,7 @@ public class EmotionMappingControllerTests
             new Claim(ClaimTypes.Role, "Cuidador")
         }));
 
-        _controller = new EmotionMappingController(_mockEmotionMappingService.Object);
+        _controller = new EmotionMappingController(_mockEmotionMappingService.Object, _loggerMock.Object);
     }
 
     #region CreateMapping Tests

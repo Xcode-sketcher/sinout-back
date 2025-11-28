@@ -1,4 +1,4 @@
-#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type
+#pragma warning disable CS8600
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
@@ -6,6 +6,7 @@ using APISinout.Models;
 using APISinout.Services;
 using APISinout.Helpers;
 using APISinout.Data;
+using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using MongoDB.Bson;
 using System.Text.Json;
@@ -22,13 +23,15 @@ public class HistoryController : ControllerBase
     private readonly IHistoryService _historyService;
     private readonly IPatientRepository _patientRepository;
     private readonly IEmotionMappingService _emotionMappingService;
+    private readonly ILogger<HistoryController> _logger;
 
     // Construtor que injeta o serviço de histórico.
-    public HistoryController(IHistoryService historyService, IPatientRepository patientRepository, IEmotionMappingService emotionMappingService)
+    public HistoryController(IHistoryService historyService, IPatientRepository patientRepository, IEmotionMappingService emotionMappingService, ILogger<HistoryController> logger)
     {
         _historyService = historyService;
         _patientRepository = patientRepository;
         _emotionMappingService = emotionMappingService;
+        _logger = logger;
     }
 
     // Método para obter histórico por paciente.
@@ -85,7 +88,8 @@ public class HistoryController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = "Erro interno", error = ex.Message });
+            _logger.LogError("Erro ao obter histórico: {Message}", ex.Message);
+            return StatusCode(500, new { message = "Erro interno" });
         }
     }
 
@@ -135,43 +139,24 @@ public class HistoryController : ControllerBase
     {
         try
         {
-            Console.WriteLine("═══════════════════════════════════════════════════════");
-            Console.WriteLine("🎯 RECEBENDO REQUISIÇÃO DE EMOÇÃO");
-            Console.WriteLine("═══════════════════════════════════════════════════════");
             
             if (request == null)
             {
-                Console.WriteLine("❌ Request é NULL!");
+                _logger.LogWarning("CuidadorEmotion request inválido ou vazio recebido.");
                 return BadRequest(new { sucesso = false, message = "Request vazio ou formato inválido" });
             }
-
-            Console.WriteLine($"📥 CuidadorId: {request.cuidadorId}");
-            Console.WriteLine($"📥 PatientId: {request.patientId}");
-            Console.WriteLine($"📥 DominantEmotion: {request.dominantEmotion}");
-            Console.WriteLine($"📥 EmotionsDetected count: {request.emotionsDetected?.Count ?? 0}");
             
-            if (request.emotionsDetected != null && request.emotionsDetected.Count > 0)
-            {
-                Console.WriteLine("📊 Emotions recebidas:");
-                foreach (var kvp in request.emotionsDetected)
-                {
-                    Console.WriteLine($"   - {kvp.Key}: {kvp.Value:F2}%");
-                }
-            }
-            else
-            {
-                Console.WriteLine("⚠️ EmotionsDetected está vazio ou null!");
-            }
 
-            // Ensure emotionsDetected is not null or empty
+            // Garantir que emotionsDetected não seja nulo ou vazio
             if (request.emotionsDetected == null || request.emotionsDetected.Count == 0)
             {
-                Console.WriteLine($"⚠️ Aplicando fallback: {request.dominantEmotion ?? "neutral"} = 1.0");
+                _logger.LogDebug("CuidadorEmotion: emotionsDetected vazio. Aplicando fallback.");
                 request.emotionsDetected = new Dictionary<string, double> { { request.dominantEmotion ?? "neutral", 1.0 } };
             }
 
             if (string.IsNullOrEmpty(request.cuidadorId))
             {
+                _logger.LogWarning("CuidadorEmotion: campo cuidadorId ausente.");
                 return BadRequest(new { sucesso = false, message = "Request vazio ou formato inválido" });
             }
 
@@ -180,6 +165,7 @@ public class HistoryController : ControllerBase
 
             if (request.cuidadorId != userId && userRole != "Admin")
             {
+                _logger.LogWarning("CuidadorEmotion: tentativa não autorizada de salvar emoção.");
                 return Forbid();
             }
 
@@ -240,6 +226,10 @@ public class HistoryController : ControllerBase
                 );
                 triggeredMessage = ruleResult.message;
                 triggeredRuleId = ruleResult.ruleId;
+                if (!string.IsNullOrEmpty(triggeredRuleId))
+                {
+                    _logger.LogInformation("CuidadorEmotion: regra de mapeamento acionada.");
+                }
             }
 
             var historyRecord = new HistoryRecord
@@ -254,16 +244,12 @@ public class HistoryController : ControllerBase
                 TriggeredRuleId = triggeredRuleId
             };
 
-            Console.WriteLine("💾 Salvando no MongoDB...");
-            Console.WriteLine($"   UserId: {historyRecord.UserId}");
-            Console.WriteLine($"   PatientId: {historyRecord.PatientId}");
-            Console.WriteLine($"   DominantEmotion: {historyRecord.DominantEmotion}");
-            Console.WriteLine($"   EmotionsDetected count: {historyRecord.EmotionsDetected?.Count ?? 0}");
+            // Persistindo o registro no MongoDB
 
             await _historyService.CreateHistoryRecordAsync(historyRecord);
+            _logger.LogInformation("CuidadorEmotion: registro salvo com sucesso. EmotionsCount={Count}", historyRecord.EmotionsDetected?.Count ?? 0);
 
-            Console.WriteLine("✅ Emoção salva com sucesso!");
-            Console.WriteLine("═══════════════════════════════════════════════════════\n");
+            // Registro salvo com sucesso
 
             return Ok(new
             {
@@ -279,14 +265,15 @@ public class HistoryController : ControllerBase
         }
         catch (AppException ex)
         {
-            Console.WriteLine($"❌ AppException: {ex.Message}");
+            // AppException ocorrida - retornando BadRequest
+            _logger.LogWarning("AppException ao salvar CuidadorEmotion: {Message}", ex.Message);
             return BadRequest(new { message = ex.Message });
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"💥 Exception crítica: {ex.Message}");
-            Console.WriteLine($"StackTrace: {ex.StackTrace}");
-            return StatusCode(500, new { message = "Erro interno ao salvar emoção", error = ex.Message });
+            // Exception crítica ocorrida - retornando 500 Internal Server Error
+            _logger.LogError("Erro ao salvar CuidadorEmotion: {Message}", ex.Message);
+            return StatusCode(500, new { message = "Erro interno ao salvar emoção" });
         }
     }
 }

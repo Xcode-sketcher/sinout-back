@@ -1,9 +1,3 @@
-// ============================================================
-// 👥 TESTES DO USERSERVICE - GESTÃO DE USUÁRIOS
-// ============================================================
-// Valida a lógica de negócio de CRUD de usuários,
-// incluindo validações e regras de autorização.
-
 using Xunit;
 using FluentAssertions;
 using Moq;

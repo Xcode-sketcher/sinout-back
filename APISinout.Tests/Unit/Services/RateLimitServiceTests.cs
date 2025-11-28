@@ -1,9 +1,3 @@
-// ============================================================
-// 🛡️ TESTES DO RATELIMITSERVICE - PROTEÇÃO CONTRA SPAM
-// ============================================================
-// Valida que o serviço de rate limiting funciona corretamente
-// para proteger endpoints sensíveis contra abuso e spam.
-
 using Xunit;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
@@ -26,74 +20,74 @@ public class RateLimitServiceTests
     [Fact]
     public void IsRateLimited_NoAttempts_ReturnsFalse()
     {
-        // Arrange - Configura chave sem tentativas anteriores
+            // Arrange - Configura chave sem tentativas anteriores
         var key = "test@example.com";
 
-        // Act
+        // Act - Executa a ação a ser testada
         var result = _service.IsRateLimited(key, maxAttempts: 3, windowMinutes: 15);
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         result.Should().BeFalse();
     }
 
     [Fact]
     public void IsRateLimited_BelowLimit_ReturnsFalse()
     {
-        // Arrange - Registra tentativas abaixo do limite
+            // Arrange - Registra tentativas abaixo do limite
         var key = "test@example.com";
         _service.RecordAttempt(key);
         _service.RecordAttempt(key);
 
-        // Act
+        // Act - Executa a ação a ser testada
         var result = _service.IsRateLimited(key, maxAttempts: 3, windowMinutes: 15);
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         result.Should().BeFalse();
     }
 
     [Fact]
     public void IsRateLimited_AtLimit_ReturnsTrue()
     {
-        // Arrange - Registra tentativas exatamente no limite
+            // Arrange - Registra tentativas exatamente no limite
         var key = "test@example.com";
         _service.RecordAttempt(key);
         _service.RecordAttempt(key);
         _service.RecordAttempt(key);
 
-        // Act
+        // Act - Executa a ação a ser testada
         var result = _service.IsRateLimited(key, maxAttempts: 3, windowMinutes: 15);
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         result.Should().BeTrue();
     }
 
     [Fact]
     public void IsRateLimited_AboveLimit_ReturnsTrue()
     {
-        // Arrange - Registra tentativas acima do limite
+            // Arrange - Registra tentativas acima do limite
         var key = "test@example.com";
         for (int i = 0; i < 5; i++)
         {
             _service.RecordAttempt(key);
         }
 
-        // Act
+        // Act - Executa a ação sob teste
         var result = _service.IsRateLimited(key, maxAttempts: 3, windowMinutes: 15);
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         result.Should().BeTrue();
     }
 
     [Fact]
     public void RecordAttempt_AddsAttemptToKey()
     {
-        // Arrange - Configura chave para registrar tentativa
+            // Arrange - Configura chave para registrar tentativa
         var key = "test@example.com";
 
-        // Act
+        // Act - Executa a ação sob teste
         _service.RecordAttempt(key);
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         var isLimited = _service.IsRateLimited(key, maxAttempts: 1, windowMinutes: 15);
         isLimited.Should().BeTrue();
     }
@@ -101,17 +95,17 @@ public class RateLimitServiceTests
     [Fact]
     public void RecordAttempt_MultipleKeys_TracksIndependently()
     {
-        // Arrange - Configura múltiplas chaves para rastreamento independente
+            // Arrange - Configura múltiplas chaves para rastreamento independente
         var key1 = "user1@example.com";
         var key2 = "user2@example.com";
 
-        // Act
+        // Act - Executa a ação sob teste
         _service.RecordAttempt(key1);
         _service.RecordAttempt(key1);
         _service.RecordAttempt(key1);
         _service.RecordAttempt(key2);
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         _service.IsRateLimited(key1, maxAttempts: 3, windowMinutes: 15).Should().BeTrue();
         _service.IsRateLimited(key2, maxAttempts: 3, windowMinutes: 15).Should().BeFalse();
     }
@@ -119,16 +113,16 @@ public class RateLimitServiceTests
     [Fact]
     public void ClearAttempts_RemovesAttemptsForKey()
     {
-        // Arrange - Registra tentativas e depois limpa
+            // Arrange - Registra tentativas e depois limpa
         var key = "test@example.com";
         _service.RecordAttempt(key);
         _service.RecordAttempt(key);
         _service.RecordAttempt(key);
 
-        // Act
+        // Act - Executa a ação sob teste
         _service.ClearAttempts(key);
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         var isLimited = _service.IsRateLimited(key, maxAttempts: 3, windowMinutes: 15);
         isLimited.Should().BeFalse();
     }
@@ -136,7 +130,7 @@ public class RateLimitServiceTests
     [Fact]
     public void ClearAttempts_NonExistentKey_DoesNotThrow()
     {
-        // Arrange - Configura chave inexistente
+            // Arrange - Configura chave inexistente
         var key = "nonexistent@example.com";
 
         // Act & Assert
@@ -147,7 +141,7 @@ public class RateLimitServiceTests
     [Fact]
     public void IsRateLimited_DifferentLimits_AppliesCorrectly()
     {
-        // Arrange - Registra tentativas para testar diferentes limites
+            // Arrange - Registra tentativas para testar diferentes limites
         var key = "test@example.com";
         _service.RecordAttempt(key);
         _service.RecordAttempt(key);
@@ -162,13 +156,13 @@ public class RateLimitServiceTests
     [Fact]
     public void IsRateLimited_LogsWarning_WhenLimitExceeded()
     {
-        // Arrange - Registra tentativas até exceder o limite
+            // Arrange - Registra tentativas até exceder o limite
         var key = "test@example.com";
         _service.RecordAttempt(key);
         _service.RecordAttempt(key);
         _service.RecordAttempt(key);
 
-        // Act
+        // Act - Executa a ação sob teste
         _service.IsRateLimited(key, maxAttempts: 3, windowMinutes: 15);
 
         // Assert - verifica que o log de warning foi chamado
@@ -185,13 +179,13 @@ public class RateLimitServiceTests
     [Fact]
     public void RecordAttempt_LogsInformation()
     {
-        // Arrange - Configura chave para registrar tentativa com log
+            // Arrange - Configura chave para registrar tentativa com log
         var key = "test@example.com";
 
-        // Act
+        // Act - Executa a ação sob teste
         _service.RecordAttempt(key);
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         _loggerMock.Verify(
             x => x.Log(
                 LogLevel.Information,
@@ -205,14 +199,14 @@ public class RateLimitServiceTests
     [Fact]
     public void ClearAttempts_LogsInformation()
     {
-        // Arrange - Registra tentativa antes de limpar
+            // Arrange - Registra tentativa antes de limpar
         var key = "test@example.com";
         _service.RecordAttempt(key);
 
-        // Act
+        // Act - Executa a ação sob teste
         _service.ClearAttempts(key);
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         _loggerMock.Verify(
             x => x.Log(
                 LogLevel.Information,
@@ -226,7 +220,7 @@ public class RateLimitServiceTests
     [Fact]
     public async Task IsRateLimited_ConcurrentAccess_HandlesCorrectly()
     {
-        // Arrange - Configura chave para teste de acesso concorrente
+            // Arrange - Configura chave para teste de acesso concorrente
         var key = "test@example.com";
         var tasks = new List<Task>();
 
@@ -237,7 +231,7 @@ public class RateLimitServiceTests
         }
         await Task.WhenAll(tasks);
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         var isLimited = _service.IsRateLimited(key, maxAttempts: 5, windowMinutes: 15);
         isLimited.Should().BeTrue();
     }

@@ -1,6 +1,7 @@
 using APISinout.Models;
 using APISinout.Data;
 using APISinout.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace APISinout.Services;
 
@@ -8,11 +9,13 @@ public class PatientService : IPatientService
 {
     private readonly IPatientRepository _patientRepository;
     private readonly IUserRepository _userRepository;
+    private readonly ILogger<PatientService>? _logger;
 
-    public PatientService(IPatientRepository patientRepository, IUserRepository userRepository)
+    public PatientService(IPatientRepository patientRepository, IUserRepository userRepository, ILogger<PatientService>? logger = null)
     {
         _patientRepository = patientRepository;
         _userRepository = userRepository;
+        _logger = logger;
     }
 
     // Obtém um paciente por ID.
@@ -97,6 +100,7 @@ public class PatientService : IPatientService
         }
 
         await _patientRepository.UpdatePatientAsync(id, patient);
+        _logger?.LogInformation("Patient updated: Id={PatientId}", id);
 
         string? cuidadorName = null;
         if (!string.IsNullOrEmpty(patient.CuidadorId))
@@ -120,6 +124,7 @@ public class PatientService : IPatientService
             throw new AppException("Acesso negado");
 
         await _patientRepository.DeletePatientAsync(id);
+        _logger?.LogInformation("Patient deleted: Id={PatientId}", id);
     }
 
     // Cria um novo paciente.
@@ -160,6 +165,7 @@ public class PatientService : IPatientService
         };
 
         await _patientRepository.CreatePatientAsync(patient);
+        _logger?.LogInformation("Patient created: Id={PatientId}, CuidadorId={CuidadorId}", patient.Id, patient.CuidadorId);
 
         var targetCuidador = await _userRepository.GetByIdAsync(targetCuidadorId);
         return new PatientResponse(patient, targetCuidador?.Name);

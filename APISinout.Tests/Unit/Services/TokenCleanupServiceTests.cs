@@ -1,9 +1,3 @@
-// ============================================================
-// 🧹 TESTES DO TOKENCLEANUPSERVICE - LIMPEZA DE TOKENS
-// ============================================================
-// Valida a limpeza automática de tokens expirados de reset de senha,
-// incluindo execução em background e tratamento de cancelamento.
-
 using Xunit;
 using FluentAssertions;
 using Moq;
@@ -31,7 +25,7 @@ public class TokenCleanupServiceTests
         _serviceScopeMock = new Mock<IServiceScope>();
         _serviceScopeFactoryMock = new Mock<IServiceScopeFactory>();
 
-        // Setup do service scope
+        // Arrange - Configura o escopo do serviço (service scope)
         _serviceScopeMock.Setup(x => x.ServiceProvider).Returns(_serviceProviderMock.Object);
         _serviceProviderMock.Setup(x => x.GetService(typeof(IPasswordResetRepository)))
             .Returns(_repositoryMock.Object);
@@ -183,7 +177,7 @@ public class TokenCleanupServiceTests
         // Arrange - Configura falha no repositório para teste de tratamento de erro
         var service = new TokenCleanupService(_serviceProviderMock.Object, _loggerMock.Object);
         var cts = new CancellationTokenSource();
-        cts.CancelAfter(TimeSpan.FromMilliseconds(200)); // Run for a short time
+        cts.CancelAfter(TimeSpan.FromMilliseconds(200)); // Executa por um curto período
 
         _repositoryMock.Setup(x => x.DeleteExpiredTokensAsync())
             .ThrowsAsync(new Exception("Database error"));
@@ -197,7 +191,7 @@ public class TokenCleanupServiceTests
         }
         catch (OperationCanceledException)
         {
-            // Expected
+            // Esperado
         }
 
         // Assert - Verifica se o erro foi logado

@@ -52,7 +52,7 @@ public class MongoDbContextTests
         var configureMappingsMethod = contextType.GetMethod("ConfigureMappings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         if (configureMappingsMethod != null)
         {
-            // Create context instance without calling constructor
+            // Act - Cria instância do contexto sem chamar o construtor
             var contextInstance = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(contextType);
             configureMappingsMethod.Invoke(contextInstance, null);
         }
@@ -61,7 +61,7 @@ public class MongoDbContextTests
         bool isRegisteredAfter = BsonClassMap.IsClassMapRegistered(typeof(User));
         Assert.True(isRegisteredAfter, "User class map should be registered after ConfigureMappings");
 
-        // Verify we can lookup the class map
+        // Assert - Verifica se é possível recuperar o ClassMap do tipo User
         try
         {
             var classMap = BsonClassMap.LookupClassMap(typeof(User));
@@ -80,7 +80,7 @@ public class MongoDbContextTests
         var contextType = typeof(MongoDbContext);
         var configureMappingsMethod = contextType.GetMethod("ConfigureMappings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         
-        // Ensure BsonClassMap is registered
+        // Arrange - Garante que o BsonClassMap esteja registrado
         if (!BsonClassMap.IsClassMapRegistered(typeof(User)))
         {
             BsonClassMap.RegisterClassMap<User>(cm =>
@@ -142,7 +142,7 @@ public class MongoDbContextTests
         Assert.NotNull(context.HistoryRecords);
         Assert.NotNull(context.PasswordResetTokens);
         
-        // Verify mapping
+        // Assert - Verifica se o mapeamento do tipo User está registrado
         var isUserMapRegistered = BsonClassMap.IsClassMapRegistered(typeof(User));
         Assert.True(isUserMapRegistered, "User class map should be registered");
     }

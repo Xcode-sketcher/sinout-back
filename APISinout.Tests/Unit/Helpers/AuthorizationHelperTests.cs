@@ -46,10 +46,10 @@ public class AuthorizationHelperTests
         var identity = new ClaimsIdentity(claims, "TestAuth");
         var claimsPrincipal = new ClaimsPrincipal(identity);
 
-        // Act
+        // Act - Executa extração do userId
         var result = AuthorizationHelper.GetCurrentUserId(claimsPrincipal);
 
-        // Assert
+        // Assert - Verifica se retornou o userId correto
         result.Should().Be("456");
     }
 

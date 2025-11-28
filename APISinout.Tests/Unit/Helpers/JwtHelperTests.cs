@@ -39,13 +39,13 @@ public class JwtHelperTests
     [Fact]
     public void GenerateToken_WithValidUser_ShouldReturnValidJwtToken()
     {
-        // Arrange
+        // Arrange - Prepara dados e configuração para geração de token (usuário)
         var user = UserFixtures.CreateValidUser();
 
-        // Act
+        // Act - Executa a geração do token
         var token = JwtHelper.GenerateToken(user, _configuration);
 
-        // Assert
+        // Assert - Verifica o token JWT gerado
         token.Should().NotBeNullOrEmpty();
         
         var handler = new JwtSecurityTokenHandler();
@@ -59,13 +59,13 @@ public class JwtHelperTests
     [Fact]
     public void GenerateToken_ShouldIncludeUserIdClaim()
     {
-        // Arrange
+        // Arrange - Prepara dados para gerar token com userId definido
         var user = UserFixtures.CreateValidUser("123");
 
-        // Act
+        // Act - Executa a geração do token
         var token = JwtHelper.GenerateToken(user, _configuration);
 
-        // Assert
+        // Assert - Verifica se o claim userId está presente
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
         
@@ -77,13 +77,13 @@ public class JwtHelperTests
     [Fact]
     public void GenerateToken_ShouldIncludeEmailClaim()
     {
-        // Arrange
+        // Arrange - Prepara dados para gerar token com email definido
         var user = UserFixtures.CreateValidUser();
 
-        // Act
+        // Act - Executa a geração do token
         var token = JwtHelper.GenerateToken(user, _configuration);
 
-        // Assert
+        // Assert - Verifica se o claim email está presente
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
         
@@ -95,13 +95,13 @@ public class JwtHelperTests
     [Fact]
     public void GenerateToken_ShouldIncludeRoleClaim()
     {
-        // Arrange
+        // Arrange - Prepara dados para gerar token com role definido
         var user = UserFixtures.CreateValidUser();
 
-        // Act
+        // Act - Executa a geração do token
         var token = JwtHelper.GenerateToken(user, _configuration);
 
-        // Assert
+        // Assert - Verifica se o claim role está presente
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
         
@@ -113,14 +113,14 @@ public class JwtHelperTests
     [Fact]
     public void GenerateToken_ShouldHaveCorrectExpiration()
     {
-        // Arrange
+        // Arrange - Prepara dados e captura timestamp antes da geração do token
         var user = UserFixtures.CreateValidUser();
         var beforeGeneration = DateTime.UtcNow;
 
-        // Act
+        // Act - Executa a geração do token
         var token = JwtHelper.GenerateToken(user, _configuration);
 
-        // Assert
+        // Assert - Verifica se a expiração do token está correta
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
         
@@ -133,13 +133,13 @@ public class JwtHelperTests
     [Fact]
     public void GenerateToken_ShouldBeValidJwtFormat()
     {
-        // Arrange
+        // Arrange - Prepara dados para gerar token e validar formato JWT
         var user = UserFixtures.CreateValidUser();
 
-        // Act
+        // Act - Executa a geração do token
         var token = JwtHelper.GenerateToken(user, _configuration);
 
-        // Assert
+        // Assert - Verifica o formato JWT do token gerado
         var handler = new JwtSecurityTokenHandler();
         handler.CanReadToken(token).Should().BeTrue();
         
@@ -150,26 +150,26 @@ public class JwtHelperTests
     [Fact]
     public void GenerateToken_WithDifferentUsers_ShouldGenerateDifferentTokens()
     {
-        // Arrange
+        // Arrange - Prepara dois usuários distintos para comparação de tokens
         var user1 = UserFixtures.CreateValidUser("1");
         var user2 = UserFixtures.CreateValidUser("2");
 
-        // Act
+        // Act - Gera tokens para usuários distintos
         var token1 = JwtHelper.GenerateToken(user1, _configuration);
         var token2 = JwtHelper.GenerateToken(user2, _configuration);
 
-        // Assert
+        // Assert - Verifica que tokens gerados são diferentes
         token1.Should().NotBe(token2);
     }
 
     [Fact]
     public void GenerateToken_WithNullEmail_ShouldThrowArgumentException()
     {
-        // Arrange
+        // Arrange - Prepara usuário com email null para testar exceção
         var user = UserFixtures.CreateValidUser();
         user.Email = null!;
 
-        // Act & Assert
+        // Act & Assert - Executa a ação e verifica exceção para email null
         var exception = Assert.Throws<ArgumentException>(() => JwtHelper.GenerateToken(user, _configuration));
         exception.Message.Should().Contain("Email do usuário não pode ser null ou vazio");
     }
@@ -177,11 +177,11 @@ public class JwtHelperTests
     [Fact]
     public void GenerateToken_WithEmptyEmail_ShouldThrowArgumentException()
     {
-        // Arrange
+        // Arrange - Prepara usuário com email vazio para testar exceção
         var user = UserFixtures.CreateValidUser();
         user.Email = string.Empty;
 
-        // Act & Assert
+        // Act & Assert - Executa a ação e verifica exceção para email vazio
         var exception = Assert.Throws<ArgumentException>(() => JwtHelper.GenerateToken(user, _configuration));
         exception.Message.Should().Contain("Email do usuário não pode ser null ou vazio");
     }
@@ -189,11 +189,11 @@ public class JwtHelperTests
     [Fact]
     public void GenerateToken_WithNullRole_ShouldThrowArgumentException()
     {
-        // Arrange
+        // Arrange - Prepara usuário com role null para testar exceção
         var user = UserFixtures.CreateValidUser();
         user.Role = null!;
 
-        // Act & Assert
+        // Act & Assert - Executa a ação e verifica exceção para role null
         var exception = Assert.Throws<ArgumentException>(() => JwtHelper.GenerateToken(user, _configuration));
         exception.Message.Should().Contain("Role do usuário não pode ser null ou vazio");
     }
@@ -201,11 +201,11 @@ public class JwtHelperTests
     [Fact]
     public void GenerateToken_WithEmptyRole_ShouldThrowArgumentException()
     {
-        // Arrange
+        // Arrange - Prepara usuário com role vazio para testar exceção
         var user = UserFixtures.CreateValidUser();
         user.Role = string.Empty;
 
-        // Act & Assert
+        // Act & Assert - Executa a ação e verifica exceção para role vazio
         var exception = Assert.Throws<ArgumentException>(() => JwtHelper.GenerateToken(user, _configuration));
         exception.Message.Should().Contain("Role do usuário não pode ser null ou vazio");
     }
