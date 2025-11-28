@@ -92,7 +92,7 @@ public class UserServiceTests
 
         // Assert - Deve lançar exceção de usuário não encontrado
         await action.Should().ThrowAsync<Exception>()
-            .WithMessage("User not found");
+            .WithMessage("Usuário não encontrado");
     }
 
     #endregion
@@ -131,7 +131,7 @@ public class UserServiceTests
 
         // Assert - Deve lançar exceção de usuário não encontrado
         await action.Should().ThrowAsync<Exception>()
-            .WithMessage("User not found");
+            .WithMessage("Usuário não encontrado");
     }
 
     #endregion
@@ -285,7 +285,7 @@ public class UserServiceTests
 
         // Assert - Deve lançar exceção de usuário não encontrado
         await action.Should().ThrowAsync<Exception>()
-            .WithMessage("User not found");
+            .WithMessage("Usuário não encontrado");
     }
 
     #endregion
@@ -324,7 +324,7 @@ public class UserServiceTests
 
         // Assert - Deve lançar exceção de usuário não encontrado
         await action.Should().ThrowAsync<Exception>()
-            .WithMessage("User not found");
+            .WithMessage("Usuário não encontrado");
     }
 
     #endregion
