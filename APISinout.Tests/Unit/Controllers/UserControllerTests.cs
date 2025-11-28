@@ -23,6 +23,7 @@ public class UserControllerTests
 {
     private readonly Mock<IUserService> _mockUserService;
     private readonly Mock<IPatientService> _mockPatientService;
+    private readonly Mock<Microsoft.Extensions.Logging.ILogger<UserController>> _loggerMock;
     private readonly UserController _controller;
     private readonly ClaimsPrincipal _adminUser;
     private readonly ClaimsPrincipal _regularUser;
@@ -31,6 +32,7 @@ public class UserControllerTests
     {
         _mockUserService = new Mock<IUserService>();
         _mockPatientService = new Mock<IPatientService>();
+        _loggerMock = new Mock<Microsoft.Extensions.Logging.ILogger<UserController>>();
 
         // Configurar usuário admin para testes
         _adminUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
@@ -48,7 +50,7 @@ public class UserControllerTests
             new Claim(ClaimTypes.Role, "Cuidador")
         }));
 
-        _controller = new UserController(_mockUserService.Object, _mockPatientService.Object);
+        _controller = new UserController(_mockUserService.Object, _mockPatientService.Object, _loggerMock.Object);
     }
 
     #region GetCurrentUser Tests

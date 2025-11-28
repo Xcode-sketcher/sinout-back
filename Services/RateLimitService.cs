@@ -2,24 +2,16 @@ using System.Collections.Concurrent;
 
 namespace APISinout.Services;
 
-/// <summary>
-/// Interface para o serviço de rate limiting.
-/// </summary>
+// Interface para o serviço de rate limiting.
 public interface IRateLimitService
 {
-    /// <summary>
-    /// Verifica se a chave está rate limited.
-    /// </summary>
+    // Verifica se a chave está rate limited.
     bool IsRateLimited(string key, int maxAttempts = 3, int windowMinutes = 15);
 
-    /// <summary>
-    /// Registra uma tentativa para a chave.
-    /// </summary>
+    // Registra uma tentativa para a chave.
     void RecordAttempt(string key);
 
-    /// <summary>
-    /// Limpa as tentativas para a chave.
-    /// </summary>
+    // Limpa as tentativas para a chave.
     void ClearAttempts(string key);
 }
 

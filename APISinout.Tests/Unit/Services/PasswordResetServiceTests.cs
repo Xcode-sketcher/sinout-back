@@ -1,9 +1,3 @@
-// ============================================================
-// 🔑 TESTES DO PASSWORDRESETSERVICE - RESET DE SENHA
-// ============================================================
-// Valida a lógica de reset de senha, geração de tokens,
-// validação de tokens e alteração de senha com segurança.
-
 using Xunit;
 using Moq;
 using FluentAssertions;

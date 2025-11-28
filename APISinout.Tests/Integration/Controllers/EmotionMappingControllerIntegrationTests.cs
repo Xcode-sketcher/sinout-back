@@ -46,7 +46,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
 
         await httpClient.PostAsJsonAsync("/api/auth/login", loginRequest);
 
-        // Get current user info using cookies
+        // Obter informações do usuário atual usando cookies
         var userResponse = await httpClient.GetFromJsonAsync<UserResponse>("/api/users/me");
         userResponse.Should().NotBeNull();
         return userResponse!.UserId!;
@@ -55,7 +55,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     [Fact]
     public async Task CreateMapping_WithValidData_ShouldReturn201Created()
     {
-        // Arrange
+        // Arrange - Prepara usuário e dados para o teste
         var userId = await GetCuidadorUserId();
 
 
@@ -69,10 +69,10 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
             Priority = 1
         };
 
-        // Act
+        // Act - Executa a requisição para criar mapeamento
         var response = await _client.PostAsJsonAsync("/api/emotion-mappings", request);
 
-        // Assert
+        // Assert - Verifica status e conteúdo da resposta
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var mapping = await response.Content.ReadFromJsonAsync<EmotionMappingResponse>();
         mapping.Should().NotBeNull();
@@ -83,7 +83,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     [Fact]
     public async Task CreateMapping_WithoutUserId_ShouldUseCurrentUser()
     {
-        // Arrange
+        // Arrange - Prepara usuário autenticado para o teste
         await GetCuidadorUserId();
 
 
@@ -96,10 +96,10 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
             Priority = 1
         };
 
-        // Act
+        // Act - Executa a requisição para criar mapeamento
         var response = await _client.PostAsJsonAsync("/api/emotion-mappings", request);
 
-        // Assert
+        // Assert - Verifica status e conteúdo da resposta
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var mapping = await response.Content.ReadFromJsonAsync<EmotionMappingResponse>();
         mapping.Should().NotBeNull();
@@ -108,7 +108,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     [Fact]
     public async Task CreateMapping_WithoutAuth_ShouldReturn401Unauthorized()
     {
-        // Arrange
+        // Arrange - Prepara requisição inválida sem autenticação
         var request = new EmotionMappingRequest
         {
             UserId = "1",
@@ -119,21 +119,21 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
             Priority = 1
         };
 
-        // Act
+        // Act - Executa a requisição para criar mapeamento e exceder limite
         var response = await _client.PostAsJsonAsync("/api/emotion-mappings", request);
 
-        // Assert
+        // Assert - Verifica que retorna BadRequest
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task CreateMapping_ExceedingLimit_ShouldReturn400BadRequest()
     {
-        // Arrange
+        // Arrange - Prepara usuário e registros para exceder limite de mapeamentos
         var userId = await GetCuidadorUserId();
 
 
-        // Create first mapping
+        // Criar primeiro mapeamento
         var request1 = new EmotionMappingRequest
         {
             UserId = userId,
@@ -145,7 +145,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         };
         await _client.PostAsJsonAsync("/api/emotion-mappings", request1);
 
-        // Create second mapping (should succeed - max is 2)
+        // Criar segundo mapeamento (deve ser bem-sucedido - máximo é 2)
         var request2 = new EmotionMappingRequest
         {
             UserId = userId,
@@ -157,7 +157,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         };
         await _client.PostAsJsonAsync("/api/emotion-mappings", request2);
 
-        // Try to create third mapping (should fail)
+        // Tentar criar terceiro mapeamento (deve falhar)
         var request3 = new EmotionMappingRequest
         {
             UserId = userId,
@@ -168,21 +168,21 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
             Priority = 1
         };
 
-        // Act
+        // Act - Executa a requisição para obter mapeamentos do usuário
         var response = await _client.PostAsJsonAsync("/api/emotion-mappings", request3);
 
-        // Assert
+        // Assert - Verifica status e lista de mapeamentos
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task GetMyMappings_WithValidToken_ShouldReturn200OK()
     {
-        // Arrange
+        // Arrange - Prepara dados e mocks para o teste
         var userId = await GetCuidadorUserId();
 
 
-        // Create a mapping first
+        // Criar um mapeamento primeiro
         var createRequest = new EmotionMappingRequest
         {
             UserId = userId,
@@ -194,10 +194,10 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         };
         await _client.PostAsJsonAsync("/api/emotion-mappings", createRequest);
 
-        // Act
+        // Act - Executa a requisição sem autenticação para listar regras
         var response = await _client.GetAsync("/api/emotion-mappings/my-rules");
 
-        // Assert
+        // Assert - Verifica que retorna Unauthorized
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var mappings = await response.Content.ReadFromJsonAsync<List<EmotionMappingResponse>>();
         mappings.Should().NotBeNull();
@@ -207,21 +207,21 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     [Fact]
     public async Task GetMyMappings_WithoutAuth_ShouldReturn401Unauthorized()
     {
-        // Act
+        // Act - Executa a requisição para listar regras sem autenticação
         var response = await _client.GetAsync("/api/emotion-mappings/my-rules");
 
-        // Assert
+        // Assert - Verifica que retorna Unauthorized
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task GetMappingsByUser_AsOwner_ShouldReturn200OK()
     {
-        // Arrange
+        // Arrange - Prepara dados e mocks para o teste
         var userId = await GetCuidadorUserId();
 
 
-        // Create a mapping first
+        // Criar um mapeamento primeiro
         var createRequest = new EmotionMappingRequest
         {
             UserId = userId,
@@ -233,10 +233,10 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         };
         await _client.PostAsJsonAsync("/api/emotion-mappings", createRequest);
 
-        // Act
+        // Act - Executa a requisição para obter mapeamentos do usuário
         var response = await _client.GetAsync($"/api/emotion-mappings/user/{userId}");
 
-        // Assert
+        // Assert - Verifica status OK e lista de mapeamentos
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var mappings = await response.Content.ReadFromJsonAsync<List<EmotionMappingResponse>>();
         mappings.Should().NotBeNull();
@@ -247,7 +247,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     [Fact]
     public async Task GetMappingsByUser_AsNonOwner_ShouldReturn400BadRequest()
     {
-        // Arrange
+        // Arrange - Prepara dados e mocks para o teste
         var client1 = _factory.CreateClientWithCookies();
         var userId1 = await GetCuidadorUserId(client1);
         
@@ -256,21 +256,21 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         
 
 
-        // Act - Try to access another user's mappings using client2
+        // Act - Executa a requisição para tentar acessar mapeamentos de outro usuário
         var response = await client2.GetAsync($"/api/emotion-mappings/user/{userId1}");
 
-        // Assert
+        // Assert - Verifica que retorna BadRequest
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task UpdateMapping_AsOwner_ShouldReturn200OK()
     {
-        // Arrange
+        // Arrange - Prepara usuário, dados e mapeamentos para o teste
         var userId = await GetCuidadorUserId();
 
 
-        // Create a mapping
+        // Criar um mapeamento
         var createRequest = new EmotionMappingRequest
         {
             UserId = userId,
@@ -294,10 +294,10 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
             Priority = 1
         };
 
-        // Act
+        // Act - Executa a requisição para atualizar mapeamento
         var response = await _client.PutAsJsonAsync($"/api/emotion-mappings/{createdMapping?.Id ?? throw new InvalidOperationException("Id not found")}", updateRequest);
 
-        // Assert
+        // Assert - Verifica que update foi aplicado com sucesso
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var updated = await response.Content.ReadFromJsonAsync<EmotionMappingResponse>();
         updated.Should().NotBeNull();
@@ -307,7 +307,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     [Fact]
     public async Task UpdateMapping_AsNonOwner_ShouldReturn400BadRequest()
     {
-        // Arrange
+        // Arrange - Prepara usuário, dados e mapeamentos para o teste
         var client1 = _factory.CreateClientWithCookies();
         var userId1 = await GetCuidadorUserId(client1);
         
@@ -330,7 +330,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         var createdMapping = await createResponse.Content.ReadFromJsonAsync<EmotionMappingResponse>();
         createdMapping.Should().NotBeNull();
 
-        // Cuidador 2 tries to update it
+        // Cuidador 2 tenta atualizar
 
         var updateRequest = new EmotionMappingRequest
         {
@@ -342,21 +342,21 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
             Priority = 1
         };
 
-        // Act
+        // Act - Executa a requisição de update por outro usuário
         var response = await client2.PutAsJsonAsync($"/api/emotion-mappings/{createdMapping?.Id ?? throw new InvalidOperationException("Id not found")}", updateRequest);
 
-        // Assert
+        // Assert - Verifica que retorna BadRequest
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task DeleteMapping_AsOwner_ShouldReturn200OK()
     {
-        // Arrange
+        // Arrange - Prepara dados e mocks para o teste
         var userId = await GetCuidadorUserId();
 
 
-        // Create a mapping
+        // Criar um mapeamento
         var createRequest = new EmotionMappingRequest
         {
             UserId = userId,
@@ -371,17 +371,17 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         var createdMapping = await createResponse.Content.ReadFromJsonAsync<EmotionMappingResponse>();
         createdMapping.Should().NotBeNull();
 
-        // Act
+        // Act - Executa a requisição para deletar mapeamento
         var response = await _client.DeleteAsync($"/api/emotion-mappings/{createdMapping?.Id ?? throw new InvalidOperationException("Id not found")}");
 
-        // Assert
+        // Assert - Verifica que retorna OK
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]
     public async Task DeleteMapping_AsNonOwner_ShouldReturn400BadRequest()
     {
-        // Arrange
+        // Arrange - Prepara dados e mocks para o teste
         var client1 = _factory.CreateClientWithCookies();
         var userId1 = await GetCuidadorUserId(client1);
         
@@ -404,13 +404,13 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
         var createdMapping = await createResponse.Content.ReadFromJsonAsync<EmotionMappingResponse>();
         createdMapping.Should().NotBeNull();
 
-        // Cuidador 2 tries to delete it
+        // Cuidador 2 tenta deletar
 
 
-        // Act
+        // Act - Executa a requisição para deletar mapeamento por outro usuário
         var response = await client2.DeleteAsync($"/api/emotion-mappings/{createdMapping?.Id ?? throw new InvalidOperationException("Id not found")}");
 
-        // Assert
+        // Assert - Verifica que retorna BadRequest
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
@@ -419,7 +419,7 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
     [Fact]
     public async Task CreateMapping_WithInvalidPriority_ShouldReturn400BadRequest()
     {
-        // Arrange
+        // Arrange - Prepara dados e mocks para o teste
         var userId = await GetCuidadorUserId();
 
 
@@ -430,20 +430,20 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
             IntensityLevel = "high",
             MinPercentage = 80.0,
             Message = "Mensagem",
-            Priority = 3 // Invalid - only 1 or 2 allowed
+            Priority = 3 // Inválido - apenas 1 ou 2 permitidos
         };
 
-        // Act
+        // Act - Executa a requisição para criar mapeamento com prioridade inválida
         var response = await _client.PostAsJsonAsync("/api/emotion-mappings", request);
 
-        // Assert
+        // Assert - Verifica que retorna BadRequest devido à prioridade inválida
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task CreateMapping_WithInvalidPercentage_ShouldReturn400BadRequest()
     {
-        // Arrange
+        // Arrange - Prepara dados e mocks para o teste
         var userId = await GetCuidadorUserId();
 
 
@@ -452,15 +452,15 @@ public class EmotionMappingControllerIntegrationTests : IClassFixture<TestWebApp
             UserId = userId,
             Emotion = "happy",
             IntensityLevel = "high",
-            MinPercentage = 150.0, // Invalid - must be 0-100
+            MinPercentage = 150.0, // Inválido - deve estar entre 0 e 100
             Message = "Mensagem",
             Priority = 1
         };
 
-        // Act
+        // Act - Executa a requisição para criar mapeamento com porcentagem inválida
         var response = await _client.PostAsJsonAsync("/api/emotion-mappings", request);
 
-        // Assert
+        // Assert - Verifica que retorna BadRequest devido à porcentagem inválida
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 }

@@ -1,16 +1,17 @@
 using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Configuration;
+using APISinout.Helpers;
 
 namespace APISinout.Services;
 
-/// <summary>Interface para o serviço de email</summary>
+// Interface para o serviço de email
 public interface IEmailService
 {
-    /// <summary>Envia email de redefinição de senha</summary>
+    // Envia email de redefinição de senha
     Task SendPasswordResetEmailAsync(string toEmail, string resetCode);
 
-    /// <summary>Envia notificação de senha alterada</summary>
+    // Envia notificação de senha alterada
     Task SendPasswordChangedNotificationAsync(string toEmail);
 }
 
@@ -71,7 +72,7 @@ public class EmailService : IEmailService
         catch (Exception ex)
         {
             _logger.LogError(ex, "[EmailService] Erro ao enviar email de reset para {Email}", toEmail);
-            throw new Exception("Erro ao enviar email");
+            throw new AppException("Erro ao enviar email");
         }
     }
 
@@ -202,7 +203,7 @@ public class EmailService : IEmailService
         
         <div class='footer'>
             <p>Este é um email automático, por favor não responda.</p>
-            <p>&copy; 2025 Sinout - Sistema de Cuidados</p>
+            <p>&copy; 2025 Sinout</p>
         </div>
     </div>
 </body>
@@ -284,7 +285,7 @@ public class EmailService : IEmailService
         
         <div class='footer'>
             <p>Este é um email automático, por favor não responda.</p>
-            <p>&copy; 2025 Sinout - Sistema de Cuidados</p>
+            <p>&copy; 2025 Sinout</p>
         </div>
     </div>
 </body>

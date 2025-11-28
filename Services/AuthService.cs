@@ -1,6 +1,7 @@
 using APISinout.Models;
 using APISinout.Data;
 using APISinout.Helpers;
+using Microsoft.Extensions.Logging;
 
 
 namespace APISinout.Services;
@@ -10,15 +11,18 @@ public class AuthService : IAuthService
     private readonly IUserRepository _userRepository;
     private readonly IPatientService _patientService;
     private readonly IConfiguration _config;
+    private readonly ILogger<AuthService>? _logger;
 
     public AuthService(
         IUserRepository userRepository,
         IPatientService patientService,
-        IConfiguration config)
+        IConfiguration config,
+        ILogger<AuthService>? logger = null)
     {
         _userRepository = userRepository;
         _patientService = patientService;
         _config = config;
+        _logger = logger;
     }
 
     // Método para registrar um novo usuário
@@ -61,6 +65,7 @@ public class AuthService : IAuthService
         };
 
         await _userRepository.CreateUserAsync(user);
+        _logger?.LogInformation("User registered: Email={Email}", user.Email);
 
         // Sempre cria um paciente automaticamente durante o registro
         if (!string.IsNullOrEmpty(request.PatientName))
@@ -90,6 +95,7 @@ public class AuthService : IAuthService
 
         if (user == null)
         {
+            _logger?.LogWarning("Login failed: user not found for email {Email}", request.Email);
             throw new AppException("Credenciais inválidas");
         }
 
@@ -113,6 +119,7 @@ public class AuthService : IAuthService
 
             await _userRepository.UpdateUserAsync(user.Id!, user);
 
+            _logger?.LogWarning("Login failed: invalid password for {Email}", request.Email);
             throw new AppException("Credenciais inválidas");
         }
 
@@ -127,11 +134,12 @@ public class AuthService : IAuthService
         user.LockoutEndDate = null;
 
         await _userRepository.UpdateUserAsync(user.Id!, user);
+        _logger?.LogInformation("User logged in: Email={Email}", user.Email);
 
         return new AuthResponse
         {
             User = new UserResponse(user),
-            Token = JwtHelper.GenerateToken(user, _config)
+            Token = JwtHelper.GenerateToken(user, _config, _logger)
         };
     }
 

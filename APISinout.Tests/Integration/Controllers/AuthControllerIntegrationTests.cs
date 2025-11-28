@@ -23,7 +23,7 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
     [Fact]
     public async Task Register_WithValidData_ShouldReturn201Created()
     {
-        // Arrange
+        // Arrange - Prepara dados de registro
         var request = new RegisterRequest
         {
             Name = "Test User Integration",
@@ -34,17 +34,17 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
             Role = "Cuidador"
         };
 
-        // Act
+        // Act - Envia requisição de registro
         var response = await _client.PostAsJsonAsync("/api/auth/register", request);
 
-        // Assert
+        // Assert - Verifica se retornou Created e conteúdo da resposta
         response.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        // Check if HttpOnly cookies were set
+        // Assert - Verificar se cookies HttpOnly foram definidos
         var cookies = response.Headers.GetValues("Set-Cookie").ToList();
         cookies.Should().Contain(cookie => cookie.Contains("accessToken=") && cookie.Contains("httponly"));
 
-        // Response body should contain user info
+        // O corpo da resposta deve conter informações do usuário
         var responseContent = await response.Content.ReadAsStringAsync();
         responseContent.Should().Contain("\"user\"");
         responseContent.Should().Contain("\"email\"");
@@ -53,7 +53,7 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
     [Fact]
     public async Task Register_WithDuplicateEmail_ShouldReturn400BadRequest()
     {
-        // Arrange
+        // Arrange - Prepara dados e mocks para o teste
         var email = $"duplicate{Guid.NewGuid()}@test.com";
         var request1 = new RegisterRequest
         {
@@ -64,10 +64,10 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
             PatientName = "Patient Test"
         };
 
-        // First registration
+        // Primeiro registro
         await _client.PostAsJsonAsync("/api/auth/register", request1);
 
-        // Try to register again with same email
+        // Tentar registrar novamente com o mesmo email
         var request2 = new RegisterRequest
         {
             Name = "Second User",
@@ -77,57 +77,57 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
             PatientName = "Another Patient"
         };
 
-        // Act
+        // Act - Executa a ação a ser testada
         var response = await _client.PostAsJsonAsync("/api/auth/register", request2);
 
-        // Assert
+        // Assert - Verifica o resultado esperado
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task Register_WithWeakPassword_ShouldReturn400BadRequest()
     {
-        // Arrange
+        // Arrange - Prepara dados para o teste
         var request = new RegisterRequest
         {
             Name = "Weak Pass User",
             Email = $"weakpass{Guid.NewGuid()}@test.com",
-            Password = "Test@1", // too short/weak as per validator
+            Password = "Test@1", // muito curta/fraca conforme o validador
             Phone = "+55 11 99999-9999",
             PatientName = "Patient Test"
         };
 
-        // Act
+        // Act - Executa a requisição
         var response = await _client.PostAsJsonAsync("/api/auth/register", request);
 
-        // Assert
+        // Assert - Verifica o resultado
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task Register_WithEmptyPassword_ShouldReturn400BadRequest()
     {
-        // Arrange
+        // Arrange - Prepara dados para o teste (senha vazia)
         var request = new RegisterRequest
         {
             Name = "Empty Pass User",
             Email = $"emptypass{Guid.NewGuid()}@test.com",
-            Password = "", // empty password
+            Password = "", // senha vazia
             Phone = "+55 11 99999-9999",
             PatientName = "Patient Test"
         };
 
-        // Act
+        // Act - Envia requisição de login
         var response = await _client.PostAsJsonAsync("/api/auth/register", request);
 
-        // Assert
+        // Assert - Verifica status OK e cookies HttpOnly
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task Login_WithValidCredentials_ShouldReturn200OK()
     {
-        // Arrange - First register a user
+        // Arrange - Registrar um usuário inicialmente
         var email = $"login{Guid.NewGuid()}@test.com";
         var password = "Test@123";
         var registerRequest = new RegisterRequest
@@ -141,24 +141,24 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
 
         await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
 
-        // Now login
+        // Efetuar login
         var loginRequest = new LoginRequest
         {
             Email = email,
             Password = password
         };
 
-        // Act
+        // Act - Envia requisição de login com senha incorreta
         var response = await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
 
-        // Assert
+        // Assert - Verifica que retorna Unauthorized
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // Check if HttpOnly cookies were set
+        // Assert - Verificar se os cookies HttpOnly foram definidos
         var cookies = response.Headers.GetValues("Set-Cookie").ToList();
         cookies.Should().Contain(cookie => cookie.Contains("accessToken=") && cookie.Contains("httponly"));
 
-        // Response body should contain user info
+        // O corpo da resposta deve conter informações do usuário
         var responseContent = await response.Content.ReadAsStringAsync();
         responseContent.Should().Contain("\"user\"");
         responseContent.Should().Contain("\"email\"");
@@ -167,7 +167,7 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
     [Fact]
     public async Task Login_WithWrongPassword_ShouldReturn401Unauthorized()
     {
-        // Arrange - First register a user
+        // Arrange - Registrar um usuário inicialmente
         var email = $"wrongpass{Guid.NewGuid()}@test.com";
         var registerRequest = new RegisterRequest
         {
@@ -180,28 +180,28 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
 
         await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
 
-        // Try login with wrong password
+        // Tentar logar com senha incorreta
         var loginRequest = new LoginRequest
         {
             Email = email,
             Password = "WrongPassword123"
         };
 
-        // Act
+        // Act - Conduz registro e login no fluxo completo
         var response = await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
 
-        // Assert
+        // Assert - Verifica cookies e conteúdo das respostas para registro e login
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task FullAuthFlow_RegisterAndLogin_ShouldWork()
     {
-        // Arrange
+        // Arrange - Registrar um usuário inicialmente para login
         var email = $"fullflow{Guid.NewGuid()}@test.com";
         var password = "Test@123";
 
-        // Step 1: Register
+        // Etapa 1: Registro
         var registerRequest = new RegisterRequest
         {
             Name = "Full Flow User",
@@ -214,15 +214,15 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
         var registerResponse = await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
         registerResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        // Check register cookies
+        // Assert - Verificar cookies de registro
         var registerCookies = registerResponse.Headers.GetValues("Set-Cookie").ToList();
         registerCookies.Should().Contain(cookie => cookie.Contains("accessToken=") && cookie.Contains("httponly"));
 
-        // Register response should contain user info
+        // A resposta do registro deve conter informações do usuário
         var registerContent = await registerResponse.Content.ReadAsStringAsync();
         registerContent.Should().Contain("\"user\"");
 
-        // Step 2: Login
+        // Etapa 2: Login
         var loginRequest = new LoginRequest
         {
             Email = email,
@@ -232,11 +232,11 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
         var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
         loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // Check login cookies
+        // Assert - Verificar cookies de login
         var loginCookies = loginResponse.Headers.GetValues("Set-Cookie").ToList();
         loginCookies.Should().Contain(cookie => cookie.Contains("accessToken=") && cookie.Contains("httponly"));
 
-        // Login response should contain user info
+        // A resposta do login deve conter informações do usuário
         var loginContent = await loginResponse.Content.ReadAsStringAsync();
         loginContent.Should().Contain("\"user\"");
     }
@@ -244,7 +244,7 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
     [Fact]
     public async Task Logout_AfterLogin_ShouldClearCookieAndReturn401OnProtectedRoute()
     {
-        // Arrange - Register and login a user
+        // Arrange - Registrar e autenticar um usuário
         var email = $"logout{Guid.NewGuid()}@test.com";
         var password = "Test@123";
         var registerRequest = new RegisterRequest
@@ -266,21 +266,21 @@ public class AuthControllerIntegrationTests : IClassFixture<TestWebApplicationFa
 
         await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
 
-        // Act - Logout
+        // Act - Efetuar logout
         var logoutResponse = await _client.PostAsync("/api/auth/logout", null);
 
-        // Assert - Logout should succeed
+        // Assert - Logout deve ter sucesso
         logoutResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // Check if cookie was cleared (should have expired date)
+        // Assert - Verificar se o cookie foi limpo (deve ter data de expiração)
         var logoutCookies = logoutResponse.Headers.GetValues("Set-Cookie").ToList();
         logoutCookies.Should().Contain(cookie => cookie.Contains("accessToken=") && cookie.Contains("expires="));
 
-        // Response body should contain success message
+        // O corpo da resposta deve conter mensagem de sucesso
         var logoutContent = await logoutResponse.Content.ReadAsStringAsync();
         logoutContent.Should().Contain("Logout realizado com sucesso");
 
-        // Now try to access a protected route - should return 401
+        // Agora tente acessar uma rota protegida - deve retornar 401
         var protectedResponse = await _client.GetAsync("/api/auth/me");
         protectedResponse.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }

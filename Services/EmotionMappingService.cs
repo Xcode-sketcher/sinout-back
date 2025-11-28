@@ -1,42 +1,29 @@
 using APISinout.Models;
 using APISinout.Data;
 using APISinout.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace APISinout.Services;
 
-/// <summary>
-/// Interface para o serviço de mapeamento de emoções.
-/// </summary>
+// Interface para o serviço de mapeamento de emoções
 public interface IEmotionMappingService
 {
-    /// <summary>
-    /// Cria um novo mapeamento de emoção.
-    /// </summary>
+    // Cria um novo mapeamento de emoção.
     Task<EmotionMappingResponse> CreateMappingAsync(EmotionMappingRequest request, string currentUserId, string currentUserRole);
 
-    /// <summary>
-    /// Obtém os mapeamentos de emoção de um usuário.
-    /// </summary>
+    // Obtém os mapeamentos de emoção de um usuário.
     Task<List<EmotionMappingResponse>> GetMappingsByUserAsync(string userId, string currentUserId, string currentUserRole);
 
-    /// <summary>
-    /// Atualiza um mapeamento de emoção.
-    /// </summary>
+    // Atualiza um mapeamento de emoção.
     Task<EmotionMappingResponse> UpdateMappingAsync(string id, EmotionMappingRequest request, string currentUserId, string currentUserRole);
 
-    /// <summary>
-    /// Exclui um mapeamento de emoção.
-    /// </summary>
+    // Exclui um mapeamento de emoção.
     Task DeleteMappingAsync(string id, string currentUserId, string currentUserRole);
 
-    /// <summary>
-    /// Encontra a mensagem correspondente para uma emoção e percentual.
-    /// </summary>
+    // Encontra a mensagem correspondente para uma emoção e percentual.
     Task<string?> FindMatchingMessageAsync(string userId, string emotion, double percentage);
 
-    /// <summary>
-    /// Encontra a regra correspondente (mensagem e ID) para uma emoção e percentual.
-    /// </summary>
+    // Encontra a regra correspondente (mensagem e ID) para uma emoção e percentual.
     Task<(string? message, string? ruleId)> FindMatchingRuleAsync(string userId, string emotion, double percentage);
 }
 
@@ -44,6 +31,7 @@ public class EmotionMappingService : IEmotionMappingService
 {
     private readonly IEmotionMappingRepository _mappingRepository;
     private readonly IUserRepository _userRepository;
+    private readonly ILogger<EmotionMappingService>? _logger;
 
     // Emoções válidas
     private readonly string[] _validEmotions = { "happy", "sad", "angry", "fear", "surprise", "neutral", "disgust" };
@@ -51,10 +39,12 @@ public class EmotionMappingService : IEmotionMappingService
 
     public EmotionMappingService(
         IEmotionMappingRepository mappingRepository,
-        IUserRepository userRepository)
+        IUserRepository userRepository,
+        ILogger<EmotionMappingService>? logger = null)
     {
         _mappingRepository = mappingRepository;
         _userRepository = userRepository;
+        _logger = logger;
     }
 
     // Cria um novo mapeamento de emoção.
@@ -102,6 +92,8 @@ public class EmotionMappingService : IEmotionMappingService
         if (existingMappings.Any(m => m.Priority == request.Priority))
             throw new AppException($"Já existe um mapeamento com prioridade {request.Priority} para a emoção '{request.Emotion}'.");
 
+            // mapping will be created and logged after insertion to ensure variables exist
+
         var mapping = new EmotionMapping
         {
             UserId = userId,
@@ -115,6 +107,7 @@ public class EmotionMappingService : IEmotionMappingService
         };
 
         await _mappingRepository.CreateMappingAsync(mapping);
+        _logger?.LogInformation("EmotionMappingService: mapping created. Id={MappingId}, UserId={UserId}", mapping.Id, mapping.UserId);
 
         return new EmotionMappingResponse(mapping, user.Name);
     }
@@ -173,6 +166,8 @@ public class EmotionMappingService : IEmotionMappingService
         mapping.Priority = request.Priority;
         mapping.UpdatedAt = DateTime.UtcNow;
 
+            _logger?.LogInformation("EmotionMappingService: mapping updated. Id={MappingId}", id);
+
         await _mappingRepository.UpdateMappingAsync(id, mapping);
 
         string? userName = null;
@@ -184,9 +179,7 @@ public class EmotionMappingService : IEmotionMappingService
         return new EmotionMappingResponse(mapping, userName);
     }
 
-    /// <summary>
-    /// Exclui um mapeamento de emoção.
-    /// </summary>
+    // Exclui um mapeamento de emoção.
     public async Task DeleteMappingAsync(string id, string currentUserId, string currentUserRole)
     {
         var mapping = await _mappingRepository.GetByIdAsync(id);
@@ -199,6 +192,8 @@ public class EmotionMappingService : IEmotionMappingService
             throw new AppException("Acesso negado");
 
         await _mappingRepository.DeleteMappingAsync(id);
+
+            _logger?.LogInformation("EmotionMappingService: mapping deleted (soft). Id={MappingId}", id);
     }
 
     // Encontra a mensagem correspondente para uma emoção e percentual.

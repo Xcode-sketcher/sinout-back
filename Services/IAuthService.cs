@@ -2,15 +2,15 @@ using APISinout.Models;
 
 namespace APISinout.Services;
 
-/// <summary>Interface para o serviço de autenticação</summary>
+// Interface para o serviço de autenticação
 public interface IAuthService
 {
-    /// <summary>Registra um novo usuário</summary>
+    // Registra um novo usuário
     Task<AuthResponse> RegisterAsync(RegisterRequest request);
 
-    /// <summary>Faz login de um usuário</summary>
+    // Faz login de um usuário
     Task<AuthResponse> LoginAsync(LoginRequest request);
 
-    /// <summary>Obtém um usuário pelo ID</summary>
+    // Obtém um usuário pelo ID
     Task<User?> GetUserByIdAsync(string userId);
 }

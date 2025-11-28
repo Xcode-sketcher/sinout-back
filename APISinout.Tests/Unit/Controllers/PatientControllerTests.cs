@@ -22,6 +22,7 @@ namespace APISinout.Tests.Unit.Controllers;
 public class PatientControllerTests
 {
     private readonly Mock<IPatientService> _mockPatientService;
+    private readonly Mock<Microsoft.Extensions.Logging.ILogger<PatientController>> _loggerMock;
     private readonly PatientController _controller;
     private readonly ClaimsPrincipal _adminUser;
     private readonly ClaimsPrincipal _regularUser;
@@ -29,6 +30,7 @@ public class PatientControllerTests
     public PatientControllerTests()
     {
         _mockPatientService = new Mock<IPatientService>();
+        _loggerMock = new Mock<Microsoft.Extensions.Logging.ILogger<PatientController>>();
 
         // Configurar usuário admin para testes
         _adminUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
@@ -46,7 +48,7 @@ public class PatientControllerTests
             new Claim(ClaimTypes.Role, "Cuidador")
         }));
 
-        _controller = new PatientController(_mockPatientService.Object);
+        _controller = new PatientController(_mockPatientService.Object, _loggerMock.Object);
     }
 
     #region GetPatients Tests

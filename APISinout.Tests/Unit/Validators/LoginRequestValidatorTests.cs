@@ -27,10 +27,10 @@ public class LoginRequestValidatorTests
         // Arrange - Configura requisição de login válida
         var request = UserFixtures.CreateValidLoginRequest();
 
-        // Act
+        // Act - Executa a validação de login
         var result = await _validator.ValidateAsync(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.IsValid.Should().BeTrue();
     }
 
@@ -41,10 +41,10 @@ public class LoginRequestValidatorTests
         var request = UserFixtures.CreateValidLoginRequest();
         request.Email = "";
 
-        // Act
+        // Act - Executa a validação com email vazio
         var result = await _validator.ValidateAsync(request);
 
-        // Assert
+        // Assert - Verifica se a validação falha por email vazio
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Email");
     }
@@ -56,10 +56,10 @@ public class LoginRequestValidatorTests
         var request = UserFixtures.CreateValidLoginRequest();
         request.Email = "invalid-email";
 
-        // Act
+        // Act - Executa a validação com email inválido
         var result = await _validator.ValidateAsync(request);
 
-        // Assert
+        // Assert - Verifica se a validação falha por email inválido
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Email");
     }
@@ -71,10 +71,10 @@ public class LoginRequestValidatorTests
         var request = UserFixtures.CreateValidLoginRequest();
         request.Password = "";
 
-        // Act
+        // Act - Executa a validação com senha vazia
         var result = await _validator.ValidateAsync(request);
 
-        // Assert
+        // Assert - Verifica se a validação falha por senha vazia
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Password");
     }

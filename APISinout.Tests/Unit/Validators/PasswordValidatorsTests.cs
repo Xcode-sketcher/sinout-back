@@ -23,10 +23,10 @@ public class PasswordValidatorsTests
         var validator = new ForgotPasswordRequestValidator();
         var request = new ForgotPasswordRequest { Email = "test@example.com" };
 
-        // Act
+        // Act - Executa a validação
         var result = validator.TestValidate(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.ShouldNotHaveAnyValidationErrors();
     }
 
@@ -37,10 +37,10 @@ public class PasswordValidatorsTests
         var validator = new ForgotPasswordRequestValidator();
         var request = new ForgotPasswordRequest { Email = "" };
 
-        // Act
+        // Act - Executa a validação
         var result = validator.TestValidate(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.ShouldHaveValidationErrorFor(x => x.Email)
             .WithErrorMessage("Email é obrigatório");
     }
@@ -52,10 +52,10 @@ public class PasswordValidatorsTests
         var validator = new ForgotPasswordRequestValidator();
         var request = new ForgotPasswordRequest { Email = "invalid-email" };
 
-        // Act
+        // Act - Executa a validação
         var result = validator.TestValidate(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.ShouldHaveValidationErrorFor(x => x.Email)
             .WithErrorMessage("Email inválido");
     }
@@ -76,10 +76,10 @@ public class PasswordValidatorsTests
             ConfirmPassword = "Password123!"
         };
 
-        // Act
+        // Act - Executa a validação
         var result = validator.TestValidate(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.ShouldNotHaveAnyValidationErrors();
     }
 
@@ -95,10 +95,10 @@ public class PasswordValidatorsTests
             ConfirmPassword = "Password123!"
         };
 
-        // Act
+        // Act - Executa a validação
         var result = validator.TestValidate(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.ShouldHaveValidationErrorFor(x => x.Token)
             .WithErrorMessage("Token é obrigatório");
     }
@@ -115,10 +115,10 @@ public class PasswordValidatorsTests
             ConfirmPassword = "123"
         };
 
-        // Act
+        // Act - Executa a validação
         var result = validator.TestValidate(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.ShouldHaveValidationErrorFor(x => x.NewPassword)
             .WithErrorMessage("Senha deve ter no mínimo 6 caracteres");
     }
@@ -135,10 +135,10 @@ public class PasswordValidatorsTests
             ConfirmPassword = "password123!"
         };
 
-        // Act
+        // Act - Executa a validação
         var result = validator.TestValidate(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.ShouldHaveValidationErrorFor(x => x.NewPassword)
             .WithErrorMessage("Senha deve conter pelo menos uma letra maiúscula");
     }
@@ -155,10 +155,10 @@ public class PasswordValidatorsTests
             ConfirmPassword = "PASSWORD123!"
         };
 
-        // Act
+        // Act - Executa a validação
         var result = validator.TestValidate(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.ShouldHaveValidationErrorFor(x => x.NewPassword)
             .WithErrorMessage("Senha deve conter pelo menos uma letra minúscula");
     }
@@ -175,10 +175,10 @@ public class PasswordValidatorsTests
             ConfirmPassword = "Password!"
         };
 
-        // Act
+        // Act - Executa a validação
         var result = validator.TestValidate(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.ShouldHaveValidationErrorFor(x => x.NewPassword)
             .WithErrorMessage("Senha deve conter pelo menos um número");
     }
@@ -196,10 +196,10 @@ public class PasswordValidatorsTests
             ConfirmPassword = longPassword
         };
 
-        // Act
+        // Act - Executa a validação
         var result = validator.TestValidate(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.ShouldHaveValidationErrorFor(x => x.NewPassword)
             .WithErrorMessage("Senha não pode ter mais de 100 caracteres");
     }
@@ -220,10 +220,10 @@ public class PasswordValidatorsTests
             ConfirmPassword = "NewPassword123!"
         };
 
-        // Act
+        // Act - Executa a validação
         var result = validator.TestValidate(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.ShouldNotHaveAnyValidationErrors();
     }
 
@@ -239,10 +239,10 @@ public class PasswordValidatorsTests
             ConfirmPassword = "NewPassword123!"
         };
 
-        // Act
+        // Act - Executa a validação
         var result = validator.TestValidate(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.ShouldHaveValidationErrorFor(x => x.CurrentPassword)
             .WithErrorMessage("Senha atual é obrigatória");
     }
@@ -259,10 +259,10 @@ public class PasswordValidatorsTests
             ConfirmPassword = "weak"
         };
 
-        // Act
+        // Act - Executa a validação
         var result = validator.TestValidate(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.ShouldHaveValidationErrorFor(x => x.NewPassword);
     }
 
@@ -278,10 +278,10 @@ public class PasswordValidatorsTests
             ConfirmPassword = "DifferentPassword123!"
         };
 
-        // Act
+        // Act - Executa a ação sob teste
         var result = validator.TestValidate(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.ShouldHaveValidationErrorFor(x => x.ConfirmPassword)
             .WithErrorMessage("Senhas não coincidem");
     }
@@ -298,10 +298,10 @@ public class PasswordValidatorsTests
             ConfirmPassword = "abc"
         };
 
-        // Act
+        // Act - Executa a ação sob teste
         var result = validator.TestValidate(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.ShouldHaveValidationErrorFor(x => x.NewPassword);
         var errors = result.Errors.Select(e => e.ErrorMessage).ToList();
         errors.Should().Contain("Senha deve ter no mínimo 6 caracteres");

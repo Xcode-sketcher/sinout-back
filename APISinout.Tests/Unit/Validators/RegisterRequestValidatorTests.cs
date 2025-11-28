@@ -29,10 +29,10 @@ public class RegisterRequestValidatorTests
         // Arrange - Configura requisição de registro válida
         var request = UserFixtures.CreateValidRegisterRequest();
 
-        // Act
+        // Act - Executa a validação
         var result = await _validator.ValidateAsync(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.IsValid.Should().BeTrue();
     }
 
@@ -43,10 +43,10 @@ public class RegisterRequestValidatorTests
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Name = "";
 
-        // Act
+        // Act - Executa a validação
         var result = await _validator.ValidateAsync(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Name");
     }
@@ -58,10 +58,10 @@ public class RegisterRequestValidatorTests
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Name = "Jo";
 
-        // Act
+        // Act - Executa a validação
         var result = await _validator.ValidateAsync(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Name");
     }
@@ -76,10 +76,10 @@ public class RegisterRequestValidatorTests
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Name = name;
 
-        // Act
+        // Act - Executa a validação
         var result = await _validator.ValidateAsync(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.IsValid.Should().BeTrue();
     }
 
@@ -94,10 +94,10 @@ public class RegisterRequestValidatorTests
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Email = "";
 
-        // Act
+        // Act - Executa a validação
         var result = await _validator.ValidateAsync(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Email");
     }
@@ -112,10 +112,10 @@ public class RegisterRequestValidatorTests
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Email = email;
 
-        // Act
+        // Act - Executa a validação
         var result = await _validator.ValidateAsync(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Email");
     }
@@ -130,10 +130,10 @@ public class RegisterRequestValidatorTests
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Email = email;
 
-        // Act
+        // Act - Executa a validação
         var result = await _validator.ValidateAsync(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.IsValid.Should().BeTrue();
     }
 
@@ -148,10 +148,10 @@ public class RegisterRequestValidatorTests
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Password = "";
 
-        // Act
+        // Act - Executa a validação
         var result = await _validator.ValidateAsync(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Password");
     }
@@ -163,10 +163,10 @@ public class RegisterRequestValidatorTests
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Password = "Test@1";
 
-        // Act
+        // Act - Executa a validação
         var result = await _validator.ValidateAsync(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Password");
     }
@@ -181,10 +181,10 @@ public class RegisterRequestValidatorTests
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Password = password;
 
-        // Act
+        // Act - Executa a validação
         var result = await _validator.ValidateAsync(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.IsValid.Should().BeTrue();
     }
 
@@ -202,10 +202,10 @@ public class RegisterRequestValidatorTests
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Phone = phone;
 
-        // Act
+        // Act - Executa a validação
         var result = await _validator.ValidateAsync(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.IsValid.Should().BeTrue();
     }
 
@@ -216,10 +216,10 @@ public class RegisterRequestValidatorTests
         var request = UserFixtures.CreateValidRegisterRequest();
         request.Phone = null;
 
-        // Act
+        // Act - Executa a validação
         var result = await _validator.ValidateAsync(request);
 
-        // Assert
+        // Assert - Verifica o resultado da validação
         result.IsValid.Should().BeTrue();
     }
 

@@ -65,10 +65,10 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
             CuidadorId = userId
         };
 
-        // Act
+        // Act - Executa a requisição para criar paciente
         var response = await _client.PostAsJsonAsync("/api/patients", request);
 
-        // Assert
+        // Assert - Verifica status e conteúdo da resposta
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var patient = await response.Content.ReadFromJsonAsync<PatientResponse>();
         patient.Should().NotBeNull();
@@ -88,10 +88,10 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
             CuidadorId = "1"
         };
 
-        // Act
+        // Act - Executa a requisição sem autenticação
         var response = await _client.PostAsJsonAsync("/api/patients", request);
 
-        // Assert
+        // Assert - Verifica que retorna Unauthorized
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -110,10 +110,10 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
         };
         await _client.PostAsJsonAsync("/api/patients", createRequest);
 
-        // Act
+        // Act - Executa a requisição para obter pacientes
         var response = await _client.GetAsync("/api/patients");
 
-        // Assert
+        // Assert - Verifica que retorna os pacientes do cuidador
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var patients = await response.Content.ReadFromJsonAsync<List<PatientResponse>>();
         patients.Should().NotBeNull();
@@ -125,21 +125,21 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
     [Fact]
     public async Task GetPatients_WithoutAuth_ShouldReturn401Unauthorized()
     {
-        // Act
+        // Act - Executa a requisição sem autenticação
         var response = await _client.GetAsync("/api/patients");
 
-        // Assert
+        // Assert - Verifica que retorna Unauthorized
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task GetPatientById_AsOwner_ShouldReturn200OK()
     {
-        // Arrange
+        // Arrange - Prepara usuário, requisição e estado do sistema para o teste
         var userId = await GetCuidadorUserId();
 
 
-        // Create a patient
+        // Criar um paciente
         var createRequest = new PatientRequest
         {
             Name = "Patient To Get",
@@ -148,10 +148,10 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
         var createResponse = await _client.PostAsJsonAsync("/api/patients", createRequest);
         var createdPatient = await createResponse.Content.ReadFromJsonAsync<PatientResponse>();
 
-        // Act
+        // Act - Executa a requisição para buscar paciente por ID
         var response = await _client.GetAsync($"/api/patients/{createdPatient!.Id}");
 
-        // Assert
+        // Assert - Verifica que retorna OK e o paciente correto
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var patient = await response.Content.ReadFromJsonAsync<PatientResponse>();
         patient.Should().NotBeNull();
@@ -161,7 +161,7 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
     [Fact]
     public async Task GetPatientById_AsNonOwner_ShouldReturn404NotFound()
     {
-        // Arrange
+        // Arrange - Prepara usuário, requisição e estado do sistema para o teste
         var userId1 = await GetCuidadorUserId();
         var client2 = _factory.CreateClientWithCookies();
         var userId2 = await GetCuidadorUserId(client2);
@@ -176,13 +176,13 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
         var createResponse = await _client.PostAsJsonAsync("/api/patients", createRequest);
         var createdPatient = await createResponse.Content.ReadFromJsonAsync<PatientResponse>();
 
-        // Cuidador 2 tries to access it
+        // Cuidador 2 tenta acessar
 
 
-        // Act
+        // Act - Executa a requisição para buscar paciente por ID
         var response = await client2.GetAsync($"/api/patients/{createdPatient!.Id}");
 
-        // Assert
+        // Assert - Verifica que retorna NotFound
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
@@ -191,11 +191,11 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
     [Fact]
     public async Task UpdatePatient_AsOwner_ShouldReturn200OK()
     {
-        // Arrange
+        // Arrange - Prepara usuário, requisição e estado do sistema para o teste
         var userId = await GetCuidadorUserId();
 
 
-        // Create a patient
+        // Criar um paciente
         var createRequest = new PatientRequest
         {
             Name = "Patient To Update",
@@ -204,17 +204,17 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
         var createResponse = await _client.PostAsJsonAsync("/api/patients", createRequest);
         var createdPatient = await createResponse.Content.ReadFromJsonAsync<PatientResponse>();
 
-        // Update it
+        // Atualizar
         var updateRequest = new PatientRequest
         {
             Name = "Updated Patient Name",
             CuidadorId = userId
         };
 
-        // Act
+        // Act - Executa a requisição para atualizar paciente
         var response = await _client.PutAsJsonAsync($"/api/patients/{createdPatient!.Id}", updateRequest);
 
-        // Assert
+        // Assert - Verifica que retorna OK e o paciente atualizado
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var updated = await response.Content.ReadFromJsonAsync<PatientResponse>();
         updated.Should().NotBeNull();
@@ -224,7 +224,7 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
     [Fact]
     public async Task UpdatePatient_AsNonOwner_ShouldReturn400BadRequest()
     {
-        // Arrange
+        // Arrange - Prepara usuário, requisição e estado do sistema para o teste
         var userId1 = await GetCuidadorUserId();
         var client2 = _factory.CreateClientWithCookies();
         var userId2 = await GetCuidadorUserId(client2);
@@ -239,7 +239,7 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
         var createResponse = await _client.PostAsJsonAsync("/api/patients", createRequest);
         var createdPatient = await createResponse.Content.ReadFromJsonAsync<PatientResponse>();
 
-        // Cuidador 2 tries to update it
+        // Cuidador 2 tenta atualizar
 
         var updateRequest = new PatientRequest
         {
@@ -247,21 +247,21 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
             CuidadorId = userId2
         };
 
-        // Act
+        // Act - Executa a requisição para atualizar paciente por outro usuário
         var response = await client2.PutAsJsonAsync($"/api/patients/{createdPatient!.Id}", updateRequest);
 
-        // Assert
+        // Assert - Verifica que retorna BadRequest
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task DeletePatient_AsOwner_ShouldReturn200OK()
     {
-        // Arrange
+        // Arrange - Prepara usuário, requisição e estado do sistema para o teste
         var userId = await GetCuidadorUserId();
 
 
-        // Create a patient
+        // Criar um paciente
         var createRequest = new PatientRequest
         {
             Name = "Patient To Delete",
@@ -270,17 +270,17 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
         var createResponse = await _client.PostAsJsonAsync("/api/patients", createRequest);
         var createdPatient = await createResponse.Content.ReadFromJsonAsync<PatientResponse>();
 
-        // Act
+        // Act - Executa a requisição de exclusão do paciente
         var response = await _client.DeleteAsync($"/api/patients/{createdPatient!.Id}");
 
-        // Assert
+        // Assert - Verifica que o paciente foi excluído com sucesso
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]
     public async Task DeletePatient_AsNonOwner_ShouldReturn400BadRequest()
     {
-        // Arrange
+        // Arrange - Prepara usuário, requisição e estado do sistema para o teste
         var userId1 = await GetCuidadorUserId();
         var client2 = _factory.CreateClientWithCookies();
         var userId2 = await GetCuidadorUserId(client2);
@@ -298,10 +298,10 @@ public class PatientControllerIntegrationTests : IClassFixture<TestWebApplicatio
         // Cuidador 2 tries to delete it
 
 
-        // Act
+        // Act - Executa a requisição de exclusão do paciente por outro usuário
         var response = await client2.DeleteAsync($"/api/patients/{createdPatient!.Id}");
 
-        // Assert
+        // Assert - Verifica que retorna BadRequest
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 

@@ -5,29 +5,19 @@ using System.Security.Cryptography;
 
 namespace APISinout.Services;
 
-/// <summary>
-/// Interface para o serviço de redefinição de senha.
-/// </summary>
+// Interface para o serviço de redefinição de senha.
 public interface IPasswordResetService
 {
-    /// <summary>
-    /// Solicita a redefinição de senha.
-    /// </summary>
+    // Solicita a redefinição de senha.
     Task<MessageResponse> RequestPasswordResetAsync(ForgotPasswordRequest request);
 
-    /// <summary>
-    /// Reenvia o código de redefinição.
-    /// </summary>
+    // Reenvia o código de redefinição.
     Task<MessageResponse> ResendResetCodeAsync(ResendResetCodeRequest request);
 
-    /// <summary>
-    /// Redefine a senha.
-    /// </summary>
+    // Redefine a senha.
     Task<MessageResponse> ResetPasswordAsync(ResetPasswordRequest request);
 
-    /// <summary>
-    /// Altera a senha.
-    /// </summary>
+    // Altera a senha.
     Task<MessageResponse> ChangePasswordAsync(ChangePasswordRequest request, string userId);
 }
 

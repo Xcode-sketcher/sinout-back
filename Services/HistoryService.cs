@@ -1,37 +1,26 @@
 using APISinout.Models;
 using APISinout.Data;
 using APISinout.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace APISinout.Services;
 
-/// <summary>
-/// Interface para o serviço de histórico.
-/// </summary>
+// Interface para o serviço de histórico
 public interface IHistoryService
 {
-    /// <summary>
-    /// Obtém o histórico de um paciente.
-    /// </summary>
+    // Obtém o histórico de um paciente.
     Task<List<HistoryRecordResponse>> GetHistoryByPatientAsync(string patientId, string currentUserId, string currentUserRole, int hours = 24);
 
-    /// <summary>
-    /// Obtém o histórico por filtro.
-    /// </summary>
+    // Obtém o histórico por filtro.
     Task<List<HistoryRecordResponse>> GetHistoryByFilterAsync(HistoryFilter filter, string currentUserId, string currentUserRole);
 
-    /// <summary>
-    /// Obtém as estatísticas de um paciente.
-    /// </summary>
+    // Obtém as estatísticas de um paciente.
     Task<PatientStatistics> GetPatientStatisticsAsync(string patientId, string currentUserId, string currentUserRole, int hours = 24);
 
-    /// <summary>
-    /// Limpa o histórico antigo.
-    /// </summary>
+    // Limpa o histórico antigo.
     Task CleanOldHistoryAsync(int hours = 24);
 
-    /// <summary>
-    /// Cria um registro de histórico.
-    /// </summary>
+    // Cria um registro de histórico.
     Task CreateHistoryRecordAsync(HistoryRecord record);
 }
 
@@ -40,12 +29,14 @@ public class HistoryService : IHistoryService
     private readonly IHistoryRepository _historyRepository;
     private readonly IUserRepository _userRepository;
     private readonly IPatientRepository _patientRepository;
+    private readonly ILogger<HistoryService>? _logger;
 
-    public HistoryService(IHistoryRepository historyRepository, IUserRepository userRepository, IPatientRepository patientRepository)
+    public HistoryService(IHistoryRepository historyRepository, IUserRepository userRepository, IPatientRepository patientRepository, ILogger<HistoryService>? logger = null)
     {
         _historyRepository = historyRepository;
         _userRepository = userRepository;
         _patientRepository = patientRepository;
+        _logger = logger;
     }
 
     // Obtém o histórico de um paciente.
@@ -53,11 +44,17 @@ public class HistoryService : IHistoryService
     {
         var patient = await _patientRepository.GetByIdAsync(patientId);
         if (patient == null)
+        {
+            _logger?.LogWarning("HistoryService.GetHistoryByPatientAsync: paciente não encontrado. PatientId={PatientId}", patientId);
             throw new AppException("Paciente não encontrado");
+        }
 
         // Verificar se o paciente pertence ao usuário
         if (patient.CuidadorId != currentUserId && currentUserRole != "Admin")
+        {
+            _logger?.LogWarning("HistoryService.GetHistoryByPatientAsync: acesso negado. PatientId={PatientId}, UserId={UserId}", patientId, currentUserId);
             throw new AppException("Acesso negado");
+        }
 
         var records = await _historyRepository.GetByPatientIdAsync(patientId, hours);
         return records.Select(r => new HistoryRecordResponse(r, patient.Name)).ToList();
@@ -94,11 +91,17 @@ public class HistoryService : IHistoryService
     {
         var patient = await _patientRepository.GetByIdAsync(patientId);
         if (patient == null)
+        {
+            _logger?.LogWarning("HistoryService.GetPatientStatisticsAsync: paciente não encontrado. PatientId={PatientId}", patientId);
             throw new AppException("Paciente não encontrado");
+        }
 
         // Verificar se o paciente pertence ao usuário
         if (patient.CuidadorId != currentUserId && currentUserRole != "Admin")
+        {
+            _logger?.LogWarning("HistoryService.GetPatientStatisticsAsync: acesso negado. PatientId={PatientId}, UserId={UserId}", patientId, currentUserId);
             throw new AppException("Acesso negado");
+        }
 
         var stats = await _historyRepository.GetPatientStatisticsAsync(patientId, hours);
         stats.PatientName = patient.Name;
@@ -106,9 +109,7 @@ public class HistoryService : IHistoryService
         return stats;
     }
 
-    /// <summary>
-    /// Limpa o histórico antigo.
-    /// </summary>
+    // Limpa o histórico antigo.
     public async Task CleanOldHistoryAsync(int hours = 24)
     {
         await _historyRepository.DeleteOldRecordsAsync(hours);
@@ -117,6 +118,8 @@ public class HistoryService : IHistoryService
     // Cria um registro de histórico.
     public async Task CreateHistoryRecordAsync(HistoryRecord record)
     {
+        _logger?.LogDebug("HistoryService.CreateHistoryRecordAsync called. PatientId={PatientId}", record.PatientId);
         await _historyRepository.CreateRecordAsync(record);
+        _logger?.LogInformation("History record created: PatientId={PatientId}", record.PatientId);
     }
 }

@@ -28,6 +28,7 @@ public class AuthControllerTests
     private readonly Mock<IValidator<LoginRequest>> _loginValidatorMock;
     private readonly Mock<IConfiguration> _configurationMock;
     private readonly Mock<IWebHostEnvironment> _webHostEnvironmentMock;
+    private readonly Mock<Microsoft.Extensions.Logging.ILogger<AuthController>> _loggerMock;
     private readonly AuthController _controller;
 
     public AuthControllerTests()
@@ -38,6 +39,7 @@ public class AuthControllerTests
         _loginValidatorMock = new Mock<IValidator<LoginRequest>>();
         _configurationMock = new Mock<IConfiguration>();
         _webHostEnvironmentMock = new Mock<IWebHostEnvironment>();
+        _loggerMock = new Mock<Microsoft.Extensions.Logging.ILogger<AuthController>>();
 
         _controller = new AuthController(
             _authServiceMock.Object,
@@ -45,7 +47,8 @@ public class AuthControllerTests
             _registerValidatorMock.Object,
             _loginValidatorMock.Object,
             _configurationMock.Object,
-            _webHostEnvironmentMock.Object);
+            _webHostEnvironmentMock.Object,
+            _loggerMock.Object);
     }
 
     #region Register Tests
@@ -292,7 +295,7 @@ public class AuthControllerTests
         var response = okResult.Value;
         Assert.NotNull(response);
         
-        // Verify properties using reflection since it's an anonymous type
+        // Assert - Verifica propriedades usando reflection devido ao tipo anônimo
         var userIdProp = response.GetType().GetProperty("userId");
         var nameProp = response.GetType().GetProperty("name");
         Assert.NotNull(userIdProp);
