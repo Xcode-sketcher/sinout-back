@@ -109,7 +109,8 @@ builder.Services.AddCors(options =>
                 origin.Contains("netlify.app") ||
                 origin.Contains("onrender.com") ||
                 origin.Contains("azurecontainerapps.io") ||
-                origin.Contains("azurestaticapps.net"))
+                origin.Contains("azurestaticapps.net") ||
+                origin.Contains("vps.gsilverio.com"))
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
